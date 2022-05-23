@@ -5,7 +5,7 @@ clc;
 close all;
 clear all;
 
-numberOfEmptyCommandsPrepended = 20;
+numberOfEmptyCommandsPrepended = 30;
 %  The Aurora machine appears to ignore the first 9-10 commands and then 
 %  begins on the 19th command. Here we prepend a bunch of dummy commands
 %  so that your desired signal is not affected.
