@@ -5,6 +5,11 @@ clc;
 close all;
 clear all;
 
+rootDir        = getRootProjectDirectory('AuroraCommandFileToolkit');
+projectFolders = getProjectFolders(rootDir);
+
+addpath(projectFolders.aurora);
+
 numberOfEmptyCommandsPrepended = 30;
 %  The Aurora machine appears to ignore the first 9-10 commands and then 
 %  begins on the 19th command. Here we prepend a bunch of dummy commands
@@ -111,12 +116,16 @@ end
 magnitudeStr = sprintf('%1.4f',max(abs(commandSignal)));
 magnitudeStr(strfind(magnitudeStr,'.'))='p';
 
-fileName = sprintf('../output/%s__%s_Lo__%i_osc__%i_HzAD__%i_pre.pro',...
+
+
+fileName = sprintf('%s__%s_Lo__%i_osc__%i_HzAD__%i_pre.pro',...
             signalName, ...
             magnitudeStr,...
             signalOscillations,...
             round(analogToDigitalSampleRateHz),...
             numberOfEmptyCommandsPrepended);
+
+filePath = fullfile(projectFolders.output_code,fileName);
 
 % Write the file
 [timeVectorExpectedMeasurement,...
@@ -128,10 +137,10 @@ fileName = sprintf('../output/%s__%s_Lo__%i_osc__%i_HzAD__%i_pre.pro',...
         postRampPauseTimeInSeconds,...
         numberOfEmptyCommandsPrepended,...
         maximumNumberOfCommands, ...
-        fileName);
+        filePath);
 
 % Read the Aurora command file
-auroraCommandFile = readAuroraCommandFile(fileName);
+auroraCommandFile = readAuroraCommandFile(filePath);
 
 % Plot the commanded signal and the signal we expect to see in the
 % measurements
@@ -208,3 +217,5 @@ figSignal = figure;
         ylabel('Length (Lo)');
         title('Error: measured-desired');
 
+saveas(figSignal,fullfile(projectFolders.output_plots,'fig00_generateAuroraFile'),'fig');
+saveas(figSignal,fullfile(projectFolders.output_plots,'fig00_generateAuroraFile'),'fig');
