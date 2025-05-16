@@ -1,12 +1,11 @@
-function [timeVectorExpectedMeasurement, signalExpectedMeasurement] ...
-    = writeAuroraCommandFile(...
-       timeVector,...
-       displacementVector,...
+function [timeAurora, lengthAurora] ...
+    = writeAuroraCommandFileFromStruct(...
+       commandStruct,...
        auroraConfig,...
        fullFilePath)
 %%
 % @author M.Millard
-% @date May 2022
+% @date May 2025
 %
 % A function to take a time series of length changes and turn it into
 % an equivalent command file to control an Aurora muscle servo testing 
@@ -14,14 +13,17 @@ function [timeVectorExpectedMeasurement, signalExpectedMeasurement] ...
 %
 % Note: This function currently assumes that time is specified in seconds
 %
-% @param timeVector: 
-%   A time vector of samples that is monotonically increasing in units 
-%   of seconds. The timeVector can be longer than maximumNumberOfCommands
-%   since zero-length-change entries are grouped. 
+% @param commandStruct
+%   A struct with fields:
 %
-% @param displacementVector: 
-%   A vector of desired length changes measured in normalized length (Lo). 
-%   This vector must have the same length as time vector.
+%   time: 
+%       A time vector of samples that is monotonically increasing in units 
+%       of seconds. The timeVector can be longer than maximumNumberOfCommands
+%       since zero-length-change entries are grouped. 
+%
+%   lengthChange: 
+%       A vector of desired length changes measured in normalized length (Lo). 
+%       This vector must have the same length as time vector.
 %
 % @param auroraConfig
 %   A struct that contains the following fields:
@@ -92,12 +94,12 @@ maximumNumberOfCommands=...
     auroraConfig.maximumNumberOfCommands;
 
 
-assert(length(timeVector)==length(displacementVector), ...
-    'timeVector and displacementVector must have the same length');
+assert(length(commandStruct.time)==length(commandStruct.lengthChange), ...
+    'commandStruct.time and commandStruct.lengthChange must have the same length');
 
 assert(isempty(fullFilePath)==0,'fullFilePath cannot be empty');
 
-assert( min(diff(timeVector))*1000 > 0.1, ...
+assert( min(diff(commandStruct.time))*1000 > 0.1, ...
     ['The Aurora machine needs at least 0.1ms to execute a step,',...
      ' and probably more like 1ms']);
 
@@ -158,7 +160,7 @@ fprintf(fid,'Maximum Length: %1.3f (Lo)\n',...
 fprintf(fid,'PD Deadband:    %1.6f mN\n',...
             auroraConfig.pdDeadBand);
 
-%This line is not functional, may not be needed, but is here for now. 
+
 for i=1:1:numberOfEmptyCommandsPrepended
     idStr = int2str(i);
     while(length(idStr)<2)
@@ -168,33 +170,44 @@ for i=1:1:numberOfEmptyCommandsPrepended
                  '50.000 Hz 0.500 s\n'],idStr);
 end
 
+%%
+% Commands
+%%
 fprintf(fid,'Time (ms)\tControl Function\tOptions \n');
-
 fprintf(fid,'%9.1f\tData-Enable\t\t\n',0.0);
 
 commandCounter = 1;
 
-idxStart= 1;
-idxEnd  = length(timeVector)-1;
+timeOffset = 0;
+if(commandStruct.active==1)
+    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000; 
+    fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeOffset,...
+            auroraConfig.bath.preActivation);
+    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000; 
+    fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeOffset,...
+            auroraConfig.bath.active);
+    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000;
+    commandCounter = commandCounter+2;
+end
 
-timeInMs        = timeVector(idxStart,1)*1000;
-timeAurora      = zeros(size(displacementVector,1)*2,1);
-lengthAurora    = zeros(size(displacementVector,1)*2,1);
+
+
+i       = 1;
+idxEnd  = length(commandStruct.time);
+
+timeInMs        = commandStruct.time(i,1)*1000 + timeOffset;
+timeAurora      = zeros(size(commandStruct.lengthChange,1)*2,1);
+lengthAurora    = zeros(size(commandStruct.lengthChange,1)*2,1);
 idxAurora=1;
 
-timeAurora(1,1)   = timeVector(1,1);
-lengthAurora(1,1) = displacementVector(1,1);
-
+timeAurora(1,1)   = commandStruct.time(1,1) + timeOffset/1000;
+lengthAurora(1,1) = commandStruct.lengthChange(1,1);
 
 dlErrMax=0;
 
-i=idxStart;
-%for i=(idxStart):1:(idxEnd-1)
-while i < (idxEnd-1)
+while i < (idxEnd)
 
-
-
-    dtB = round( (timeVector(i+1)-timeVector(i))*1000, 1);
+    dtB = round( (commandStruct.time(i+1)-commandStruct.time(i))*1000, 1);
     dtA = dtB-dtPauseMs;
 
     dtAStr = sprintf('%1.1f',dtA);
@@ -216,7 +229,7 @@ while i < (idxEnd-1)
         dtStr = dtStr(1);
     end
     
-    dlFull = displacementVector(i+1)-lengthAurora(idxAurora,1);
+    dlFull = commandStruct.lengthChange(i+1)-lengthAurora(idxAurora,1);
 
     dlStr = sprintf('%1.4f',dlFull);
 
@@ -234,7 +247,7 @@ while i < (idxEnd-1)
 
     signStr = '+';
     if(dl < 0 && flag_zero==0)
-        signStr =' ';
+        signStr ='';
     end      
 
     %Trim off all trailing zeros: Aurora's working pro files have no
@@ -244,8 +257,6 @@ while i < (idxEnd-1)
         dlStr = dlStr(1:(lastIndex-1));
     end
     if(strcmp(dlStr(end),'.')==1)
-        %lastIndex = length(dlStr);
-        %dlStr = dlStr(1:(lastIndex-1));
         dlStr = [dlStr,'0'];
     end
     assert( (contains(dlStr,'-') && length(dlStr) > 1) ...
@@ -271,48 +282,27 @@ while i < (idxEnd-1)
     idxAurora=idxAurora+1;
     timeAurora(idxAurora,1)   = timeAurora(idxAurora-1,1)+dtPause;
     lengthAurora(idxAurora,1) = lengthAurora(idxAurora-1,1);
+    
+    timeInMs = timeInMs + dtB;
+    i=i+1;
+    commandCounter=commandCounter+1;
 
-    %Check to see if there is a zero block that can be lumped together
-    idxZeroBlockStart = i+1;
-    idxZeroBlockEnd = idxZeroBlockStart+1;
-    dlNext = round(displacementVector(idxZeroBlockEnd)...
-             -displacementVector(idxZeroBlockStart),4);
-    tol  = sqrt(eps);
-
-    %Lump blocks of zero length changes together if we have passed the
-    %first block of empty commands
-    if(abs(dlNext) < tol )
-        while abs(dlNext)<tol && idxZeroBlockEnd < (idxEnd-1)
-            idxZeroBlockEnd = idxZeroBlockEnd+1;
-            dlNext = round((displacementVector(idxZeroBlockEnd)...
-                     -displacementVector(idxZeroBlockStart)),4);
-        end
-        idxZeroBlockEnd = idxZeroBlockEnd-1;        
-        zeroBlockTime = round( (timeVector(idxZeroBlockEnd)-timeVector(idxZeroBlockStart))*1000, 1);
-        i=i+(idxZeroBlockEnd-idxZeroBlockStart)+1;
-
-        timeInMs = timeInMs + dtB + zeroBlockTime;
-        timeAurora(idxAurora,1)=...
-            timeAurora(idxAurora-1,1)+dtPause+(timeVector(idxZeroBlockEnd)-timeVector(idxZeroBlockStart));
-        here=1;
-    else
-        timeInMs = timeInMs + dtB;
-        i=i+1;
-    end
     
 end
 
-
-
-
-timeAurora      = timeAurora(1:idxAurora,1);
-lengthAurora    = lengthAurora(1:idxAurora,1);
-
+if(commandStruct.active==1)
+    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000; 
+    fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeInMs,...
+            auroraConfig.bath.preActivation);
+    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000; 
+    fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeInMs,...
+            auroraConfig.bath.passive);
+    commandCounter = commandCounter+2;
+    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000;
+end
 
 %Write the closing lines
-
-dt = timeVector(end,1)-timeAurora(end,1);
-timeInMs = timeInMs + dt*1000 +dtPauseMs;
+timeInMs = timeInMs +dtPauseMs;
 
 fprintf(fid,'%9.1f\tData-Disable\t\t\n',timeInMs);
 fprintf(fid,'%9.1f\tStop\t\t\n',(timeInMs+dtPauseMs));
@@ -326,17 +316,25 @@ fprintf('writeAuroraCommandFile:\n\t%i of %i command entries used\n',...
     commandCounter, maximumNumberOfCommands);
 
 
+%%
+% Generate an estimate of the measured signal
+%%
+
+timeAurora      = timeAurora(1:idxAurora,1);
+lengthAurora    = lengthAurora(1:idxAurora,1);
+
 %Return the super sampled signal, which due to the small processing delays
 %between the linear moves is slightly different than the desired signal
 
-dt = 1/analogToDigitalSampleRateHz;
-
-timeVectorExpectedMeasurement = ...
-    ([dt:dt:1]') .* (max(timeAurora)-min(timeAurora))...
-     + min(timeAurora);
-
-signalExpectedMeasurement = interp1(timeAurora, lengthAurora, ...
-                            timeVectorExpectedMeasurement,'linear');
+% dt = 1/analogToDigitalSampleRateHz;
+% 
+% timeVectorExpectedMeasurement = ...
+%     ([dt:dt:1]') .* (max(timeAurora)-min(timeAurora))...
+%      + min(timeAurora);
+% 
+% signalExpectedMeasurement = interp1(commandStruct.time,...
+%                                     commandStruct.lengthChange, ...
+%                             timeVectorExpectedMeasurement,'linear');
 
 
 success=1;
