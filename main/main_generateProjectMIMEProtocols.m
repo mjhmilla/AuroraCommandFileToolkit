@@ -10,6 +10,13 @@ projectFolders = getProjectFolders(rootDir);
 
 addpath(projectFolders.aurora);
 addpath(projectFolders.postprocessing);
+addpath(projectFolders.experiments);
+
+%%
+% Script Configuration
+%%
+specimenOptimalLengthApprox = 0.0015; %in m
+flag_generateRandomSignal   = 1;
 
 %%
 % Plot Configuration
@@ -28,6 +35,8 @@ plotConfig.baseFontSize                     = 10;
 %%
 % Aurora configuration
 %%
+%pg 3 of the manual for 322 C-I: 300um in 700us
+auroraConfig.maximumRampSpeed = (300e-6/700e-6);
 
 auroraConfig.numberOfEmptyCommandsPrepended = 10;
 %  The Aurora machine appears to ignore the first 9-10 commands and then 
@@ -58,110 +67,124 @@ auroraConfig.bath.preActivation = 2;
 auroraConfig.bath.active        = 3;
 
 %%
+% Create the system identification vibration signal
+%%
+if(flag_generateRandomSignal==1)
+    configVibration.points           = 2^11;
+    configVibration.frequencyHz      = 333;
+    configVibration.magnitude        = [0.01];
+    configVibration.duration         = 5;
+    
+    configVibration.paddingDuration  = ...
+       ((configVibration.points ...
+        /configVibration.frequencyHz) ...
+        -configVibration.duration)*0.5;
+    
+    configVibration.maximumSpeedNorm = ...
+        auroraConfig.maximumRampSpeed/specimenOptimalLengthApprox;
+
+    configVibration.rng              = rng('default');
+    
+    dtMin = configVibration.duration...
+           /configVibration.points;
+    configVibration.holdRange        = [dtMin*2,0.3];
+    
+    randomSquareWave = createRandomSquareWavePerturbation(configVibration);
+    randomSquareWave.rng    = rng('default');
+    randomSquareWave.config = configVibration;
+    
+    save(fullfile(projectFolders.output_structs,'randomSquareWave.mat'));
+else
+    load(fullfile(projectFolders.output_structs,'randomSquareWave.mat'));
+end
+
+%%
 % Trial configuration
 %%
-experimentConfig.timeIsometricHold = 20;
-experimentConfig.postMovementPauseTimeInSeconds ...
-        = auroraConfig.postMovementPauseTimeInSeconds;
-experimentConfig.maximumRampSpeed = inf;
-protocol = createFiberInjuryExperiments(experimentConfig);
+
+configExperiment.postMovementPauseTimeInSeconds = ...
+    auroraConfig.postMovementPauseTimeInSeconds;
+
+%Nominal specimen length
+configExperiment.optimalSpecimenLength = specimenOptimalLengthApprox;
+
+configExperiment.maximumRampSpeed             = auroraConfig.maximumRampSpeed;
+configExperiment.maximumRampSpeedNorm         = ...
+        configExperiment.maximumRampSpeed/specimenOptimalLengthApprox;
 
 
-idx = 1;
-trials(idx).number      = idx;
-trials(idx).type        = 'isometric';
-trials(idx).takePhoto   = 'Yes';
-trials(idx).active      = 1;
-trials(idx).startLength = 1.0;
-trials(idx).endLength   = 1.0;
-trials(idx).endForce    = 0;
-trials(idx).time        = [0,timeIsometricHold];
-trials(idx).lengthChange= [0,0];
-trials(idx).comment     = 'Pre-injury';
+%Passive settings
+configExperiment.passive.holdTime             = [20,20;...
+                                                 20,20];
+configExperiment.passive.lengths              = [0.6,1.4;... 
+                                                 0.6,1.4];
+configExperiment.passive.velocity             = [0.1;...
+                                                 1.0];
+configExperiment.isometric.appendVibration    = [1;1];
 
-filePath = fullfile(projectFolders.output_code,'test.pro');
+%Isometric settings
+configExperiment.isometric.holdTime        = [20;20;20];
+configExperiment.isometric.lengths         = [0.6;1;1.4];
+configExperiment.isometric.appendVibration = [1;1;1];
 
-fileProtocol=fullfile(projectFolders.output_code,'protocol.csv');
-fidProtocol = fopen(fileProtocol,'w');
+%Ramp settings
+configExperiment.ramp.holdTime            =[20;20;20;20];
 
-fprintf(fidProtocol,'%s,%s,%s,%s,%s\n',...
-    'Number','Type','Starting_Length_Lo','Take_Photo','Comment')
+configExperiment.ramp.lengths             =[1.1,0.9;...
+                                            1.1,0.9;...
+                                            0.9,1.1;...
+                                            0.9,1.1];
 
-[timeAurora,...
- lengthAurora] ...
-     = writeAuroraCommandFileFromStruct(...
-        trials(1),...
-        auroraConfig,...
-        filePath);    
+configExperiment.ramp.velocity            =[-(1/3);-(2/3);(1/3);(2/3)];
 
-fprintf(fidProtocol, '%i,%s,%1.2f,%s,%s\n',...
-    trials(1).number,...
-    trials(1).type,...
-    trials(1).startLength,...
-    trials(1).takePhoto,...
-    trials(1).comment);
+%Injury settings
+configExperiment.injury.length      = [0.7];
+configExperiment.injury.endingForce = [2.4];
+configExperiment.injury.active      = 1;
+configExperiment.injury.type        = 'force'; %passive-ramp, active-ramp, force
 
+%%
+% Create the experiments
+%%
+
+dateVec = datevec(date());
+dateId  = [int2str(dateVec(1,1)),int2str(dateVec(1,2)),int2str(dateVec(1,3))];
+
+trials  = createFiberInjuryExperiments(configExperiment,randomSquareWave,dateId);
+
+
+%%
+% Write the pro files and the csv file to disk
+%%
+
+protocolName = ['protocol_',dateId,'.csv'];
+fileProtocol    = fullfile(projectFolders.output_code,protocolName);
+fidProtocol     = fopen(fileProtocol,'w');
+
+fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s,%s\n',...
+    'Number','Type','Starting_Length_Lo','Take_Photo','Block','FileName','Comment')
+
+for i=1:1:length(trials)
+
+    filePath = fullfile(projectFolders.output_code,trials(i).name);
+    
+    [trials(i).timeAurora,...
+     trials(i).lengthAurora] ...
+         = writeAuroraCommandFileFromStruct(...
+            trials(i),...
+            auroraConfig,...
+            filePath);    
+    
+    fprintf(fidProtocol, '%i,%s,%1.2f,%s,%s,%s,%s\n',...
+        trials(i).number,...
+        trials(i).type,...
+        trials(i).startLength,...
+        trials(i).takePhoto,...
+        trials(i).block,...
+        trials(i).name,...
+        trials(i).comment);
+end
 fclose(fidProtocol);
 
 
-maxLength = 1.4;
-
-timeInitialActivation= 15;
-timeFinalPause       = 15;
-timeClosingPause     = max(auroraConfig.postMovementPauseTimeInSeconds,0.1);
-lengthChange = 0.2;
-rampVelocity = 1; %1 lo/s. Maximum for the EDL is 2.25 lo/s
-
-lengthSetA = [0.6,0.8,1,1.2,1.4];
-lengthSetB = lengthSetA - lengthChange;
-lengthSetC = lengthSetA;
-lengthSetD = lengthSetC + lengthChange;
-lengthSetD = min(lengthSetD,ones(size(lengthSetD)).*maxLength);
-
-lengthSet= [lengthSetA,lengthSetC;...
-            lengthSetA,lengthSetC;...
-            lengthSetB,lengthSetD;...
-            lengthSetB,lengthSetD;...
-            lengthSetB,lengthSetD];
-
-
-timeSetStart = ones(size(lengthSet(1,:))).*timeInitialActivation;
-timeSetRamp  = ones(size(lengthSet(1,:))).*(lengthChange/rampVelocity);
-timeSetEnd   = ones(size(lengthSet(1,:))).*timeFinalPause; 
-
-timeSet = [ zeros(size(timeSetStart));...
-            timeSetStart;...
-           (timeSetStart+timeSetRamp);...
-           (timeSetStart+timeSetRamp+timeSetEnd);...
-           (timeSetStart+timeSetRamp+timeSetEnd+timeClosingPause)];
-
-for i=1:1:length(lengthSetA)
-    
-    commandTimeVector   = timeSet(:,i);
-    commandSignal       = lengthSet(:,i);   
-
-    fname = 'ramp';
-    fnumber = int2str(i);
-    if(length(fnumber)<2)
-        fnumber=['0',fnumber];
-    end
-    fname=[fname,fnumber];
-
-    fileName = sprintf('%s_%1.1f_%1.1f_%1.1f.pro',...
-                       fname, lengthSet(1,i),lengthSet(3,i),rampVelocity);
-    idx = strfind(fileName,'.');
-    idx = idx(1:(end-1));
-    fileName(idx)='p';
-
-    filePath = fullfile(projectFolders.output_code,fileName);
-
-    [timeVectorExpectedMeasurement,...
-        signalExpectedMeasurement] ...
-         = writeAuroraCommandFile(...
-            commandTimeVector,...
-            commandSignal,...
-            auroraConfig,...
-            filePath);    
-
-end
 
