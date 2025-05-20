@@ -1,0 +1,6 @@
+function trialName = getTrialName(trialName, trialType,...
+                                  startingLength, nameId)
+
+lengthStr = int2str(floor(startingLength*10));
+trialName = [trialName,'_',trialType,...
+                  '_',lengthStr,'Lo_',nameId,'.pro'];

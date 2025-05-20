@@ -1,5 +1,7 @@
 function trials = createFiberInjuryExperiments(configExperiment,...
-                                            perturbationWave,nameId)
+                                            preconditioningWave,...
+                                            perturbationWave,...
+                                            nameId)
 
 n = 2;
 
@@ -18,7 +20,7 @@ for i=1:1:n
     trials(i).startLength = 1.0;
     trials(i).endLength   = 1.0;
     trials(i).endForce    = 0;
-    trials(i).time        = [0,configExperiment.isometric.holdTime];
+    trials(i).time        = [0,0];
     trials(i).lengthChange= [0,0];
     trials(i).block       = '';
 
@@ -44,14 +46,20 @@ trials(idx).active      = 1;
 trials(idx).startLength = 1.0;
 trials(idx).endLength   = 1.0;
 trials(idx).endForce    = 0;
-trials(idx).time        = [0,configExperiment.isometric.holdTime];
+trials(idx).time        = [0,configExperiment.isometric.holdTime(1)];
 trials(idx).lengthChange= [0,0];
+
+
+
 trials(idx).block       = 'Pre-injury';
 trials(idx).comment     = '';
 
-lengthStr = int2str(floor(trials(idx).startLength*10));
-trials(idx).name = [trials(idx).name,'_',trials(idx).type,...
-                  '_',lengthStr,'Lo_',nameId,'.pro'];
+trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                trials(idx).startLength,nameId);
+
+%lengthStr = int2str(floor(trials(idx).startLength*10));
+%trials(idx).name = [trials(idx).name,'_',trials(idx).type,...
+%                  '_',lengthStr,'Lo_',nameId,'.pro'];
 
 %%
 % 2
@@ -69,6 +77,9 @@ trials(idx).lengthChange= [0,0];
 trials(idx).block       = 'Pre-injury';
 trials(idx).comment     = '';
 
-lengthStr = int2str(floor(trials(idx).startLength*10));
-trials(idx).name = [trials(idx).name,'_',trials(idx).type,...
-                  '_',lengthStr,'Lo_',nameId,'.pro'];
+trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                trials(idx).startLength,nameId);
+
+% lengthStr = int2str(floor(trials(idx).startLength*10));
+% trials(idx).name = [trials(idx).name,'_',trials(idx).type,...
+%                   '_',lengthStr,'Lo_',nameId,'.pro'];
