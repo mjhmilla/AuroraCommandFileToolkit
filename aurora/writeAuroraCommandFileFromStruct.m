@@ -94,8 +94,8 @@ maximumNumberOfCommands=...
     auroraConfig.maximumNumberOfCommands;
 
 
-assert(length(commandStruct.time)==length(commandStruct.lengthChange), ...
-    'commandStruct.time and commandStruct.lengthChange must have the same length');
+assert(length(commandStruct.time)==length(commandStruct.length), ...
+    'commandStruct.time and commandStruct.length must have the same length');
 
 assert(isempty(fullFilePath)==0,'fullFilePath cannot be empty');
 
@@ -196,12 +196,12 @@ i       = 1;
 idxEnd  = length(commandStruct.time);
 
 timeInMs        = commandStruct.time(i,1)*1000 + timeOffset;
-timeAurora      = zeros(size(commandStruct.lengthChange,1)*2,1);
-lengthAurora    = zeros(size(commandStruct.lengthChange,1)*2,1);
+timeAurora      = zeros(size(commandStruct.length,1)*2,1);
+lengthAurora    = zeros(size(commandStruct.length,1)*2,1);
 idxAurora=1;
 
 timeAurora(1,1)   = commandStruct.time(1,1) + timeOffset/1000;
-lengthAurora(1,1) = commandStruct.lengthChange(1,1);
+lengthAurora(1,1) = commandStruct.length(1,1);
 
 dlErrMax=0;
 
@@ -226,10 +226,10 @@ while i < (idxEnd)
         dtStr = dtStr(1:(lastIndex-1));
     end
     if(strcmp(dtStr(end),'.')==1)
-        dtStr = dtStr(1);
+        dtStr = dtStr(1:(end-1));
     end
     
-    dlFull = commandStruct.lengthChange(i+1)-lengthAurora(idxAurora,1);
+    dlFull = commandStruct.length(i+1)-lengthAurora(idxAurora,1);
 
     dlStr = sprintf('%1.4f',dlFull);
 
@@ -268,10 +268,17 @@ while i < (idxEnd)
 
     timeInMsStr = sprintf('%9.1f',timeInMs);
 
-    fprintf(fid,'%s\tLength-Ramp\t\t%s%s Lo  %s ms\n', ...
-        timeInMsStr, signStr, dlStr, dtStr);
-    commandCounter = commandCounter+1;
+    if(abs(timeInMs-54016.9)<1)
+        here=1;
+    end
 
+    if(abs(dlFull)>1e-6)
+        fprintf(fid,'%s\tLength-Ramp\t\t%s%s Lo  %s ms\n', ...
+            timeInMsStr, signStr, dlStr, dtStr);
+        commandCounter = commandCounter+1;
+    else
+        here=1;
+    end
     %Do the step
     idxAurora=idxAurora+1;
     timeAurora(idxAurora,1)   = timeAurora(idxAurora-1,1)+dtA/1000;
@@ -285,7 +292,6 @@ while i < (idxEnd)
     
     timeInMs = timeInMs + dtB;
     i=i+1;
-    commandCounter=commandCounter+1;
 
     
 end
@@ -333,7 +339,7 @@ lengthAurora    = lengthAurora(1:idxAurora,1);
 %      + min(timeAurora);
 % 
 % signalExpectedMeasurement = interp1(commandStruct.time,...
-%                                     commandStruct.lengthChange, ...
+%                                     commandStruct.length, ...
 %                             timeVectorExpectedMeasurement,'linear');
 
 
