@@ -7,14 +7,16 @@ nI0 = 1;
 nP  = size(configExperiment.passive.holdTime,1);
 nFL = size(configExperiment.isometric.holdTime,1);
 nFV = size(configExperiment.ramp.holdTime,1);
-nI1 = 1;
+nI = size(configExperiment.injury.holdTime,1);
 
-n = nI0+nP+nFL+nFV+nI1;
+n = 2*nI0+2*nP+2*nFL+2*nFV+nI*2;
 
-trials(3) = struct('number',0,'type','','takePhoto','','active',0,...
+assert(n==32,'Error: n is incorrect');
+
+trials(32) = struct('number',0,'type','','takePhoto','','active',0,...
                    'startLength',0,'endLength',0,'endForce',0,...
-                   'time',0,'length',0,'comment','',...
-                   'block','',...
+                   'time',0,'signal',0,'comment','',...
+                   'block','','command',[],...
                    'timeAurora',[],'lengthAurora',[],...
                    'name','');
 
@@ -27,8 +29,9 @@ for i=1:1:n
     trials(i).endLength   = 1.0;
     trials(i).endForce    = 0;
     trials(i).time        = [0,0];
-    trials(i).length= [0,0];
+    trials(i).signal= [0,0];
     trials(i).block       = '';
+    trials(i).command = [];
 
     trials(i).timeAurora = [];
     trials(i).lengthAurora=[];
@@ -53,9 +56,13 @@ trials(idx).startLength = 1.0;
 trials(idx).endLength   = 1.0;
 trials(idx).endForce    = 0;
 trials(idx).time        = [0,configExperiment.isometric.holdTime(1)];
-trials(idx).length      = [0,0];
+trials(idx).signal      = [0,0];
 trials(idx).block       = 'Pre-injury';
 trials(idx).comment     = '';
+
+for j=1:1:length(trials(idx).signal)
+    trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+end
 
 trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
                                 trials(idx).startLength,nameId);
@@ -83,14 +90,23 @@ for i=1:1:nP
           - configExperiment.passive.lengths(i,1));
     l3 = l2;
 
+
+
     waveTime = [];
     waveLength = [];
     if(configExperiment.passive.appendVibration(i,1)==1)
         dt=1;
         waveTime = [(preconditioningWave.time'+t3+dt),...
-                   (stochasticWave.time'+max(preconditioningWave.time)+t3+2*dt)];
-        waveLength=[(preconditioningWave.length'+l3),...
-                    (stochasticWave.length+l3)'];
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'+l3),...
+                        (stochasticWave.signal+l3)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
     end
 
     idx=idx+1;
@@ -102,10 +118,18 @@ for i=1:1:nP
     trials(idx).endLength   = configExperiment.passive.lengths(i,2);
     trials(idx).endForce    = 0;
     trials(idx).time        = [t0,t1,t2,t3,waveTime];
-    trials(idx).length= [l0,l1,l2,l3,waveLength];
+    trials(idx).signal= [l0,l1,l2,l3,waveLength];
     trials(idx).block       = 'Pre-injury';
     trials(idx).comment     = '';
     
+    for j=1:1:4
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=5:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
+
     trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
                                     trials(idx).startLength,nameId);
 end
@@ -128,9 +152,16 @@ for i=1:1:nFL
     if(configExperiment.isometric.appendVibration(i,1)==1)
         dt=1;
         waveTime = [(preconditioningWave.time'+t3+dt),...
-                   (stochasticWave.time'+max(preconditioningWave.time)+t3+2*dt)];
-        waveLength=[(preconditioningWave.length'),...
-                    (stochasticWave.length)'];
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
     end
 
     idx=idx+1;
@@ -142,10 +173,17 @@ for i=1:1:nFL
     trials(idx).endLength   = configExperiment.isometric.lengths(i,1);
     trials(idx).endForce    = 0;
     trials(idx).time        = [t0,t1,waveTime];
-    trials(idx).length      = [l0,l1,waveLength];
+    trials(idx).signal      = [l0,l1,waveLength];
     trials(idx).block       = 'Pre-injury';
     trials(idx).comment     = '';
     
+    for j=1:1:2
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=3:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
     trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
                                     trials(idx).startLength,nameId);
 end
@@ -177,9 +215,16 @@ for i=1:1:nFV
     if(configExperiment.ramp.appendVibration(i,1)==1)
         dt=1;
         waveTime = [(preconditioningWave.time'+t3+dt),...
-                   (stochasticWave.time'+max(preconditioningWave.time)+t3+2*dt)];
-        waveLength=[(preconditioningWave.length'+l3),...
-                    (stochasticWave.length+l3)'];
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'+l3),...
+                        (stochasticWave.signal+l3)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
     end
 
     idx=idx+1;
@@ -191,10 +236,17 @@ for i=1:1:nFV
     trials(idx).endLength   = configExperiment.ramp.lengths(i,2);
     trials(idx).endForce    = 0;
     trials(idx).time        = [t0,t1,t2,t3,waveTime];
-    trials(idx).length= [l0,l1,l2,l3,waveLength];
+    trials(idx).signal= [l0,l1,l2,l3,waveLength];
     trials(idx).block       = 'Pre-injury';
     trials(idx).comment     = '';
     
+    for j=1:1:4
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=5:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
     trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
                                     trials(idx).startLength,nameId);
 
@@ -212,7 +264,7 @@ trials(idx).startLength = 1.0;
 trials(idx).endLength   = 1.0;
 trials(idx).endForce    = 0;
 trials(idx).time        = [0,configExperiment.isometric.holdTime(1)];
-trials(idx).length      = [0,0];
+trials(idx).signal      = [0,0];
 trials(idx).block       = 'Pre-injury';
 trials(idx).comment     = '';
 
@@ -222,10 +274,265 @@ trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
 
 
 %%
-% 6. Injury ramp
-%   a. Force-ramp to ff
-%   b. Isometric
+% 6. Injury stretch-shorten
 %
 % Increase ff until Isometric < 0.8 previous isometric
+%%
+for i=1:1:nI
+
+    lenV = configExperiment.injury.lengths(i,:);
+    velV = configExperiment.injury.velocity(i,:);
+
+    dlenV = diff(lenV);
+    dTimeV = [1,1];
+
+    
+    if(max(abs(dlenV)) > 1e-6 )
+        dTimeV = dlenV ./ velV;
+    end    
+
+    %Time differentials
+    signalTime = [0,configExperiment.injury.holdTime(i,1),...
+                  dTimeV,configExperiment.injury.holdTime(i,2)];
+
+    %Cumulative time
+    for j=2:1:length(signalTime)
+        signalTime(1,j) = signalTime(1,j-1) + signalTime(1,j);
+    end
+
+
+    idx = idx+1;
+    trials(idx).number      = idx;
+    trials(idx).type        = configExperiment.injury.type{i};
+    trials(idx).takePhoto   = '';
+    trials(idx).active      = 1;
+    trials(idx).startLength = 1.0;
+    trials(idx).endLength   = 1.0;
+    trials(idx).endForce    = 0;
+    trials(idx).time        = signalTime;
+    trials(idx).signal      = [0,lenV,0];
+    trials(idx).block       = 'Injury-Test';
+    trials(idx).comment     = configExperiment.injury.comments{i};
+    
+    if(length(trials(idx).time)~=length(trials(idx).signal))
+        here=1;
+    end
+    assert(length(trials(idx).time)==length(trials(idx).signal));
+
+    trials(idx).command = [];
+    for j=1:1:length(trials(idx).time)
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+
+    trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                    trials(idx).startLength,nameId);    
+
+end
+
+
+
+%
+%
+%
+%%
+% 2. Block of passive trials
+%%
+
+for i=1:1:nP
+
+    rampTime = ( configExperiment.passive.lengths(i,2) ...
+                -configExperiment.passive.lengths(i,1)) ...
+                / ( configExperiment.passive.velocity(i,1) );
+
+    t0=0;
+    t1=configExperiment.passive.holdTime(i,1);
+    t2=t1+rampTime;
+    t3=t2+configExperiment.passive.holdTime(i,2);
+
+    l0=0;
+    l1=0;
+    l2= l1 ...
+        + ( configExperiment.passive.lengths(i,2) ...
+          - configExperiment.passive.lengths(i,1));
+    l3 = l2;
+
+
+
+    waveTime = [];
+    waveLength = [];
+    if(configExperiment.passive.appendVibration(i,1)==1)
+        dt=1;
+        waveTime = [(preconditioningWave.time'+t3+dt),...
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'+l3),...
+                        (stochasticWave.signal+l3)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
+    end
+
+    idx=idx+1;
+    trials(idx).number      = idx;
+    trials(idx).type        = 'passive';
+    trials(idx).takePhoto   = '';
+    trials(idx).active      = 0;
+    trials(idx).startLength = configExperiment.passive.lengths(i,1);
+    trials(idx).endLength   = configExperiment.passive.lengths(i,2);
+    trials(idx).endForce    = 0;
+    trials(idx).time        = [t0,t1,t2,t3,waveTime];
+    trials(idx).signal= [l0,l1,l2,l3,waveLength];
+    trials(idx).block       = 'Pre-injury';
+    trials(idx).comment     = '';
+    
+    for j=1:1:4
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=5:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
+
+    trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                    trials(idx).startLength,nameId);
+end
 
 %%
+% 3. Block of isometric trials
+%%
+
+
+for i=1:1:nFL
+
+    t0=0;
+    t1=configExperiment.isometric.holdTime(i,1);
+
+    l0=0;
+    l1=0;
+
+    waveTime = [];
+    waveLength = [];
+    if(configExperiment.isometric.appendVibration(i,1)==1)
+        dt=1;
+        waveTime = [(preconditioningWave.time'+t3+dt),...
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
+    end
+
+    idx=idx+1;
+    trials(idx).number      = idx;
+    trials(idx).type        = 'isometric';
+    trials(idx).takePhoto   = '';
+    trials(idx).active      = 1;
+    trials(idx).startLength = configExperiment.isometric.lengths(i,1);
+    trials(idx).endLength   = configExperiment.isometric.lengths(i,1);
+    trials(idx).endForce    = 0;
+    trials(idx).time        = [t0,t1,waveTime];
+    trials(idx).signal      = [l0,l1,waveLength];
+    trials(idx).block       = 'Pre-injury';
+    trials(idx).comment     = '';
+    
+    for j=1:1:2
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=3:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
+    trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                    trials(idx).startLength,nameId);
+end
+
+%%
+% 4. Block of ramp trials
+%%
+
+for i=1:1:nFV
+
+    rampTime = ( configExperiment.ramp.lengths(i,2) ...
+                    -configExperiment.ramp.lengths(i,1)) ...
+                    / ( configExperiment.ramp.velocity(i,1) );
+
+    t0=0;
+    t1=configExperiment.ramp.holdTime(i,1);
+    t2=t1+rampTime;
+    t3=t2+configExperiment.ramp.holdTime(i,2);
+
+    l0=0;
+    l1=0;
+    l2= l1 ...
+        + ( configExperiment.ramp.lengths(i,2) ...
+          - configExperiment.ramp.lengths(i,1));
+    l3 = l2;
+
+    waveTime = [];
+    waveLength = [];
+    if(configExperiment.ramp.appendVibration(i,1)==1)
+        dt=1;
+        waveTime = [(preconditioningWave.time'+t3+dt),...
+                   (stochasticWave.time'...
+                    +max(preconditioningWave.time)+t3+2*dt)];
+
+        if(strcmp(stochasticWave.command,'Length-Ramp'))
+            waveLength=[(preconditioningWave.signal'+l3),...
+                        (stochasticWave.signal+l3)'];
+        else
+            waveLength=[(preconditioningWave.signal'),...
+                        (stochasticWave.signal)'];
+        end
+    end
+
+    idx=idx+1;
+    trials(idx).number      = idx;
+    trials(idx).type        = 'ramp';
+    trials(idx).takePhoto   = '';
+    trials(idx).active      = 1;
+    trials(idx).startLength = configExperiment.ramp.lengths(i,1);
+    trials(idx).endLength   = configExperiment.ramp.lengths(i,2);
+    trials(idx).endForce    = 0;
+    trials(idx).time        = [t0,t1,t2,t3,waveTime];
+    trials(idx).signal= [l0,l1,l2,l3,waveLength];
+    trials(idx).block       = 'Pre-injury';
+    trials(idx).comment     = '';
+    
+    for j=1:1:4
+        trials(idx).command = [trials(idx).command;{'Length-Ramp'}];
+    end
+    for j=5:1:length(trials(idx).signal)
+        trials(idx).command = [trials(idx).command;{stochasticWave.command}];
+    end
+
+    trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                    trials(idx).startLength,nameId);
+
+end
+
+%%
+% 5. Isometric trial to see if the fiber is viable before injury
+%%
+idx = idx+1;
+trials(idx).number      = idx;
+trials(idx).type        = 'isometric';
+trials(idx).takePhoto   = 'Yes';
+trials(idx).active      = 1;
+trials(idx).startLength = 1.0;
+trials(idx).endLength   = 1.0;
+trials(idx).endForce    = 0;
+trials(idx).time        = [0,configExperiment.isometric.holdTime(1)];
+trials(idx).signal      = [0,0];
+trials(idx).block       = 'Pre-injury';
+trials(idx).comment     = '';
+
+trials(idx).name = getTrialName(trials(idx).name, trials(idx).type,...
+                                trials(idx).startLength,nameId);

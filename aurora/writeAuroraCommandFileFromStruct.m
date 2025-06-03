@@ -94,8 +94,8 @@ maximumNumberOfCommands=...
     auroraConfig.maximumNumberOfCommands;
 
 
-assert(length(commandStruct.time)==length(commandStruct.length), ...
-    'commandStruct.time and commandStruct.length must have the same length');
+assert(length(commandStruct.time)==length(commandStruct.signal), ...
+    'commandStruct.time and commandStruct.signal must have the same length');
 
 assert(isempty(fullFilePath)==0,'fullFilePath cannot be empty');
 
@@ -180,13 +180,16 @@ commandCounter = 1;
 
 timeOffset = 0;
 if(commandStruct.active==1)
-    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000; 
+    timeOffset = timeOffset ...
+               + auroraConfig.bath.changeTime*1000; 
     fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeOffset,...
-            auroraConfig.bath.preActivation);
-    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000; 
+                 auroraConfig.bath.preActivation);
+    timeOffset = timeOffset ...
+        + auroraConfig.bath.preActivationDuration*1000 ...
+        + auroraConfig.bath.changeTime*1000;
     fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeOffset,...
             auroraConfig.bath.active);
-    timeOffset = timeOffset + auroraConfig.bathChangeTime*1000;
+    timeOffset = timeOffset + auroraConfig.bath.changeTime*1000;
     commandCounter = commandCounter+2;
 end
 
@@ -196,12 +199,12 @@ i       = 1;
 idxEnd  = length(commandStruct.time);
 
 timeInMs        = commandStruct.time(i,1)*1000 + timeOffset;
-timeAurora      = zeros(size(commandStruct.length,1)*2,1);
-lengthAurora    = zeros(size(commandStruct.length,1)*2,1);
+timeAurora      = zeros(size(commandStruct.signal,1)*2,1);
+lengthAurora    = zeros(size(commandStruct.signal,1)*2,1);
 idxAurora=1;
 
 timeAurora(1,1)   = commandStruct.time(1,1) + timeOffset/1000;
-lengthAurora(1,1) = commandStruct.length(1,1);
+lengthAurora(1,1) = commandStruct.signal(1,1);
 
 dlErrMax=0;
 
@@ -229,7 +232,7 @@ while i < (idxEnd)
         dtStr = dtStr(1:(end-1));
     end
     
-    dlFull = commandStruct.length(i+1)-lengthAurora(idxAurora,1);
+    dlFull = commandStruct.signal(i+1)-lengthAurora(idxAurora,1);
 
     dlStr = sprintf('%1.4f',dlFull);
 
@@ -273,8 +276,13 @@ while i < (idxEnd)
     end
 
     if(abs(dlFull)>1e-6)
-        fprintf(fid,'%s\tLength-Ramp\t\t%s%s Lo  %s ms\n', ...
-            timeInMsStr, signStr, dlStr, dtStr);
+        unitStr = 'Lo';
+        if(strcmp(commandStruct.command{i},'Force-Ramp')==1)
+            unitStr = 'Fmax';
+        end
+
+        fprintf(fid,'%s\t%s\t\t%s%s %s  %s ms\n', ...
+            timeInMsStr, commandStruct.command{i}, signStr, dlStr, unitStr, dtStr);
         commandCounter = commandCounter+1;
     else
         here=1;
@@ -297,14 +305,11 @@ while i < (idxEnd)
 end
 
 if(commandStruct.active==1)
-    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000; 
-    fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeInMs,...
-            auroraConfig.bath.preActivation);
-    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000; 
+    timeInMs = timeInMs + auroraConfig.bath.changeTime*1000; 
     fprintf(fid,'%9.1f\tBath\t\t%i 0 ms\n',timeInMs,...
             auroraConfig.bath.passive);
     commandCounter = commandCounter+2;
-    timeInMs = timeInMs + auroraConfig.bathChangeTime*1000;
+    timeInMs = timeInMs + auroraConfig.bath.changeTime*1000;
 end
 
 %Write the closing lines
@@ -339,7 +344,7 @@ lengthAurora    = lengthAurora(1:idxAurora,1);
 %      + min(timeAurora);
 % 
 % signalExpectedMeasurement = interp1(commandStruct.time,...
-%                                     commandStruct.length, ...
+%                                     commandStruct.signal, ...
 %                             timeVectorExpectedMeasurement,'linear');
 
 

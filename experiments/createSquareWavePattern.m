@@ -1,7 +1,10 @@
-function signal = createSquareWavePattern(config,holdTimesVector,signOfFirstChange)
+function signal = createSquareWavePattern(config,...
+                                holdTimesVector,...
+                                velocityVector,...
+                                signOfFirstChange)
 
 %Get the parameters
-maximumSpeed    = config.maximumSpeedNorm;
+maximumSpeed    = max(config.normSpeedRange);
 duration        = config.duration;
 amplitude       = config.magnitude ;
 paddingDuration = config.paddingDuration;
@@ -45,8 +48,11 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
         timeVec(i,1)=tmpTime;
         signalVec(i,1)  =signalVec(i-1,1);
 
+        stepVel = velocityVector(i-1,1);
+        stepTime = 2.0*amplitude/stepVel;
+
         i=i+1;
-        tmpTime    =timeVec(i-1,1)+minTime;
+        tmpTime    =timeVec(i-1,1)+stepTime;
         timeVec(i,1)=tmpTime;
         signalVec(i,1)=signalVec(i-1,1)+signOfChange*amplitude;        
         signOfChange=signOfChange*-1;            
@@ -88,7 +94,8 @@ signalVec=signalVec(1:i,1);
 
 %Signal that the Auorora machine will use
 signal.time=timeVec;
-signal.length=signalVec;
+signal.signal=signalVec;
+signal.command = config.command;
 
 %Interpolated signal used to analyze the spectrum
 samplePoints = config.points;

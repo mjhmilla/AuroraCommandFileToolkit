@@ -17,8 +17,10 @@ function [  stochasticWave, ...
 % response more consistent with an LTI system, here we generate a set of 
 % vibrations that can be used prior to the stochastic wave in order to 
 % pre-condition it so that its mean force does not drop when the 
-% stochastic perturbation is applied
+% stochastic perturbation is applied.
 %
+% The other option is to perturb in the force domain, which is possible
+% with the Aurora machine.
 % 
 %%
 pointsHalf = configVibration.points/2;    
@@ -39,19 +41,30 @@ end
 %  Create the random hold vector vector
 %%
 rng(1,'twister'); 
-randomVec = rand(configVibration.points,1);
+randomVecA = rand(configVibration.points,1);
+
+rng(2,'twister'); 
+randomVecB = rand(configVibration.points,1);
+
+
+
 signOfFirstChange=1;
 
-if(randomVec(pointsHalf,1)>(0.5*(diff(configVibration.holdRange))))
+if(randomVecA(pointsHalf,1)>(0.5*(diff(configVibration.holdRange))))
     signOfFirstChange=-1;
 end
 
-randomHoldVector = (1-randomVec).*(configVibration.holdRange(1,1)) ...
-                  +randomVec.*(configVibration.holdRange(1,2)...
+randomHoldVector = (1-randomVecA).*(configVibration.holdRange(1,1)) ...
+                  +randomVecA.*(configVibration.holdRange(1,2)...
                               -configVibration.holdRange(1,1));
+
+randomVelocityVector = (1-randomVecB).*(configVibration.normSpeedRange(1,1)) ...
+                  +randomVecB.*(configVibration.normSpeedRange(1,2)...
+                              -configVibration.normSpeedRange(1,1));
 
 stochasticWave = createSquareWavePattern(configVibration,...
                                            randomHoldVector,...
+                                           randomVelocityVector,...
                                            signOfFirstChange);
 
 stochasticWaveCommands = round(length(stochasticWave.time)*0.5);
@@ -85,8 +98,13 @@ configConditioning.holdRange = [1,1].*mean(configVibration.holdRange);
 constantHoldVector = ones(configConditioning.points,1)...
                    .*mean(configVibration.holdRange);
 
+constantVelocityVector = ones(configConditioning.points,1)...
+                   .*mean(configVibration.normSpeedRange);
+
+
 preConditioningWave = createSquareWavePattern(configConditioning,...
                                            constantHoldVector,...
+                                           constantVelocityVector,...
                                            1);
 
 preConditionWaveCommands = round(length(preConditioningWave.time)*0.5);
@@ -120,15 +138,15 @@ if(isempty(figPerturbation)==0)
     figure(figPerturbation);
     subplot('Position',reshape(subplotPanel(1,1,:),1,4));
         plot((preConditioningWave.time-max(preConditioningWave.time)),...
-             preConditioningWave.length,'-','Color',[1,1,1].*0.75,...
+             preConditioningWave.signal,'-','Color',[1,1,1].*0.75,...
              'LineWidth',0.25,'DisplayName','Pre-conditioning');
         hold on;
         plot(stochasticWave.time,...
-             stochasticWave.length,'-k',...
+             stochasticWave.signal,'-k',...
              'LineWidth',0.25,'DisplayName','x(t)');
         axis tight;
         xlabel('Time (s)');
-        ylabel('Norm. Length (Lo)');
+        ylabel('Amplitude');
         title('Conditioning and perturbation waveform');
         legend('Location','NorthWest');
         %legend boxoff;

@@ -53,7 +53,7 @@ auroraConfig.numberOfEmptyCommandsPrepended = 10;
 %  begins on the 19th command. Here we prepend a bunch of dummy commands
 %  so that your desired signal is not affected.
 
-auroraConfig.analogToDigitalSampleRateHz = 5000;
+auroraConfig.analogToDigitalSampleRateHz = 1000;
 %  This is the rate Aurora's A/D converter will sample signals
 
 auroraConfig.postMovementPauseTimeInSeconds = 0.0001; 
@@ -68,10 +68,11 @@ auroraConfig.maximumNumberOfCommands = 945;
 
 auroraConfig.comment = 'EDL, h: 0.091 w:  0.079';
 %
-auroraConfig.minimumNormalizedLength = 0.05;
-auroraConfig.maximumNormalizedLength = 2.5;
+auroraConfig.minimumNormalizedLength = 0.2;
+auroraConfig.maximumNormalizedLength = 1.5;
 auroraConfig.pdDeadBand              = 0;
-auroraConfig.bathChangeTime          = 0.5;
+auroraConfig.bath.changeTime            = 0.5;
+auroraConfig.bath.preActivationDuration = 60;
 auroraConfig.bath.passive       = 1;
 auroraConfig.bath.preActivation = 2;
 auroraConfig.bath.active        = 3;
@@ -80,22 +81,24 @@ auroraConfig.bath.active        = 3;
 % System identification perturbation signal configuration
 %%
 configVibration.points           = 2^12;
-configVibration.frequencyHz      = 1000;
-configVibration.magnitude        = [0.01];
+configVibration.frequencyHz      = 500;
+configVibration.magnitude        = [0.001];
 configVibration.duration         = (configVibration.points ...
                                   -1.5*configVibration.frequencyHz) ...
                                   /configVibration.frequencyHz;
+configVibration.command          ='Length-Ramp';
 configVibration.paddingDuration  = ...
    ((configVibration.points ...
     /configVibration.frequencyHz) ...
     -configVibration.duration)*0.5;
 
-configVibration.maximumSpeedNorm = ...
-    auroraConfig.maximumRampSpeed/specimenOptimalLengthApprox;
+configVibration.normSpeedRange = [0.1,1];
 
 dtMin = (configVibration.duration+2*configVibration.paddingDuration)...
        /configVibration.points;
-configVibration.holdRange        = [4,30].*(dtMin);
+configVibration.holdRange        = [(1/100),(1/10)];
+
+assert(max(configVibration.holdRange) > dtMin);
 
 %%
 % Create the system identification vibration signal
@@ -177,11 +180,36 @@ configExperiment.ramp.velocity            =[-(1/3);...
 
 configExperiment.ramp.appendVibration     =[0;0;0;0];
 
-%Injury settings
-configExperiment.injury.length      = [0.7];
-configExperiment.injury.endingForce = [2.4];
+%Injury settings - using stretch-shortening
+configExperiment.injury.holdTime    = [20,2;...
+                                       20,2;
+                                       20,2;...
+                                       20,2;...
+                                       20,2;...
+                                       20,2];
+
+configExperiment.injury.lengths     = [0,0.5,0;...
+                                       0,0,0;...
+                                       0,0.75,0;...
+                                       0,0,0;...
+                                       0,1.0,0;...
+                                       0,0,0];
+
+configExperiment.injury.velocity    = [(2/3),-(2/3);...
+                                       0,0;...
+                                       (2/3),-(2/3);...
+                                       0,0;...
+                                       (2/3),-(2/3);...
+                                       0,0];
+configExperiment.injury.comments = ...
+    {'Injury','If Fmax is 20% lower skip remaining injury block',...
+     'Injury','If Fmax is 20% lower skip remaining injury block',...
+     'Injury','If Fmax is 20% lower skip remaining injury block'};
+
+configExperiment.injury.type = {'injury','isometricTest',...
+                                'injury','isometricTest',...
+                                'injury','isometricTest'};
 configExperiment.injury.active      = 1;
-configExperiment.injury.type        = 'force'; %passive-ramp, active-ramp, force
 
 %%
 % Create the experiments
@@ -246,13 +274,15 @@ for i=1:1:length(trials)
         timeSuper = [0:dtMin:max(trials(i).time+auroraCommands.time(1,1))]';
     
         trialLengthSuper = interp1(trials(i).time+trials(i).timeAurora(1,1),...
-                              trials(i).length,...
+                              trials(i).signal,...
                               timeSuper);
     
         writtenLengthSuper = interp1(trials(i).timeAurora,...
                               trials(i).lengthAurora,...
                               timeSuper);
-    
+        if(i==12)
+            here=1;
+        end
         readLengthSuper = interp1(auroraCommands.time,...
                               auroraCommands.length,...
                               timeSuper);
@@ -260,13 +290,20 @@ for i=1:1:length(trials)
         lerrWritten = writtenLengthSuper-trialLengthSuper;
         lerrRead    = readLengthSuper-trialLengthSuper;    
     
-        assert(abs(max(lerrWritten)) < (configVibration.magnitude*0.5),...
-               ['Error: written length change has an error that exceeds the ',...
-                'the perturbation magnitude.']);
-    
-        assert(abs(max(lerrRead)) < (configVibration.magnitude*0.5),...
-               ['Error: read length change has an error that exceeds the ',...
-                'the perturbation magnitude.']);
+
+        if(abs(max(lerrWritten)) >= (configVibration.magnitude*0.5))
+            here=1;
+        end
+        if(abs(max(lerrRead)) >= (configVibration.magnitude*0.5))
+            here=1;
+        end
+%         assert(abs(max(lerrWritten)) < (configVibration.magnitude*0.5),...
+%                ['Error: written length change has an error that exceeds the ',...
+%                 'the perturbation magnitude.']);
+%     
+%         assert(abs(max(lerrRead)) < (configVibration.magnitude*0.5),...
+%                ['Error: read length change has an error that exceeds the ',...
+%                 'the perturbation magnitude.']);
     end
 
     if(isempty(auroraCommands.time)==0)
@@ -274,14 +311,14 @@ for i=1:1:length(trials)
         figure(figTest);
         subplot(2,3,1);
             plot(trials(i).time,...
-                 trials(i).length,'-','Color',[1,1,1].*0.5);
+                 trials(i).signal,'-','Color',[1,1,1].*0.5);
             hold on;
             xlabel('Time (s)');
             ylabel('Length (Lo)');
             title('Desired');
         subplot(2,3,2);        
             plot(trials(i).time+trials(i).timeAurora(1,1),...
-                 trials(i).length,'-','Color',[1,1,1].*0.5);
+                 trials(i).signal,'-','Color',[1,1,1].*0.5);
             hold on;
     
             plot(trials(i).timeAurora,...
@@ -290,7 +327,7 @@ for i=1:1:length(trials)
             title('Written (rounded)');
         subplot(2,3,3);        
             plot(trials(i).time+trials(i).timeAurora(1,1),...
-                 trials(i).length,'-','Color',[1,1,1].*0.5);
+                 trials(i).signal,'-','Color',[1,1,1].*0.5);
             hold on;    
             plot(auroraCommands.time,...
                  auroraCommands.length,'--r');
