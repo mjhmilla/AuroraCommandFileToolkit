@@ -36,6 +36,9 @@ assert(flag_rootDirPathValid==1, ['Error: the rootProjectDirectoryFullPath ',...
 
 projectFolders.main    = fullfile(rootProjectDirectoryFullPath,'main'   ); 
 projectFolders.aurora  = fullfile(rootProjectDirectoryFullPath,'aurora' );   
+projectFolders.aurora600A  = fullfile(rootProjectDirectoryFullPath,'aurora600A' );   
+projectFolders.aurora610A  = fullfile(rootProjectDirectoryFullPath,'aurora610A' );   
+
 projectFolders.output  = fullfile(rootProjectDirectoryFullPath,'output' );  
 projectFolders.experiments  = ...
                     fullfile(rootProjectDirectoryFullPath,'experiments' );  

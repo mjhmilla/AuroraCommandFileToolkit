@@ -106,10 +106,10 @@ if(ischar(line))
 
 
     while contains(line,'Length-Ramp')==1
-        fields=textscan(line, '%f %s %f Lo  %d ms');
+        fields=textscan(line, '%f %s %f Lo  %f ms');
 
         if(isempty(fields{3}))
-            fields=textscan(line, '%f %s %s Lo  %d ms');
+            fields=textscan(line, '%f %s %s Lo  %f ms');
             if(contains(fields{3},'-'))
                 fields{3} = double(-0);
             else
@@ -166,7 +166,7 @@ if(ischar(line))
         line=fgetl(fid);
     end
     
-    fields=textscan(line, '%f %s %f Lo  %d ms');
+    fields=textscan(line, '%f %s %f Lo  %f ms');
     auroraCommandFile.controlFunction = [auroraCommandFile.controlFunction;...
                                          fields{2}];
     auroraCommandFile.lengthChange = [auroraCommandFile.lengthChange;...

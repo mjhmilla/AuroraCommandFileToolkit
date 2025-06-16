@@ -99,6 +99,10 @@ assert(length(commandStruct.time)==length(commandStruct.signal), ...
 
 assert(isempty(fullFilePath)==0,'fullFilePath cannot be empty');
 
+if(min(diff(commandStruct.time))*1000 < 0.1)
+    here=1;
+end
+
 assert( min(diff(commandStruct.time))*1000 > 0.1, ...
     ['The Aurora machine needs at least 0.1ms to execute a step,',...
      ' and probably more like 1ms']);

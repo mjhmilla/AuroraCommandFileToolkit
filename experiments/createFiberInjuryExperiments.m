@@ -7,13 +7,14 @@ nI0 = 1;
 nP  = size(configExperiment.passive.holdTime,1);
 nFL = size(configExperiment.isometric.holdTime,1);
 nFV = size(configExperiment.ramp.holdTime,1);
+nI1=1;
 nI = size(configExperiment.injury.holdTime,1);
 
-n = 2*nI0+2*nP+2*nFL+2*nFV+nI*2;
+n = nI0+2*nP+2*nFL+2*nFV+2*nI1+nI;
 
-assert(n==32,'Error: n is incorrect');
+assert(n==27,'Error: n is incorrect');
 
-trials(32) = struct('number',0,'type','','takePhoto','','active',0,...
+trials(27) = struct('number',0,'type','','takePhoto','','active',0,...
                    'startLength',0,'endLength',0,'endForce',0,...
                    'time',0,'signal',0,'comment','',...
                    'block','','command',[],...
