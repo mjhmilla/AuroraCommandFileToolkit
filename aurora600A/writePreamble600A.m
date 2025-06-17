@@ -1,6 +1,6 @@
-function endTime = writePreamble600A(fid,auroraConfig)
+function nextStartTime = writePreamble600A(fid,auroraConfig)
 
-endTime = auroraConfig.postCommandPauseTimeMS;
+nextStartTime = auroraConfig.postCommandPauseTimeMS;
 
 analogToDigitalSampleRateHz=...
     auroraConfig.analogToDigitalSampleRateHz;

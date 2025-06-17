@@ -71,38 +71,34 @@ auroraConfig.bath.passive               = 1;
 auroraConfig.bath.preActivation         = 2;
 auroraConfig.bath.active                = 3;
 
+auroraConfig.defaultLengthUnit  = 'Lo';
+auroraConfig.defaultForceUnit   = 'Fo';
+auroraConfig.defaultTimeUnit    = 'ms';
+auroraConfig.defaultFrequencyUnit    = 'Hz';
+
+auroraConfig.useRelativeUnits   = 1;
+
 %%
 % Commands
 %%
 fid = fopen(fullfile(projectFolders.output_code,'test.pro'),'w');
 
 
+startTime = writePreamble600A(fid,auroraConfig);
 
-
-
-minWaitingTime = 0.1;
-lengthRamp(2)=struct('unit','','value',[],'printUnit',1,'isRelative',1);
-
-lengthRamp(1).unit = 'Lo';
-lengthRamp(1).value = 1.55;
-lengthRamp(1).printUnit = 1;
-lengthRamp(1).isRelative =1;
-
-lengthRamp(2).unit = 'ms';
+lengthRamp = getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
+lengthRamp(1).value=1.55;
 lengthRamp(2).value = 15;
-lengthRamp(2).printUnit = 1;
-lengthRamp(2).isRelative =0;
 
 
+startTime = writeControlFunction600A(fid,startTime,'ms',...
+        'Length-Ramp',lengthRamp,auroraConfig);
 
-endTime = writeControlFunction600A(fid,0,'ms','Length-Ramp',lengthRamp);
-
-
-startTime =endTime + minWaitingTime;
 lengthRamp(1).value = -1.55;
 lengthRamp(2).value = 15;
 
-endTime = writeControlFunction600A(fid,startTime,'ms','Length-Ramp',lengthRamp);
+startTime = writeControlFunction600A(fid,startTime,'ms',...
+            'Length-Ramp',lengthRamp,auroraConfig);
 
 
 here=1;
