@@ -83,22 +83,22 @@ switch controlFunctionName
 
 
     case 'Length-Sample'
-        %optionTypes = {'sample','time'};
+        %optionTypes = {'integer','time'};
         commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;          
         i=i+1;
         commandOption(i).unit = auroraConfig.defaultTimeUnit;
         commandOption(i).printUnit = 1;  
 
     case 'Length-Hold'
-        %optionTypes = {'sample'};
+        %optionTypes = {'integer'};
         commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;          
 
     case 'Read-Larb'
@@ -200,22 +200,22 @@ switch controlFunctionName
         commandOption(i).printUnit = 1;    
 
     case 'Force-Sample'
-        %optionTypes = {'sample','time'};
+        %optionTypes = {'integer','time'};
         commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;          
         i=i+1;
         commandOption(i).unit = auroraConfig.defaultTimeUnit;
         commandOption(i).printUnit = 1;  
 
     case 'Force-Hold'
-        %optionTypes = {'sample'};
+        %optionTypes = {'integer'};
         commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;                  
 
     case 'Force-Clamp'
@@ -258,22 +258,22 @@ switch controlFunctionName
 
 
     case 'SL-Sample'
-        %optionTypes = {'sample','time'};
+        %optionTypes = {'integer','time'};
         commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;
         i=i+1;
         commandOption(i).unit = auroraConfig.defaultTimeUnit;
         commandOption(i).printUnit = 1;
 
     case 'SL-Hold'
-        %optionTypes = {'sample'};
+        %optionTypes = {'integer'};
         commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
 
         i=1;
-        commandOption(i).unit = 'sample';
+        commandOption(i).unit = 'integer';
         commandOption(i).printUnit = 0;
 
     case 'SL-Trigger'
@@ -343,7 +343,7 @@ switch controlFunctionName
         commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);   
         i=1;
         commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 1; 
+        commandOption(i).printUnit = 0; 
         i=i+1;
         commandOption(i).unit = auroraConfig.defaultTimeUnit;
         commandOption(i).printUnit = 1;

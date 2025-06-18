@@ -1,4 +1,4 @@
-function nextStartTime = ...
+function [endTime]= ...
     writeControlFunction600A(   fid,...
                                 startTime,...
                                 timeUnit,...
@@ -10,6 +10,8 @@ function nextStartTime = ...
 % value
 % unit
 % printUnit
+
+
 
 assert(strcmp(timeUnit,'ms'),...
         'Error: timeUnit and startTime must be in ms');
@@ -116,8 +118,6 @@ if(isempty(options)==0)
                 %Question: must all frequencies be whole number values?
                 valueStr = sprintf('%i',options(i).value);            
 
-            case 'sample'
-                valueStr = sprintf('%i',options(i).value);  
 
             case 'bool'
                 valueStr = sprintf('%i',options(i).value);  
@@ -165,8 +165,13 @@ if(isempty(options)==0)
 
 end
 
+%nextStartTime = endTime;
 
-nextStartTime = endTime + auroraConfig.postCommandPauseTimeMS;
+%if(abs(endTime-startTime) < auroraConfig.postCommandPauseTime)
+%    nextStartTime = endTime + auroraConfig.postCommandPauseTime;
+%else
+%    
+%end
 
 fprintf(fid,'%s\n',commandLine);
 

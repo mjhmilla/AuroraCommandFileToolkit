@@ -34,14 +34,10 @@ if(length(unitName))
             unitType = 'time';            
         case 'Hz'
             unitType = 'frequency';            
-        case 'sample'
-            unitType = 'sample';
+        case 'integer'
+            unitType = 'integer';
         case 'bool'
             unitType = 'bool';
-        case 'pattern'
-            unitType = 'pattern';
-        case 'number'
-            unitType='number';
         otherwise assert(0, ['Error: unrecognized unit: ',unitName]);
     end
 end
