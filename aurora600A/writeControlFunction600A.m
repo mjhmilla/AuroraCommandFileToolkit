@@ -16,12 +16,6 @@ function [endTime]= ...
 assert(strcmp(timeUnit,'ms'),...
         'Error: timeUnit and startTime must be in ms');
 
-[optionTypes,isValid,message] ...
-    = getCommandFunctionOptionType600A(controlFunctionName,options);
-assert(isValid==1, message);
-
-
-
 
 
 timeStr = sprintf('%1.1f',startTime);
@@ -59,7 +53,7 @@ if(isempty(options)==0)
     for i=1:1:length(options)
         unitStr = '';
         valueStr = '';
-        switch optionTypes{i}
+        switch options(i).type
 
             case 'time'
                 unitStr = options(i).unit;  

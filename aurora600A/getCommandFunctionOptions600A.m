@@ -1,9 +1,9 @@
-function [commandOption,isValid,msg]= ...
+function [options,isValid,msg]= ...
             getCommandFunctionOptions600A(controlFunctionName,...
                                           auroraConfig)
 
 
-optionTypes = {};
+
 
 isValid = 1;
 msg = '';
@@ -11,355 +11,415 @@ msg = '';
 
 switch controlFunctionName
     case 'Length-Step'
-        %optionTypes = {'length'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
-
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type = 'length';
 
     case 'Length-Ramp'
-        %optionTypes = {'length','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type = 'length';
 
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type = 'time';
 
     case 'Length-Square'
-        %optionTypes = {'frequency','length','time'};
-        commandOption(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type = 'frequency';
+
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type = 'length';
+
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;        
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;        
+        options(i).type = 'time';
 
     case 'Length-Sine'
-        %optionTypes = {'frequency','length','time'};    
-        commandOption(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type = 'frequency';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type = 'length';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;              
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;   
+        options(i).type = 'time';           
 
     case 'Length-Sweep'
-        %optionTypes = {'frequency','frequency','length','time'};
-        commandOption(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type ='frequency';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type ='frequency';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='length';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
-
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;  
+        options(i).type ='time';
 
     case 'Length-Sample'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;          
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;          
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;  
+        options(i).type ='time';
 
     case 'Length-Hold'
-        %optionTypes = {'integer'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;          
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;          
+        options(i).type ='integer';
 
     case 'Read-Larb'
-        %optionTypes = {'length','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
         i=1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='length';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;   
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;   
+        options(i).type ='time';
 
     case 'Write-Larb'
-        %optionTypes = {'length','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+
         i=1;
-        commandOption(i).unit = auroraConfig.defaultLengthUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='length';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;  
+        options(i).type ='time';
 
     case 'Send-Larb'
-        commandOption = [];
+
+        options = [];
 
     case 'Length-Arb'
-        commandOption = [];
+
+        options = [];
+
     case 'Force-Step'
-        %optionTypes = {'force'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
 
 
     case 'Force-Ramp'
-        %optionTypes = {'force','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
 
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;        
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;        
+        options(i).type ='time';
 
     case 'Force-Square'
-        %optionTypes = {'frequency','force','time'};
-        commandOption(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type ='frequency';        
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;    
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;    
+        options(i).type ='time';
 
     case 'Force-Sine'
-        %optionTypes = {'frequency','force','time'};
-        commandOption(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type ='frequency';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;    
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;    
+        options(i).type ='time';
 
     case 'Force-Sweep'
-        %optionTypes = {'frequency','frequency','force','time'};
-        commandOption(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;
+        options(i).type ='frequency';
         i=1+1;
-        commandOption(i).unit = auroraConfig.defaultFrequencyUnit;
-        commandOption(i).printUnit = 1;        
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;    
+        options(i).type ='frequency';    
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;    
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;    
+        options(i).type ='time';
 
     case 'Force-Sample'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+        
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;          
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;          
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1; 
+        options(i).type ='time'; 
 
     case 'Force-Hold'
-        %optionTypes = {'integer'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;                  
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;   
+        options(i).type ='integer';               
 
     case 'Force-Clamp'
-        %optionTypes = {'force','time','time'};
-        commandOption(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = auroraConfig.defaultForceUnit;
-        commandOption(i).printUnit = 1;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = auroraConfig.defaultForceUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='force';
 
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;  
+        options(i).type ='time';
 
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type ='time';        
 
     case 'SL-Step'
-        %optionTypes = {'length'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'um';
-        commandOption(i).printUnit = 0;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).unit = 'um';
+        options(i).printUnit = 0;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='length';
 
     case 'SL-Ramp'
-        %optionTypes = {'length','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'um';
-        commandOption(i).printUnit = 0;
-        commandOption(i).isRelative = auroraConfig.useRelativeUnits;        
-        i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = 'um';
+        options(i).printUnit = 0;
+        options(i).isRelative = auroraConfig.useRelativeUnits;   
+        options(i).type ='length';     
 
+        i=i+1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type ='time';
 
     case 'SL-Sample'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type ='time';
 
     case 'SL-Hold'
-        %optionTypes = {'integer'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+        optionTypes = {'integer'};
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;
+        options(i).type ='integer';
 
     case 'SL-Trigger'
-        %optionTypes = {'time'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);        
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');        
         i=1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;        
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;  
+        options(i).type ='time';      
 
     case 'SL-Track'
-        %optionTypes = {'bool'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);
+
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
         i=1;
-        commandOption(i).unit = 'bool';
+        options(i).unit = 'bool';
+        options(i).type ='bool';
    
 
     case 'Stimulus'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);        
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');        
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;  
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;  
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1; 
+        options(i).type ='time'; 
 
     case 'Trigger1'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);        
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');        
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;  
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;  
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1; 
+        options(i).type ='time'; 
 
     case 'Trigger2'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);        
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');        
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0;  
+        options(i).unit = 'integer';
+        options(i).printUnit = 0;  
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;  
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1; 
+        options(i).type ='time'; 
 
     case 'Data-Enable'
-        %optionTypes = {};
-        commandOption = [];
+        optionTypes = {};
+        options = [];
     case 'Data-Disable'
-        %optionTypes = {};
-        commandOption = [];
+        optionTypes = {};
+        options = [];
 
-    case 'Data-Burst'
-        %optionTypes = {'time','time'};
+    case 'Data-Burst'        
         
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);   
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');   
         i=1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1; 
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1; 
+        options(i).type ='time';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type ='time';
 
     case 'Bath'
-        %optionTypes = {'integer','time'};
-        commandOption(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);   
+
+        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');   
         i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 0; 
+        options(i).unit = 'integer';
+        options(i).printUnit = 0; 
+        options(i).type ='integer';
         i=i+1;
-        commandOption(i).unit = auroraConfig.defaultTimeUnit;
-        commandOption(i).printUnit = 1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;
+        options(i).type ='time';
 
     case 'Repeat'
-        %optionTypes = {'integer'};
-        commandOption(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan);   
-        i=1;
-        commandOption(i).unit = 'integer';
-        commandOption(i).printUnit = 1; 
 
+        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');   
+        i=1;
+        options(i).unit = 'integer';
+        options(i).printUnit = 1; 
+        options(i).type ='integer';
+        
     case 'Stop'
-        commandOption = [];
+        options = [];
     otherwise 
-        %optionTypes={};
-        commandOption = [];
+        options = [];
         isValid = 0;
         msg = ['Error ', commandFunctionName,...
               ' is not in the list of valid commands'];

@@ -6,7 +6,7 @@ function signal = createSquareWavePattern(config,...
 %Get the parameters
 maximumSpeed    = max(config.normSpeedRange);
 duration        = config.duration;
-amplitude       = config.magnitude ;
+amplitude       = config.magnitudeRange(1,1) ;
 paddingDuration = config.paddingDuration;
 
 minTime = config.holdRange(1,1);
