@@ -2,14 +2,16 @@ function [endTime, lineCount] =writeLengthRampBlock600A(fid,startTime,...
                            waitTimeVector,lengthVector,durationVector,...
                            lengthRampOptions, lineCount,auroraConfig)
 
-assert(abs(timeVector(1,1))==0,'Error: timeVector must start from zero');
 
-endTime=startTime;
+
 for i=1:1:length(waitTimeVector)
 
-    startTime = endTime + ...
-             max([waitTimeVector(i,1),auroraConfig.postCommandPauseTime]);
-
+    if(i>1)
+        startTime = endTime + waitTimeVector(i,1);        
+        assert(waitTimeVector(i,1) >= auroraConfig.postCommandPauseTime,...
+               'Error: wait time is not long enough');
+        
+    end
     lengthRampOptions(1).value = lengthVector(i,1);
     lengthRampOptions(2).value = durationVector(i,1);
 
@@ -18,6 +20,7 @@ for i=1:1:length(waitTimeVector)
                 'Length-Ramp',lengthRampOptions,auroraConfig);
 
     lineCount = lineCount+1;
+
     
 end
 

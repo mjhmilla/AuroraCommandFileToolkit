@@ -4,14 +4,14 @@ config.timeUnits = 's';
 config.frequencyUnits='Hz';
 config.lengthUnits = 'Lo';
 
-config.points           = 2^13;
+config.points           = 2^12;
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
 
 config.magnitudeRange    = [0.001,0.001];
 
 %This gives the square and sine perturbations the same mean frequency
 %in the power spectrum
-config.frequencyRange    = [3, 40.43]; 
+config.frequencyRange    = [5, 40.43]; 
 
 config.normSpeedRange    = [0.1,1];
 config.holdRange         = [(1/100),(1/10)];  

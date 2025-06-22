@@ -3,14 +3,17 @@ function [endTime, lineCount] = writeLengthSineBlock600A(fid,startTime,...
                            durationVector, lengthSineOptions, ...
                            lineCount,auroraConfig)
 
-assert(abs(timeVector(1,1))==0,'Error: timeVector must start from zero');
 
-endTime=startTime;
+
 for i=1:1:length(waitTimeVector)
 
-    startTime = endTime + ...
-             max([waitTimeVector(i,1),auroraConfig.postCommandPauseTime]);
 
+    if(i>1)
+        startTime = endTime + waitTimeVector(i,1);  
+        assert(waitTimeVector(i,1) >= auroraConfig.postCommandPauseTime,...
+               'Error: wait time is not long enough');
+    end
+    
     lengthSineOptions(1).value = frequencyVector(i,1);
     lengthSineOptions(2).value = lengthVector(i,1);
     lengthSineOptions(3).value = durationVector(i,1);

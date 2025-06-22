@@ -17,7 +17,7 @@ simSignal = struct('time',zeros(npts,1),...
                    'index',1);
 
 [endTime, lineCount] = ...
-    writeActivationBlock600A(fid, startTime, lineCount, auroraConfig);
+    writeActivationBlock600A(fid, startTime, 'ms', lineCount, auroraConfig);
 startTime = endTime;
 
 lengthRamp = getCommandFunctionOptions600A('Length-Ramp',auroraConfig);

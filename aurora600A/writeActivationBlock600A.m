@@ -1,5 +1,8 @@
 function [nextStartTime, lineCount] = ...
-    writeActivationBlock600A(fid, startTime, lineCount, auroraConfig)
+    writeActivationBlock600A(fid, startTime, startTimeUnit, lineCount, auroraConfig)
+
+assert(strcmp(startTimeUnit,auroraConfig.defaultTimeUnit)==1,...
+       'Error: startTimeUnit and auroraConfig.defaultTimeUnit must match');
 
 bathOptions = getCommandFunctionOptions600A('Bath',auroraConfig);
 

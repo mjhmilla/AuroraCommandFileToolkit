@@ -36,6 +36,8 @@ auroraConfig.maximumNormalizedLength    = maxLengthLo;
 auroraConfig.pdDeadBand                 = 0;
 auroraConfig.bath.changeTime            = 0.5*s2ms;
 auroraConfig.bath.preActivationDuration = 60*s2ms;
+auroraConfig.bath.activationDuration    = 20*s2ms;
+
 auroraConfig.bath.passive               = 1;
 auroraConfig.bath.preActivation         = 2;
 auroraConfig.bath.active                = 3;

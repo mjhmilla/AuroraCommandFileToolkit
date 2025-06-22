@@ -1,14 +1,13 @@
-function signal = analyzeSignalSpectrum(controlFunctionName, ...
-                                    timeVec, signalVec,config)
+function signal = analyzeSignalSpectrum(timeVec, signalVec,config)
 
 %%
 % Create the signal struct
 %%
 
 %Signal that the Auorora machine will use
-signal.time=timeVec;
-signal.signal=signalVec;
-signal.command = controlFunctionName;
+%signal.time=timeVec;
+%signal.signal=signalVec;
+%signal.command = controlFunctionName;
 
 %Interpolated signal used to analyze the spectrum
 samplePoints = config.points;
