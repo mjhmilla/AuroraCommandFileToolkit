@@ -1,14 +1,14 @@
-function config = getPerturbationConfiguration(auroraConfig)
+function config = getPerturbationConfiguration(magnitude,auroraConfig)
 
 
 config.timeUnits = 's';
 config.frequencyUnits='Hz';
-config.lengthUnits = 'Lo';
+config.lengthUnits = auroraConfig.defaultLengthUnit;
 
 config.points           = 2^12;
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
 
-config.magnitudeRange    = [0.005,0.005];
+config.magnitudeRange    = [1,1].*magnitude;
 
 %This gives the square and sine perturbations the same mean frequency
 %in the power spectrum
@@ -17,7 +17,7 @@ config.frequencyRange    = [5, 39];
 %To have a ramp speed between 0.1-1 LPS
 config.normSpeedRange    = [0.1,1];
 
-config.holdRange         = [(1/500),(1/20)];  
+config.holdRange         = [(1/100),(1/11.4)];  
 config.waitTimeRange     = [1,1].*auroraConfig.postCommandPauseTime;
 
 if(strcmp(auroraConfig.defaultTimeUnit,'ms'))

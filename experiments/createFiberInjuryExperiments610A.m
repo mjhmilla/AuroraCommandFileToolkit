@@ -1,4 +1,4 @@
-function success = createFiberInjuryExperiments600A(  stochasticWaveSet,...
+function success = createFiberInjuryExperiments610A(  stochasticWaveSet,...
                                                       projectFolders,...                                                                                                            
                                                       auroraConfig)
 
@@ -6,41 +6,33 @@ function success = createFiberInjuryExperiments600A(  stochasticWaveSet,...
 % Check (some) of the inputs
 %%
 success=0;
-assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
-       'Error: printed time values configured for ms only.');
+assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
+       'Error: printed time values configured for s only.');
+assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
+      'Error: Assumed length unit is mm');
 %%
 %Experiment configuration
 %%
-lengthRampOptions=getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
-scaleTime=1;
-switch auroraConfig.defaultTimeUnit
-    case 's'
-        scaleTime=1;
-    case 'ms'
-        scaleTime=1000;
-    otherwise
-        assert(0,'Error: Unrecognized time unit');
-end
-assert(strcmp(auroraConfig.defaultLengthUnit,'Lo'),...
-      'Error: Assumed length unit is Lo');
+lengthRampOptions=getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
 passiveLengthRamp(2) = struct('wait',0,'waitPostRamp',0,...
                     'lengths',[0,0],'lengthChange',0,...
-                    'velocity',0,'duration',0,'options',[],'type','');
+                    'velocity',0,'duration',0,'options',[],'type','','port','');
 
 i=1;
-passiveLengthRamp(i).wait         = 1.*scaleTime;
-passiveLengthRamp(i).waitPostRamp = 15.*scaleTime;
-passiveLengthRamp(i).lengths      = [0.6,1.55];
+passiveLengthRamp(i).wait         = 1;
+passiveLengthRamp(i).waitPostRamp = 5;
+passiveLengthRamp(i).lengths      = [0.6,1.4].*auroraConfig.approximateSampleLengthInDefaultUnits;
 passiveLengthRamp(i).lengthChange = diff(passiveLengthRamp(i).lengths);
 passiveLengthRamp(i).velocity     = 0.1*auroraConfig.maximumRampSpeedInDefaultUnits;
 passiveLengthRamp(i).duration     = passiveLengthRamp(i).lengthChange ./ passiveLengthRamp(i).velocity;
 passiveLengthRamp(i).options      = lengthRampOptions;  
 passiveLengthRamp(i).type         = 'Passive-Length-Ramp';
+
 i=2;
-passiveLengthRamp(i).wait         = 1.*scaleTime;
-passiveLengthRamp(i).waitPostRamp = 15.*scaleTime;
-passiveLengthRamp(i).lengths      = [0.6,1.55];
+passiveLengthRamp(i).wait         = 1;
+passiveLengthRamp(i).waitPostRamp = 5;
+passiveLengthRamp(i).lengths      = [0.6,1.4].*auroraConfig.approximateSampleLengthInDefaultUnits;
 passiveLengthRamp(i).lengthChange = diff(passiveLengthRamp(i).lengths);
 passiveLengthRamp(i).velocity     = 1*auroraConfig.maximumRampSpeedInDefaultUnits;
 passiveLengthRamp(i).duration     = passiveLengthRamp(i).lengthChange ./ passiveLengthRamp(i).velocity;
@@ -57,8 +49,8 @@ activeLengthRamp(4) = struct('wait',0,'waitPostRamp',0,...
                     'velocity',0,'duration',0,'options',[],'type','');
 
 i=1;
-activeLengthRamp(i).wait         = 1.*scaleTime;
-activeLengthRamp(i).waitPostRamp = 15.*scaleTime;
+activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).lengths      = [1.1,0.9];
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = -(1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
@@ -67,8 +59,8 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Shortening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1.*scaleTime;
-activeLengthRamp(i).waitPostRamp = 15.*scaleTime;
+activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).lengths      = [1.1,0.9];
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = -(2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
@@ -77,8 +69,8 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Shortening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1.*scaleTime;
-activeLengthRamp(i).waitPostRamp = 15.*scaleTime;
+activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).lengths      = [0.9,1.1];
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = (1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
@@ -87,8 +79,8 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Lengthening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1.*scaleTime;
-activeLengthRamp(i).waitPostRamp = 15.*scaleTime;
+activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).lengths      = [0.9,1.1];
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = (2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
@@ -116,13 +108,13 @@ if(length(dStr)<2)
 end
 dateId = [yStr,mStr,dStr];
 
-codeDir         = fullfile(projectFolders.output_code,[dateId,'_600A']);
-codeLabelDir    = fullfile(projectFolders.output_code,[dateId,'_600A'],'segmentLabels');
+codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']);
+codeLabelDir    = fullfile(projectFolders.output_code,[dateId,'_610A'],'segmentLabels');
 
 fileFolderList=dir(projectFolders.output_code);
 codeDirExists=0;
 for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,'_600A']))
+    if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,'_610A']))
         codeDirExists=1;
     end
 end
@@ -151,7 +143,7 @@ fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
 
 fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s,%s\n',...
     'Number','Type','Starting_Length_Lo',...
-    'Take_Photo','Block','FileName','Comment');
+    'Block','FileName','Comment');
 
 %%
 % 1. Starting isometric trial to see if the fiber is viable
@@ -161,16 +153,15 @@ idxStr = getTrialIndexString(idx);
 
 startLength = 1;
 type        = 'isometric';
-takePhoto   = 'Yes';
 blockName   = 'Pre-injury';
 fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
 fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
 
 
-fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
-    idxStr,type,startLength,takePhoto, blockName,fname,'');
+fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+    idxStr,type,startLength, blockName,fname,'');
 
-success = createIsometricImpedanceTrial600A(...
+success = createIsometricImpedanceTrial610A(...
                     stochasticWaveSet,...
                     fullfile(codeDir,fname),...
                     fullfile(codeLabelDir,fnameLabels),...
@@ -187,19 +178,18 @@ for i=1:1:length(passiveLengthRamp)
     
     startLength = passiveLengthRamp(i).lengths(1,1);
     type        = 'passiveLengthening';
-    takePhoto   = '';
     blockName   = 'Pre-injury';
     fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
-    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
-        idxStr,type,startLength,takePhoto, blockName,fname,'');
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength, blockName,fname,'');
     
        
     isRampActive=0;
 
-    success = createLengthRampImpedanceTrial600A(...
+    success = createLengthRampImpedanceTrial610A(...
                         isRampActive,...
                         passiveLengthRamp(i),...
                         stochasticWaveSet,...
@@ -224,10 +214,10 @@ for i=1:1:length(isometric)
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
-    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
-        idxStr,type,startLength,takePhoto, blockName,fname,'');
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength, blockName,fname,'');
     
-    success = createIsometricImpedanceTrial600A(...
+    success = createIsometricImpedanceTrial610A(...
                         stochasticWaveSet,...
                         fullfile(codeDir,fname),...
                         fullfile(codeLabelDir,fnameLabels),...
@@ -253,13 +243,13 @@ for i=1:1:length(activeLengthRamp)
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
-    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
-        idxStr,type,startLength,takePhoto, blockName,fname,'');
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength,blockName,fname,'');
     
        
     isRampActive=1;
 
-    success = createLengthRampImpedanceTrial600A(...
+    success = createLengthRampImpedanceTrial610A(...
                         isRampActive,...
                         activeLengthRamp(i),...
                         stochasticWaveSet,...

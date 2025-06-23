@@ -10,7 +10,7 @@ rootDir        = getRootProjectDirectory('AuroraCommandFileToolkit');
 projectFolders = getProjectFolders(rootDir);
 
 addpath(projectFolders.aurora);
-addpath(projectFolders.aurora600A);
+addpath(projectFolders.aurora610A);
 addpath(projectFolders.postprocessing);
 addpath(projectFolders.experiments);
 addpath(projectFolders.signals);
@@ -21,9 +21,33 @@ addpath(projectFolders.signals);
 flag_generateRandomSignal   = 1;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
-ratMuscleName           = 'EDL';
-muscleTemperatureInC    = 12;
-perturbationMagnitude   = 0.005;
+ratMuscleName = 'EDL';
+muscleTemperatureInC = 12;
+sampleFrequency =1000;
+
+
+
+%%
+% Approximate specimen properties
+%%
+%From: Table II of
+%
+%W. L. Johnson, D. L. Jindrich, H. Zhong, R. R. Roy and V. R. Edgerton, 
+% "Application of a Rat Hindlimb Model: A Prediction of Force Spaces 
+% Reachable Through Stimulation of Nerve Fascicles," in IEEE 
+% Transactions on Biomedical Engineering, vol. 58, no. 12, pp. 
+% 3328-3338, Dec. 2011, doi: 10.1109/TBME.2011.2106784. 
+
+g2N      = 9.81*0.001;
+edlParams.fisoN     = 225*g2N;   %225g 
+edlParams.lceOptMM   = 13.7;      %mm 
+edlParams.vceNMax  = 243/edlParams.lceOptMM; %Lo/s  
+edlParams.alphaOpt = deg2rad(10);
+edlParams.ltSlkMM    = 9;         %mm
+edlParams.etIso    = 0.033; % Johnson et al. took the default value from Zajac
+
+perturbation.magnitude = 0.01*edlParams.lceOptMM;
+perturbation.unit = 'mm';
 
 %%
 % Plot Configuration
@@ -55,29 +79,17 @@ plotConfig.plotHeight                       = 6;
 [subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
 
 
+
 %%
 % Aurora configuration
 %%
-approximateSampleLengthInMM=1.5;
-sampleFrequency =1000;
-minNormLength = 0.5;
-maxNormLength = 1.6;
 
-switch ratMuscleName
-    case 'SOL'
-        maxNormalizedSpeedLPS = 1.02; 
-        % in units of norm fiber lengths/second        
-    case 'EDL'
-        maxNormalizedSpeedLPS = 2.25;  
-    otherwise 
-        assert(0,'Error: muscleName not found');
-end
 
-auroraConfig = getDefaultAuroraConfiguration600A(approximateSampleLengthInMM,...
-                                        sampleFrequency,...
-                                        minNormLength,...
-                                        maxNormLength,...
-                                        maxNormalizedSpeedLPS);
+
+auroraConfig = getDefaultAuroraConfiguration610A(...
+                    sampleFrequency,...    
+                    edlParams.lceOptMM,...
+                    edlParams.vceNMax);
 
 %%
 % System identification perturbation signal configuration
@@ -98,22 +110,29 @@ if(flag_generateRandomSignal==1)
     perturbationPlotConfig.subplot=subplotPanel_3R1C;
     perturbationPlotConfig.config = plotConfig_3R1C;
 
-    configVibration = ...
-        getPerturbationConfiguration(perturbationMagnitude,auroraConfig);
+    assert(strcmp(perturbation.unit,auroraConfig.defaultLengthUnit),...
+        ['Error: perturbation unit and the defaultLengthUnit must',...
+         'match']);
+
+    configVibration = getPerturbationConfiguration(...
+                       perturbation.magnitude,...
+                       auroraConfig);
 
     lengthRampOption = ...
-        getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
+        getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
 
     [squareStochasticWave, ...
     squarePreconditioningWave, ...
-    figSquarePerturbation] = createPerturbationWaveUpd('Length-Ramp',...
-                                                lengthRampOption,...
-                                                configVibration,...
-                                                auroraConfig, ...
-                                                figSquarePerturbation,...
-                                                perturbationPlotConfig,...
-                                                verbose);
+    figSquarePerturbation] = ...
+    createPerturbationWaveUpd(...
+            'Length-Ramp',...
+            lengthRampOption,...
+            configVibration,...
+            auroraConfig, ...
+            figSquarePerturbation,...
+            perturbationPlotConfig,...
+            verbose);
 
     save(fullfile(projectFolders.output_structs,...
          'squareStochasticWave.mat'),...
@@ -167,15 +186,6 @@ else
     load(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'));
     load(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'));
 end
-
-
-
-%%
-% Experiment configuration
-%%
-
-
-[endTime,lineCount] = createTestExperiment(auroraConfig, projectFolders);
 
 
 %%

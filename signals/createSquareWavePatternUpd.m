@@ -173,8 +173,12 @@ stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;
 holdTime        = (duration+2*paddingDuration) ...
                  -(timeVec(i-1,1) + stepTime + paddingDuration);
 
-assert((holdTime)*scaleHoldTime > auroraConfig.postCommandPauseTime,... 
-       'Error: final wait time is too small.');
+%assert((holdTime)*scaleHoldTime > auroraConfig.postCommandPauseTime,... 
+%       'Error: final wait time is too small.');
+
+if((holdTime)*scaleHoldTime < auroraConfig.postCommandPauseTime)
+    holdTime = auroraConfig.postCommandPauseTime/scaleHoldTime;
+end
 
 timeVec(i,1)    = timeVec(i-1,1)+holdTime;
 signalVec(i,1)  = signalVec(i-1,1);
