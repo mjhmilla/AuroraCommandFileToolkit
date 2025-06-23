@@ -125,10 +125,12 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 
     i=i+1;
 
-    stepVel    = velocityVector(i-1,1)*maxRampSpeedLPS;
-    stepTime   = round(abs(lengthChange/stepVel)*1000,1)/1000;    
-    holdTime   = holdTimesVector(i-1,1);
-    nextTime    = timeVec(i-1,1)+holdTime+stepTime;
+    lengthChange    = signOfChange*amplitude;    
+    stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
+    stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;    
+    holdTime        = holdTimesVector(i-1,1);
+    nextTime        = timeVec(i-1,1)+holdTime+stepTime;
+
     if(nextTime < (duration+paddingDuration))
         timeVec(i,1)    = timeVec(i-1,1)+holdTime;
         signalVec(i,1)  = signalVec(i-1,1);
@@ -138,9 +140,7 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
                'Error: ramp duration is too small');
 
         i=i+1;
-        nextTime       = timeVec(i-1,1)+stepTime;
-        lengthChange   = signOfChange*amplitude;
-        timeVec(i,1)   = nextTime;
+        timeVec(i,1)   = timeVec(i-1,1)+stepTime;
         signalVec(i,1) = signalVec(i-1,1)+lengthChange;        
 
         lineCount = lineCount+1;
@@ -155,7 +155,6 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 
         signOfChange=signOfChange*-1;         
     else
-        i=i-1;
         flag_limitReached=1;
     end
     
@@ -163,11 +162,40 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 end
 
 %%
-%Go back one point and set the length to zero
+% Add the final point to bring the net length change to zero
 %%
-signalVec(i,1)=0;
-lengthVec(lineCount,1)    = -lengthVecSum;
-lengthVecSum = lengthVecSum-lengthVecSum;
+ 
+
+
+lengthChange    = 0.5*signOfChange*amplitude;    
+stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
+stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;    
+holdTime        = (duration+2*paddingDuration) ...
+                 -(timeVec(i-1,1) + stepTime + paddingDuration);
+
+assert((holdTime)*scaleHoldTime > auroraConfig.postCommandPauseTime,... 
+       'Error: final wait time is too small.');
+
+timeVec(i,1)    = timeVec(i-1,1)+holdTime;
+signalVec(i,1)  = signalVec(i-1,1);
+
+assert(stepTime > minStepTimeInS,...
+       'Error: ramp duration is too small');
+
+i=i+1;
+timeVec(i,1)   = timeVec(i-1,1)+stepTime;
+signalVec(i,1) = signalVec(i-1,1)+lengthChange;        
+
+lineCount = lineCount+1;
+
+waitVec(lineCount,1)      = holdTime.*scaleHoldTime;
+lengthVec(lineCount,1)    = lengthChange;
+durationVec(lineCount,1)  = (stepTime*scaleDurationTime);
+lengthVecSum = lengthVecSum + lengthChange;
+timeVecSum  = timeVecSum ...
+            + waitVec(lineCount,1) ...
+            + durationVec(lineCount,1);
+
 
 %%
 % Update the padding duration

@@ -1,5 +1,5 @@
 function trialName = getTrialNameUpd(trialNumber, trialType,...
-                                  startingLength, nameId)
+                                  startingLength, nameId, extensionStr)
 
 trialNumberStr = num2str(trialNumber);
 if(length(trialNumberStr)<2)
@@ -7,5 +7,9 @@ if(length(trialNumberStr)<2)
 end
 
 lengthStr = int2str(floor(startingLength*10));
+if(startingLength < 1)
+    lengthStr = ['0',lengthStr];
+end
+
 trialName = [trialNumberStr,'_',trialType,...
-                  '_',lengthStr,'Lo_',nameId,'.pro'];
+                  '_',lengthStr,'Lo_',nameId,extensionStr];

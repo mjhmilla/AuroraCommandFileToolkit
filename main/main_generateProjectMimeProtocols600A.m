@@ -21,6 +21,9 @@ addpath(projectFolders.signals);
 flag_generateRandomSignal   = 1;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
+ratMuscleName = 'EDL';
+muscleTemperatureInC = 12;
+
 %%
 % Plot Configuration
 %%
@@ -58,7 +61,17 @@ approximateSampleLengthInMM=1.5;
 sampleFrequency =1000;
 minNormLength = 0.5;
 maxNormLength = 1.6;
-maxNormalizedSpeedLPS = 1;
+
+switch ratMuscleName
+    case 'SOL'
+        maxNormalizedSpeedLPS = 1.02; 
+        % in units of norm fiber lengths/second        
+    case 'EDL'
+        maxNormalizedSpeedLPS = 2.25;  
+    otherwise 
+        assert(0,'Error: muscleName not found');
+end
+
 auroraConfig = getDefaultAuroraConfiguration600A(approximateSampleLengthInMM,...
                                         sampleFrequency,...
                                         minNormLength,...
