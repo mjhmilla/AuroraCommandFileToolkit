@@ -78,6 +78,7 @@ if(length(configVibration.normSpeedRange) == 2 ...
         (1-randomVecB).*(configVibration.normSpeedRange(1,1)) ...
            +randomVecB.*(configVibration.normSpeedRange(1,2)...
                         -configVibration.normSpeedRange(1,1));
+    
 else
     randomSignals.velocity = ones(size(randomVecA)).*configVibration.normSpeedRange(1,1);
 end
@@ -91,7 +92,24 @@ if(length(configVibration.frequencyRange) == 2 ...
 else
     randomSignals.frequency = ones(size(randomVecC)).*configVibration.frequencyRange(1,1);
 end
-randomSignals.frequency = round(randomSignals.frequency);
+%We adjuste the frequency values so that they have a period that is
+%as close as possible to a time that ends perfectly at a multiple of 
+%0.1 ms, which is the finest level of precision offered by Aurora's
+%duration field
+
+period = round( (randomSignals.frequency.^(-1)).*1000, 1);
+
+frequencyTmp = round( ((period.*0.001).^(-1)), 4);
+frequencyErr = abs(randomSignals.frequency-frequencyTmp);
+periodA      = (frequencyTmp.^(-1)).*1000;
+periodB      = round((periodA),1);
+cycleErr    = abs(periodA-periodB)./periodB;
+
+assert(max(cycleErr) < 1e-4,...
+    ['Error: the cycle error in the sinusoid perturbation ',...
+     'function may accumulate at a rate greater than 1% per 100 cycles']);
+
+randomSignals.frequency = frequencyTmp;
 
 if(length(configVibration.magnitudeRange) == 2 ...
         && abs(diff(configVibration.magnitudeRange)) > 0 )
@@ -281,16 +299,35 @@ if(isempty(figPerturbation)==0)
              'LineWidth',0.25,'DisplayName','x(t)');
         axis tight;
         xlabel('Time (s)');
-        ylabel('Amplitude');
+        ylabel(['Length (', auroraConfig.defaultLengthUnit,')']);
         title('Conditioning and perturbation waveform');
         legend('Location','NorthWest');
         %legend boxoff;
         box off;
         hold on;
+
+    figure(figPerturbation);
+    subplot('Position',reshape(subplotPanel(2,1,:),1,4));
+
+    plot((preConditioningWave.signal.t-max(preConditioningWave.signal.t)),...
+         preConditioningWave.signal.xdot,'-','Color',[1,1,1].*0.75,...
+         'LineWidth',0.25,'DisplayName','Pre-conditioning');
+    hold on;
+    plot(stochasticWave.signal.t,...
+         stochasticWave.signal.xdot,'-k',...
+         'LineWidth',0.25,'DisplayName','xdot(t)');
+    axis tight;
+    xlabel('Time (s)');
+    ylabel(['Velocity (', auroraConfig.defaultLengthUnit,'/s)']);
+    title('Conditioning and perturbation waveform');
+    legend('Location','NorthWest');
+    %legend boxoff;
+    box off;
+    hold on;    
     
     
     figure(figPerturbation);
-    subplot('Position',reshape(subplotPanel(2,1,:),1,4));
+    subplot('Position',reshape(subplotPanel(3,1,:),1,4));
         normPower=stochasticWave.signal.p(1:pointsHalf,1)...
                ./max(stochasticWave.signal.p(1:pointsHalf,1));
         plot(stochasticWave.signal.freqHz(1:pointsHalf,1),...

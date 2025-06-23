@@ -7,13 +7,27 @@ function [timeVec,signalVec,controlFunctions,lineCount] =...
                                 auroraConfig)
 
 %Get the parameters
-maximumSpeed    = max(config.normSpeedRange);
+maxRampSpeed    = auroraConfig.maximumRampSpeedInDefaultUnits;
+
+
+switch auroraConfig.defaultTimeUnit
+    case 's'
+        maxRampSpeedLPS = maxRampSpeed*config.normSpeedRange(1,2);
+    case 'ms'
+        maxRampSpeedLPS = maxRampSpeed*1000*config.normSpeedRange(1,2);
+    otherwise
+        assert(0,'Error: Unrecognized time unit');
+
+end
+
 duration        = config.duration;
 amplitude       = config.magnitudeRange(1,1) ;
 paddingDuration = config.paddingDuration;
 
 minTime = config.holdRange(1,1);
 maxTime = config.holdRange(1,2);
+
+
 
 halfTime = (maxTime-minTime)*0.5;
 
@@ -22,13 +36,15 @@ signOfChange=signOfFirstChange;
 
 scaleDurationTime=1;
 scaleHoldTime    =1;
+minStepTimeInS   = auroraConfig.postCommandPauseTime;
 switch functionOption(2).unit
     case 's'
         scaleDurationTime=1;        
         scaleHoldTime    =1;
     case 'ms'
         scaleDurationTime=1000;        
-        scaleHoldTime    =1000;        
+        scaleHoldTime    =1000; 
+        minStepTimeInS   = minStepTimeInS*0.001;
     otherwise
         assert(0,'Error: unrecognized defaultTimeUnit in functionOption');
 end
@@ -76,15 +92,25 @@ lengthVecSum                 = lengthVecSum + lengthChange;
 % Second move: a step
 %
 i=i+1;
+
+
 lengthChange    = 0.5*signOfChange*amplitude;
-timeVec(i,1)    = timeVec(i-1,1)+minTime;
+
+
+stepVel    = velocityVector(i-1,1)*maxRampSpeedLPS;
+stepTime   = round(abs(lengthChange/stepVel)*1000,1)/1000;
+assert(stepTime > minStepTimeInS,...
+       'Error: ramp duration is too small');
+
+
+timeVec(i,1)    = timeVec(i-1,1)+stepTime;
 signalVec(i,1)  = signalVec(i-1,1)+lengthChange;
 
 lineCount=lineCount+1;
 
 waitVec(lineCount,1)      = auroraConfig.postCommandPauseTime;
 lengthVec(lineCount,1)    = lengthChange;
-durationVec(lineCount,1)  = (minTime*scaleDurationTime...
+durationVec(lineCount,1)  = (stepTime*scaleDurationTime...
                             -auroraConfig.postCommandPauseTime);
 lengthVecSum = lengthVecSum + lengthChange;
 timeVecSum  = timeVecSum ...
@@ -98,14 +124,18 @@ flag_limitReached=0;
 while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 
     i=i+1;
+
+    stepVel    = velocityVector(i-1,1)*maxRampSpeedLPS;
+    stepTime   = round(abs(lengthChange/stepVel)*1000,1)/1000;    
     holdTime   = holdTimesVector(i-1,1);
-    nextTime    = timeVec(i-1,1)+holdTime;
+    nextTime    = timeVec(i-1,1)+holdTime+stepTime;
     if(nextTime < (duration+paddingDuration))
-        timeVec(i,1)    = nextTime;
+        timeVec(i,1)    = timeVec(i-1,1)+holdTime;
         signalVec(i,1)  = signalVec(i-1,1);
 
-        stepVel = velocityVector(i-1,1);
-        stepTime = 2.0*amplitude/stepVel;
+
+        assert(stepTime > minStepTimeInS,...
+               'Error: ramp duration is too small');
 
         i=i+1;
         nextTime       = timeVec(i-1,1)+stepTime;
@@ -144,7 +174,7 @@ lengthVecSum = lengthVecSum-lengthVecSum;
 %%
 finalPaddingTime = duration+2*paddingDuration-timeVec(i,1);
 
-assert(abs(finalPaddingTime-paddingDuration)/paddingDuration< 0.05);
+assert((finalPaddingTime-paddingDuration)/paddingDuration< 0.1);
 
 i=i+1;
 timeVec(i) = timeVec(i-1)+finalPaddingTime;

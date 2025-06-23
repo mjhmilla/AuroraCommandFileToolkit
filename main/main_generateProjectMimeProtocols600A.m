@@ -43,6 +43,14 @@ plotConfig.plotHeight                       = 6;
 
 [subplotPanel_2R1C,plotConfig_2R1C]=plotConfigGeneric(plotConfig);
 
+plotConfig.numberOfHorizontalPlotColumns    = 1;
+plotConfig.numberOfVerticalPlotRows         = 3;
+plotConfig.plotWidth                        = 18;
+plotConfig.plotHeight                       = 6;
+
+[subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
+
+
 %%
 % Aurora configuration
 %%
@@ -50,10 +58,12 @@ approximateSampleLengthInMM=1.5;
 sampleFrequency =1000;
 minNormLength = 0.5;
 maxNormLength = 1.6;
+maxNormalizedSpeedLPS = 1;
 auroraConfig = getDefaultAuroraConfiguration600A(approximateSampleLengthInMM,...
                                         sampleFrequency,...
                                         minNormLength,...
-                                        maxNormLength);
+                                        maxNormLength,...
+                                        maxNormalizedSpeedLPS);
 
 %%
 % System identification perturbation signal configuration
@@ -71,8 +81,8 @@ if(flag_generateRandomSignal==1)
     verbose=1;
     figSquarePerturbation=figure;
 
-    perturbationPlotConfig.subplot=subplotPanel_2R1C;
-    perturbationPlotConfig.config = plotConfig_2R1C;
+    perturbationPlotConfig.subplot=subplotPanel_3R1C;
+    perturbationPlotConfig.config = plotConfig_3R1C;
 
     configVibration = getPerturbationConfiguration(auroraConfig);
 
@@ -90,15 +100,19 @@ if(flag_generateRandomSignal==1)
                                                 perturbationPlotConfig,...
                                                 verbose);
 
-    save(fullfile(projectFolders.output_structs,'squareStochasticWave.mat'),...
+    save(fullfile(projectFolders.output_structs,...
+         'squareStochasticWave.mat'),...
          'squareStochasticWave','-mat');        
-    save(fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat'),...
+    save(fullfile(projectFolders.output_structs,...
+         'squarePreconditioningWave.mat'),...
          'squarePreconditioningWave','-mat');    
     
-    saveas(figSquarePerturbation,fullfile(projectFolders.output_plots,...
-                    'fig_randomSquareWave'),'pdf');
-    savefig(figSquarePerturbation,fullfile(projectFolders.output_plots,...
-                    'fig_randomSquareWave.fig'));    
+    saveas(figSquarePerturbation,...
+           fullfile(projectFolders.output_plots,...
+          'fig_randomSquareWave'),'pdf');
+    savefig(figSquarePerturbation,...
+            fullfile(projectFolders.output_plots,...
+            'fig_randomSquareWave.fig'));    
 
     %%
     % Sine
@@ -106,8 +120,8 @@ if(flag_generateRandomSignal==1)
     verbose=1;
     figSinePerturbation=figure;
 
-    perturbationPlotConfig.subplot=subplotPanel_2R1C;
-    perturbationPlotConfig.config = plotConfig_2R1C;
+    perturbationPlotConfig.subplot=subplotPanel_3R1C;
+    perturbationPlotConfig.config = plotConfig_3R1C;
 
     lengthSineOption = ...
         getCommandFunctionOptions600A('Length-Sine',auroraConfig);

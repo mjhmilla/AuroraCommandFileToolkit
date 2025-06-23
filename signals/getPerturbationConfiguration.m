@@ -1,5 +1,6 @@
 function config = getPerturbationConfiguration(auroraConfig)
 
+
 config.timeUnits = 's';
 config.frequencyUnits='Hz';
 config.lengthUnits = 'Lo';
@@ -7,14 +8,16 @@ config.lengthUnits = 'Lo';
 config.points           = 2^12;
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
 
-config.magnitudeRange    = [0.001,0.001];
+config.magnitudeRange    = [0.005,0.005];
 
 %This gives the square and sine perturbations the same mean frequency
 %in the power spectrum
-config.frequencyRange    = [5, 40.43]; 
+config.frequencyRange    = [5, 39]; 
 
+%To have a ramp speed between 0.1-1 LPS
 config.normSpeedRange    = [0.1,1];
-config.holdRange         = [(1/100),(1/10)];  
+
+config.holdRange         = [(1/500),(1/20)];  
 config.waitTimeRange     = [1,1].*auroraConfig.postCommandPauseTime;
 
 if(strcmp(auroraConfig.defaultTimeUnit,'ms'))
@@ -38,39 +41,6 @@ assert(config.frequencyHz <= auroraConfig.analogToDigitalSampleRateHz,...
 
 
 
-% s2ms =1000;
-% 
-% switch auroraConfig.defaultTimeUnit
-%     case 's'
-%         config.holdRange   = [(1/100),(1/10)];  
-% 
-%         config.duration    = ((config.points-1.5*config.frequencyHz) ...
-%                               /config.frequencyHz);  
-% 
-%         config.paddingDuration  = ...
-%            ((config.points ...
-%             /config.frequencyHz) ...
-%             -config.duration)*0.5;
-%         
-%         dtMin = (config.duration+2*config.paddingDuration)...
-%                /config.points;        
-%     case 'ms'
-%         config.holdRange   = [(1/100),(1/10)].*s2ms;
-% 
-%         config.duration    = ((config.points -1.5*config.frequencyHz) ...
-%                               /config.frequencyHz).*s2ms;    
-% 
-%         config.paddingDuration  = ...
-%            ((config.points ...
-%             /config.frequencyHz) ...
-%             -config.duration)*0.5 * s2ms;
-%         
-%         dtMin = ((config.duration+2*config.paddingDuration)...
-%                /config.points) * s2ms;
-%     otherwise 
-%         assert(0,'Error: invalid time unit');
-% 
-% end
 
 
 

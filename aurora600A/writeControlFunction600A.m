@@ -110,7 +110,7 @@ if(isempty(options)==0)
                 unitStr  = options(i).unit;  
 
                 %Question: must all frequencies be whole number values?
-                valueStr = sprintf('%i',options(i).value);            
+                valueStr = sprintf('%1.4f',options(i).value);            
 
 
             case 'bool'
