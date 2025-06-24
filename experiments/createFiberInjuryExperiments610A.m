@@ -1,6 +1,6 @@
 function success = createFiberInjuryExperiments610A(  stochasticWaveSet,...
-                                                      projectFolders,...                                                                                                            
-                                                      auroraConfig)
+                                                      auroraConfig,...
+                                                      projectFolders)
 
 %%
 % Check (some) of the inputs
@@ -22,7 +22,10 @@ passiveLengthRamp(2) = struct('wait',0,'waitPostRamp',0,...
 i=1;
 passiveLengthRamp(i).wait         = 1;
 passiveLengthRamp(i).waitPostRamp = 5;
-passiveLengthRamp(i).lengths      = [0.6,1.4].*auroraConfig.approximateSampleLengthInDefaultUnits;
+passiveLengthRamp(i).normLengths  = [-0.4,0.4];
+passiveLengthRamp(i).lengths      = ...
+    passiveLengthRamp(i).normLengths...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 passiveLengthRamp(i).lengthChange = diff(passiveLengthRamp(i).lengths);
 passiveLengthRamp(i).velocity     = 0.1*auroraConfig.maximumRampSpeedInDefaultUnits;
 passiveLengthRamp(i).duration     = passiveLengthRamp(i).lengthChange ./ passiveLengthRamp(i).velocity;
@@ -32,7 +35,10 @@ passiveLengthRamp(i).type         = 'Passive-Length-Ramp';
 i=2;
 passiveLengthRamp(i).wait         = 1;
 passiveLengthRamp(i).waitPostRamp = 5;
-passiveLengthRamp(i).lengths      = [0.6,1.4].*auroraConfig.approximateSampleLengthInDefaultUnits;
+passiveLengthRamp(i).normLengths  = [-0.4,0.4];
+passiveLengthRamp(i).lengths      = ...
+    passiveLengthRamp(i).normLengths...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 passiveLengthRamp(i).lengthChange = diff(passiveLengthRamp(i).lengths);
 passiveLengthRamp(i).velocity     = 1*auroraConfig.maximumRampSpeedInDefaultUnits;
 passiveLengthRamp(i).duration     = passiveLengthRamp(i).lengthChange ./ passiveLengthRamp(i).velocity;
@@ -40,9 +46,14 @@ passiveLengthRamp(i).options      = lengthRampOptions;
 passiveLengthRamp(i).type         = 'Passive-Length-Ramp';
 
 isometric(3)= struct('length',0);
-isometric(1).length = 0.6;
-isometric(2).length = 1;
-isometric(3).length = 1.4;
+
+isometric(1).normLength = -0.4;
+isometric(2).normLength = 0.0;
+isometric(3).normLength = 0.4;
+
+for i=1:1:length(isometric)
+    isometric(i).length = isometric(i).normLength*auroraConfig.approximateSampleLengthInDefaultUnits;
+end
 
 activeLengthRamp(4) = struct('wait',0,'waitPostRamp',0,...
                     'lengths',[0,0],'lengthChange',0,...
@@ -51,7 +62,10 @@ activeLengthRamp(4) = struct('wait',0,'waitPostRamp',0,...
 i=1;
 activeLengthRamp(i).wait         = 1;
 activeLengthRamp(i).waitPostRamp = 5;
-activeLengthRamp(i).lengths      = [1.1,0.9];
+activeLengthRamp(i).normLengths  = [0.1,-0.1];
+activeLengthRamp(i).lengths      = ...
+    activeLengthRamp(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = -(1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
 activeLengthRamp(i).duration     = activeLengthRamp(i).lengthChange ./ activeLengthRamp(i).velocity;
@@ -61,7 +75,10 @@ activeLengthRamp(i).type         = 'Active-Shortening';
 i=i+1;
 activeLengthRamp(i).wait         = 1;
 activeLengthRamp(i).waitPostRamp = 5;
-activeLengthRamp(i).lengths      = [1.1,0.9];
+activeLengthRamp(i).normLengths  = [0.1,-0.1];
+activeLengthRamp(i).lengths      = ...
+    activeLengthRamp(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = -(2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
 activeLengthRamp(i).duration     = activeLengthRamp(i).lengthChange ./ activeLengthRamp(i).velocity;
@@ -71,7 +88,10 @@ activeLengthRamp(i).type         = 'Active-Shortening';
 i=i+1;
 activeLengthRamp(i).wait         = 1;
 activeLengthRamp(i).waitPostRamp = 5;
-activeLengthRamp(i).lengths      = [0.9,1.1];
+activeLengthRamp(i).normLengths  = [-0.1,0.1];
+activeLengthRamp(i).lengths      = ...
+    activeLengthRamp(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = (1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
 activeLengthRamp(i).duration     = activeLengthRamp(i).lengthChange ./ activeLengthRamp(i).velocity;
@@ -81,7 +101,10 @@ activeLengthRamp(i).type         = 'Active-Lengthening';
 i=i+1;
 activeLengthRamp(i).wait         = 1;
 activeLengthRamp(i).waitPostRamp = 5;
-activeLengthRamp(i).lengths      = [0.9,1.1];
+activeLengthRamp(i).normLengths  = [-0.1,0.1];
+activeLengthRamp(i).lengths      = ...
+    activeLengthRamp(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
 activeLengthRamp(i).lengthChange = diff(activeLengthRamp(i).lengths);
 activeLengthRamp(i).velocity     = (2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
 activeLengthRamp(i).duration     = activeLengthRamp(i).lengthChange ./ activeLengthRamp(i).velocity;
@@ -154,7 +177,7 @@ idxStr = getTrialIndexString(idx);
 startLength = 1;
 type        = 'isometric';
 blockName   = 'Pre-injury';
-fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
+fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
 fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
 
 
@@ -176,10 +199,10 @@ for i=1:1:length(passiveLengthRamp)
     idx=idx+1;
     idxStr = getTrialIndexString(idx);
     
-    startLength = passiveLengthRamp(i).lengths(1,1);
+    startLength = passiveLengthRamp(i).normLengths(1,1)+1;
     type        = 'passiveLengthening';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
+    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
@@ -206,11 +229,11 @@ for i=1:1:length(isometric)
     idx = idx+1;
     idxStr = getTrialIndexString(idx);
     
-    startLength = isometric(i).length;
+    startLength = isometric(i).normLengths(1,1)+1;
     type        = 'isometric';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
+    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
@@ -231,7 +254,7 @@ for i=1:1:length(activeLengthRamp)
     idx=idx+1;
     idxStr = getTrialIndexString(idx);
     
-    startLength = activeLengthRamp(i).lengths(1,1);
+    startLength = activeLengthRamp(i).normLengths(1,1)+1;
     if(activeLengthRamp(i).velocity > 0)
         type        = 'activeLengthening';
     else
@@ -239,7 +262,7 @@ for i=1:1:length(activeLengthRamp)
     end
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
+    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
     fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
     
     

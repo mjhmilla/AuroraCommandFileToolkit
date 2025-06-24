@@ -10,7 +10,7 @@ for i=1:1:length(waitTimeVector)
 
     if(i>1)
         startTime = endTime + waitTimeVector(i,1);  
-        assert(waitTimeVector(i,1) >= auroraConfig.postCommandPauseTime,...
+        assert(waitTimeVector(i,1) >= auroraConfig.minimumWaitTime,...
                'Error: wait time is not long enough');
     end
     

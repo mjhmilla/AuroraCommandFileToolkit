@@ -1,7 +1,6 @@
-function [endTime]= ...
+function [smallestNextWaitTime, commandDuration] = ...
     writeControlFunction610A(   fid,...
-                                startTime,...
-                                timeUnit,...
+                                waitTimeInS,...
                                 controlFunctionName,...
                                 options,...
                                 auroraConfig)
@@ -12,33 +11,147 @@ function [endTime]= ...
 % printUnit
 
 
+success= 0;
 
-assert(strcmp(timeUnit,'ms'),...
-        'Error: timeUnit and startTime must be in ms');
+assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
+        'Error: auroraConfig.defaultTimeUnit must be in s');
+assert(strcmp(auroraConfig.defaultFrequencyUnit,'Hz'),...
+        'Error: auroraConfig.defaultFrequencyUnit must be in Hz');
+assert(strcmp(auroraConfig.defaultForceUnit,'mN'),...
+        'Error: auroraConfig.defaultTimeUnit must be in mN');
+assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
+        'Error: auroraConfig.defaultTimeUnit must be in mm');
+
+commandDuration = waitTimeInS;
+
+
+switch controlFunctionName
+    case 'Step'
+        smallestNextWaitTime  = auroraConfig.lengthStepResponseTime;
+        commandDuration       = commandDuration ...
+                              + auroraConfig.lengthStepResponseTime;
+
+    case 'Ramp'
+        
+        assert(strcmp(options(2).type,'time'),...
+               'Error: Expected a duration at this option index');
+
+
+        if(options(2).value < auroraConfig.lengthStepResponseTime)
+            commandDuration         = commandDuration ...
+                                    + auroraConfig.lengthStepResponseTime;
+            smallestNextWaitTime    = auroraConfig.lengthStepResponseTime;
+        else
+            commandDuration         = commandDuration + options(2).value;        
+            smallestNextWaitTime    = 0;            
+        end
+
+    case 'Sine Wave'
+        assert(strcmp(options(1).type,'frequency'),...
+               'Error: Expected a frequency at this option index');
+
+        assert(strcmp(options(3).type,'cycles'),...
+               'Error: Expected cycles at this option index');
 
 
 
-timeStr = sprintf('%1.6f',startTime);
-endTime = str2double(timeStr);
+        f = options(1).value;
+        c = options(3).value;
+        dtCycle = (1/f)*c;
+
+
+        if(dtCycle < auroraConfig.lengthStepResponseTime)
+            commandDuration     = commandDuration ...
+                                + auroraConfig.lengthStepResponseTime ;
+            smallestNextWaitTime = auroraConfig.lengthStepResponseTime;
+        else
+            commandDuration         =  commandDuration + dtCycle;
+            smallestNextWaitTime    = 0;
+        end
+
+
+    case 'Sum-Sine Wave'
+
+        assert(strcmp(options(5).type,'time'),...
+               'Error: Expected time at this option index');
+
+
+        if(options(5).value < auroraConfig.lengthStepResponseTime)
+            commandDuration      = commandDuration ...
+                                 + auroraConfig.lengthStepResponseTime;
+            smallestNextWaitTime = auroraConfig.lengthStepResponseTime;                                 
+        else
+            commandDuration         = commandDuration + options(5).value;
+            smallestNextWaitTime    = 0;
+        end
+        
+
+    case 'Stimulus-Train'
+
+        assert(strcmp(options(1).type,'time'),...
+               'Error: Expected a duration at this option index');
+        assert(strcmp(options(2).type,'frequency'),...
+               'Error: Expected a frequency at this option index');
+        assert(strcmp(options(4).type,'pulses'),...
+               'Error: Expected pulses at this option index');
+        assert(strcmp(options(5).type,'Hz'),...
+               'Error: Expected Hz at this option index');
+
+        initialDelay    = options(1).value;
+        pulseFrequency  = options(2).value;
+        pulsesPerTrain  = options(4).value
+        trainFrequency  = options(5).value
+
+        smallestNextWaitTime = 0;
+
+        commandDuration = inf;
+
+
+    case 'Stimulus-Tetanus'
+
+        assert(strcmp(options(1).type,'time'),...
+               'Error: Expected a duration at this option index');
+        assert(strcmp(options(2).type,'frequency'),...
+               'Error: Expected a frequency at this option index');
+        assert(strcmp(options(4).type,'time'),...
+               'Error: Expected pulses at this option index');
+
+        initialDelay    = options(1).value;
+        timeDuration    = options(4).value;
+
+        smallestNextWaitTime   = 0;
+        commandDuration        = commandDuration + initialDelay + timeDuration;
+
+    case 'Stimulus-Twitch'
+
+        smallestNextWaitTime   = 0;
+        commandDuration        = 0;
+
+    case 'Trigger'
+
+        smallestNextWaitTime   = 0;
+        commandDuration        = 0;
+
+    case 'Stop'
+
+        smallestNextWaitTime   = 0;
+        commandDuration        = 0;
+
+    otherwise
+        assert(0, ['Error: ',controlFunctionName,...
+                ' is an unrecognized function']);
+end
+
+
+waitTimeStr = sprintf('%1.6f',waitTimeInS);
 
 
 if(length(options) > 0)
-    commandLine = sprintf('%s\t%s\t%s\t',timeStr,controlFunctionName,options(1).port);
+    commandLine = sprintf('%s\t%s\t%s\t',waitTimeStr,controlFunctionName,options(1).port);
 else
-    commandLine = sprintf('%s\t%s',timeStr,controlFunctionName);
+    commandLine = sprintf('%s\t%s',waitTimeStr,controlFunctionName);
 end
-% Check that the options are valid
 
-controlsWithADuration = ...
-    {'Ramp','Sum-Sine Wave','Stimulus-Tetanus','Stimulus-Twitch'};
-
-isLastTimeFieldDelay = 0;
-
-for i=1:1:length(controlsWithADuration)
-    if(strcmp(controlsWithADuration{i},controlFunctionName))
-        isLastTimeFieldDelay = 1;
-    end
-end
 
 if(isempty(options)==0)
     for i=1:1:length(options)
@@ -59,16 +172,6 @@ if(isempty(options)==0)
                         assert(0,'Error: time unit must be ms or s');
                 end
 
-                if(isLastTimeFieldDelay)
-                    switch unitStr
-                        case 'ms'
-                            endTime = endTime + str2double(valueStr);
-                        case 's'
-                            endTime = endTime + str2double(valueStr)/1000;                   
-                        otherwise 
-                            assert(0,'Error: time unit must be ms or s');
-                    end                               
-                end
 
 
             case 'length'
@@ -80,8 +183,6 @@ if(isempty(options)==0)
                         valueStr = sprintf('%1.4f',options(i).value);
                     end
                 else
-                    assert( options(i).value > 0, ...
-                            'Error: an absolute length must be positive');
                     valueStr = sprintf('%1.6f',options(i).value);                
                 end
 
@@ -133,13 +234,8 @@ if(isempty(options)==0)
 
 end
 
-%nextStartTime = endTime;
 
-%if(abs(endTime-startTime) < auroraConfig.postCommandPauseTime)
-%    nextStartTime = endTime + auroraConfig.postCommandPauseTime;
-%else
-%    
-%end
 
 fprintf(fid,'%s\n',commandLine);
 
+success= 1;

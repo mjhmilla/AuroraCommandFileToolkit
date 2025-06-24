@@ -1,4 +1,4 @@
-function [timeVec,signalVec,controlFunctions,lineCount] = createSineWavePattern(...
+function [timeVec,signalVec,controlFunctions,lineCount] = createSineWavePattern610A(...
                                 config,...
                                 frequencyVector,...
                                 amplitudeVector,...
@@ -48,11 +48,11 @@ timeVecDense(i,1)    =timeVecDense(i-1,1)+config.paddingDuration;
 signalVecDense(i,1)  =signalVecDense(i-1,1);
 
 j = 1;
-waitVec(j,1)      = auroraConfig.postCommandPauseTime;
+waitVec(j,1)      = auroraConfig.minimumWaitTime;
 frequencyVec(j,1) = 10;
 amplitudeVec(j,1) = 0;
 durationVec(j,1)  = config.paddingDuration*scaleControlFunctionTime...
-                           -auroraConfig.postCommandPauseTime;
+                           -auroraConfig.minimumWaitTime;
 
 timeVecSum   = timeVecSum + waitVec(j,1) + durationVec(j,1);
 
@@ -141,7 +141,7 @@ signalVec = interp1(timeVecDense,signalVecDense,timeVec);
 paddingTime = endTime*scaleControlFunctionTime - timeVecSum;
 
 %padding interval
-waitVec(j,1)        = auroraConfig.postCommandPauseTime;
+waitVec(j,1)        = auroraConfig.minimumWaitTime;
 frequencyVec(j,1)   = 10;
 amplitudeVec(j,1)   = 0;
 durationVec(j,1)    = paddingTime-waitVec(j,1);

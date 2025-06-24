@@ -26,7 +26,7 @@ for i=1:1:length(stochasticWaveSet)
                             auroraConfig);
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);
-            startTime = endTime + auroraConfig.postCommandPauseTime;
+            startTime = endTime + auroraConfig.minimumWaitTime;
 
         case 'Length-Sine'
             [endTime,lineCount] = ...
@@ -40,7 +40,7 @@ for i=1:1:length(stochasticWaveSet)
                     auroraConfig);
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
-            startTime = endTime + auroraConfig.postCommandPauseTime;
+            startTime = endTime + auroraConfig.minimumWaitTime;
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
@@ -72,7 +72,7 @@ for i=1:1:length(stochasticWaveSet)
                             auroraConfig);
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);
-            startTime = endTime + auroraConfig.postCommandPauseTime;
+            startTime = endTime + auroraConfig.minimumWaitTime;
 
         case 'Length-Sine'
             [endTime,lineCount] = ...
@@ -86,7 +86,7 @@ for i=1:1:length(stochasticWaveSet)
                     auroraConfig);
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
-            startTime = endTime + auroraConfig.postCommandPauseTime;
+            startTime = endTime + auroraConfig.minimumWaitTime;
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
@@ -95,7 +95,7 @@ end
 [endTime, lineCount] = ...
     writeDeactivationBlock600A(fid, startTime, lineCount, auroraConfig);
 
-startTime=endTime+auroraConfig.postCommandPauseTime;
+startTime=endTime+auroraConfig.minimumWaitTime;
 
 [endTime, lineCount] = ...
     writeClosingBlock600A(fid, startTime, lineCount, auroraConfig);

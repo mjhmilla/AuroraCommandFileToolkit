@@ -161,8 +161,8 @@ end
 
 %nextStartTime = endTime;
 
-%if(abs(endTime-startTime) < auroraConfig.postCommandPauseTime)
-%    nextStartTime = endTime + auroraConfig.postCommandPauseTime;
+%if(abs(endTime-startTime) < auroraConfig.minimumWaitTime)
+%    nextStartTime = endTime + auroraConfig.minimumWaitTime;
 %else
 %    
 %end

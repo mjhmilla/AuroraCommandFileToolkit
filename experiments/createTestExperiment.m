@@ -44,7 +44,7 @@ lineCount = lineCount+1;
 [endTime, lineCount] = ...
     writeDeactivationBlock600A(fid, startTime, lineCount, auroraConfig);
 
-startTime=endTime+auroraConfig.postCommandPauseTime;
+startTime=endTime+auroraConfig.minimumWaitTime;
 
 [endTime, lineCount] = ...
     writeClosingBlock600A(fid, startTime, lineCount, auroraConfig);

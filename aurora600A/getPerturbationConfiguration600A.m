@@ -1,4 +1,4 @@
-function config = getPerturbationConfiguration(magnitude,auroraConfig)
+function config = getPerturbationConfiguration600A(magnitude,auroraConfig)
 
 
 config.timeUnits = 's';
@@ -18,7 +18,7 @@ config.frequencyRange    = [5, 39];
 config.normSpeedRange    = [0.1,1];
 
 config.holdRange         = [(1/100),(1/11.4)];  
-config.waitTimeRange     = [1,1].*auroraConfig.postCommandPauseTime;
+config.waitTimeRange     = [1,1].*auroraConfig.minimumWaitTime;
 
 if(strcmp(auroraConfig.defaultTimeUnit,'ms'))
     config.waitTimeRange = config.waitTimeRange/1000;

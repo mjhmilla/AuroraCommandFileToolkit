@@ -11,7 +11,7 @@ disp('Aurora Configuration for the 3EE');
 
 auroraConfig.maximumRampSpeedInLPS = maxNormalizedSpeedLPS;
 auroraConfig.maximumRampSpeedInMPS = ...
-    auroraConfig.maximumRampSpeedInLPS*(approximateSampleLengthInMM/1000);
+    maxNormalizedSpeedLPS*(approximateSampleLengthInMM/1000);
 
 disp('  Note: Find the maximum Length-Ramp speed of the 300E');
 auroraConfig.maximumSpeedInMPS = auroraConfig.maximumRampSpeedInMPS;
@@ -22,19 +22,18 @@ auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 %  This is the rate Aurora's A/D converter will sample signals
 
 
-disp('  Note: Is there a minimum wait time between commands?');
-auroraConfig.postCommandPauseTime = 0.0001; 
-%  The Aurora system needs a pause time of at least 0.1 ms between ramps
+auroraConfig.lengthStepResponseTime = 0.002;  
+% Set to 2 x the length-step reponse time of the 305B and 305B-LR
 
 
 disp('  Note: Find the maximum of commands for the 300E');
 auroraConfig.maximumNumberOfCommands = 945;
 
 
-auroraConfig.activationTime = 2;
+auroraConfig.activationTime = 0.5;
 
 auroraConfig.defaultLengthUnit      = 'mm';
-auroraConfig.defaultForceUnit       = 'N';
+auroraConfig.defaultForceUnit       = 'mN';
 auroraConfig.defaultTimeUnit        = 's';
 auroraConfig.defaultFrequencyUnit   = 'Hz';
 
@@ -60,3 +59,6 @@ auroraConfig.maximumRampSpeedInDefaultUnits = ...
 assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        ['Error: many functions in the 610 only accept seconds',... 
         ' seconds must be the default time unit']);
+
+auroraConfig.stimulation.frequencyHz=50;
+auroraConfig.stimulation.pulseWidthMs=5;

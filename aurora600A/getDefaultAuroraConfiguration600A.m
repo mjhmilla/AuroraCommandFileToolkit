@@ -25,7 +25,7 @@ auroraConfig.numberOfEmptyCommandsPrepended = 10;
 auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 %  This is the rate Aurora's A/D converter will sample signals
 
-auroraConfig.postCommandPauseTime = 0.1; 
+auroraConfig.minimumWaitTime = 0.1; 
 %  The Aurora system needs a pause time of at least 0.1 ms between ramps
 
 auroraConfig.maximumNumberOfCommands = 945;

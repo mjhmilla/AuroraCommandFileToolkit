@@ -1,5 +1,5 @@
 function [timeVec,signalVec,controlFunctions,lineCount] =...
-     createSquareWavePatternUpd(config,...
+     createSquareWavePattern600A(config,...
                                 holdTimesVector,...
                                 velocityVector,...
                                 signOfFirstChange,...
@@ -36,7 +36,7 @@ signOfChange=signOfFirstChange;
 
 scaleDurationTime=1;
 scaleHoldTime    =1;
-minStepTimeInS   = auroraConfig.postCommandPauseTime;
+minStepTimeInS   = auroraConfig.minimumWaitTime;
 switch functionOption(2).unit
     case 's'
         scaleDurationTime=1;        
@@ -78,10 +78,10 @@ signalVec(i,1)  =signalVec(i-1,1);
 
 lineCount=1;
 
-waitVec(lineCount,1)      = auroraConfig.postCommandPauseTime;
+waitVec(lineCount,1)      = auroraConfig.minimumWaitTime;
 lengthVec(lineCount,1)    = lengthChange;
 durationVec(lineCount,1)  = paddingDuration*scaleDurationTime...
-                           -auroraConfig.postCommandPauseTime;
+                           -auroraConfig.minimumWaitTime;
 timeVecSum  = timeVecSum ...
             + waitVec(lineCount,1)...
             + durationVec(lineCount,1);
@@ -108,10 +108,10 @@ signalVec(i,1)  = signalVec(i-1,1)+lengthChange;
 
 lineCount=lineCount+1;
 
-waitVec(lineCount,1)      = auroraConfig.postCommandPauseTime;
+waitVec(lineCount,1)      = auroraConfig.minimumWaitTime;
 lengthVec(lineCount,1)    = lengthChange;
 durationVec(lineCount,1)  = (stepTime*scaleDurationTime...
-                            -auroraConfig.postCommandPauseTime);
+                            -auroraConfig.minimumWaitTime);
 lengthVecSum = lengthVecSum + lengthChange;
 timeVecSum  = timeVecSum ...
             + waitVec(lineCount,1)...
@@ -173,11 +173,11 @@ stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;
 holdTime        = (duration+2*paddingDuration) ...
                  -(timeVec(i-1,1) + stepTime + paddingDuration);
 
-%assert((holdTime)*scaleHoldTime > auroraConfig.postCommandPauseTime,... 
+%assert((holdTime)*scaleHoldTime > auroraConfig.minimumWaitTime,... 
 %       'Error: final wait time is too small.');
 
-if((holdTime)*scaleHoldTime < auroraConfig.postCommandPauseTime)
-    holdTime = auroraConfig.postCommandPauseTime/scaleHoldTime;
+if((holdTime)*scaleHoldTime < auroraConfig.minimumWaitTime)
+    holdTime = auroraConfig.minimumWaitTime/scaleHoldTime;
 end
 
 timeVec(i,1)    = timeVec(i-1,1)+holdTime;
@@ -221,10 +221,10 @@ finalPaddingDuration = (duration+2*paddingDuration)*scaleDurationTime...
                      - timeVecSum;
 
 lineCount                 = lineCount+1;
-waitVec(lineCount,1)      = auroraConfig.postCommandPauseTime;
+waitVec(lineCount,1)      = auroraConfig.minimumWaitTime;
 lengthVec(lineCount,1)    = 0;
 durationVec(lineCount,1)  = finalPaddingDuration ...
-                           -auroraConfig.postCommandPauseTime;
+                           -auroraConfig.minimumWaitTime;
 
 
 %Trim

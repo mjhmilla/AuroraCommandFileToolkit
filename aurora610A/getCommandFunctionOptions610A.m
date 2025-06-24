@@ -30,7 +30,8 @@ switch controlFunctionName
     case 'Step'
 
         options(1) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',0);
 
         i=1;
         switch portType
@@ -41,16 +42,21 @@ switch controlFunctionName
             otherwise
                 assert(0,'Error: Unrecognized port type');
         end
-        options(i).value = nan;
-        options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
-        options(i).type = portType;
-        options(i).port = portName;
+        options(i).value        = nan;
+        options(i).printUnit    = 0;  %Always zero for the 610A
+        options(i).isRelative   = 0; %Always zero for the 610A
+        options(i).type         = portType;
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 0;
+        end
 
     case 'Ramp'
 
         options(2) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',0);
 
         i=1;
         switch portType
@@ -63,32 +69,36 @@ switch controlFunctionName
         end        
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
-        options(i).type = portType;
-        options(i).port = portName;
+        options(i).isRelative = 0; %Always zero for the 610A
+        options(i).type       = portType;
 
         i=i+1;
         options(i).unit = 's';
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
-        options(i).type = 'time';
-        options(i).port = '';
+        options(i).isRelative = 0; %Always zero for the 610A
+        options(i).type       = 'time';
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 0;
+        end
 
 
     case 'Sine Wave'
 
         options(3) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',0);
 
 
         i=1;
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
-        options(i).port = portName;
+
 
         i=i+1;
         switch portType
@@ -101,24 +111,28 @@ switch controlFunctionName
         end        
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = portType;
-        options(i).port = '';
 
         i=i+1;
         options(i).unit = 'cycles';
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'cycles';
-        options(i).port = '';
 
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 0;
+        end
 
 
     case 'Sum-Sine Wave'
 
         options(5) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',0);
 
 
 
@@ -126,7 +140,7 @@ switch controlFunctionName
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
         options(i).port = portName;
 
@@ -141,7 +155,7 @@ switch controlFunctionName
         end        
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = portType;
         options(i).port = '';
 
@@ -149,7 +163,7 @@ switch controlFunctionName
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
         options(i).port = '';
 
@@ -164,7 +178,7 @@ switch controlFunctionName
         end        
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = portType;
         options(i).port = '';        
 
@@ -172,20 +186,27 @@ switch controlFunctionName
         options(i).unit = 's';
         options(i).value = nan;
         options(i).printUnit =0;  %Always zero for the 610A
-        options(i).isRelative =1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = '';
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 0;
+        end
+
 
     case 'Stimulus-Train'
 
         options(5) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',1);
 
         i=1;
         options(i).unit  = 's';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = portName;
 
@@ -193,7 +214,7 @@ switch controlFunctionName
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
         options(i).port = '';
 
@@ -201,7 +222,7 @@ switch controlFunctionName
         options(i).unit  = 'ms';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = '';
 
@@ -209,7 +230,7 @@ switch controlFunctionName
         options(i).unit  = 'pulses';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'pulses';
         options(i).port = '';
 
@@ -217,20 +238,27 @@ switch controlFunctionName
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
         options(i).port = '';
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 1;
+        end
+
 
     case 'Stimulus-Tetanus'
 
         options(4) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',1);
 
         i=1;
         options(i).unit  = 's';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = portName;
 
@@ -238,7 +266,7 @@ switch controlFunctionName
         options(i).unit  = 'Hz';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'frequency';
         options(i).port = '';
 
@@ -246,7 +274,7 @@ switch controlFunctionName
         options(i).unit  = 'ms';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = '';
 
@@ -254,21 +282,28 @@ switch controlFunctionName
         options(i).unit  = 's';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = '';
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 1;
+        end
+
 
 
     case 'Stimulus-Twitch'
 
         options(2) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',1);
 
         i=1;
         options(i).unit  = 's';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = portName;
 
@@ -276,22 +311,35 @@ switch controlFunctionName
         options(i).unit  = 'ms';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'time';
         options(i).port = '';
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 1;
+        end
+
 
     case 'Trigger'
 
         options(1) = struct('unit','','value',nan,'printUnit',nan,...
-                            'isRelative',nan,'type','','port','');
+                            'isRelative',nan,'type','','port','',...
+                            'isParallelCommand',1);
 
         i=1;
         options(i).unit  = '';
         options(i).value = nan;
         options(i).printUnit  = 0; %Always zero for the 610A
-        options(i).isRelative = 1; %Always zero for the 610A
+        options(i).isRelative = 0; %Always zero for the 610A
         options(i).type = 'integer';
         options(i).port = portName;
+
+        for i=1:1:length(options)
+            options(i).port                 = portName;
+            options(i).isParallelCommand    = 1;
+        end
+
 
     case 'Stop'
 
