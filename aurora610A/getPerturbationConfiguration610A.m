@@ -42,6 +42,12 @@ config.duration    = ((config.points-1.5*config.frequencyHz) ...
 config.paddingDuration  =  ((config.points/config.frequencyHz) ...
                             -config.duration)*0.5;
 
+config.probe.frequencyHz = 20;
+config.probe.magnitude   = magnitude; 
+config.probe.cycles      = round(config.probe.frequencyHz*0.5);
+config.probe.duration    = (1/config.probe.frequencyHz)*config.probe.cycles;
+
+
 dtMin = (config.duration+2*config.paddingDuration)/config.points;
 
 assert(config.frequencyHz <= auroraConfig.analogToDigitalSampleRateHz,...

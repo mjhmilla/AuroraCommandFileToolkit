@@ -8,21 +8,21 @@ function [options,isValid,msg]= ...
 
 isValid = 1;
 msg = '';
-
-
 portType ='';
-if(isempty(strfind(portName,'Length'))==0)
-    portType ='length';
-end
 
-if(isempty(strfind(portName,'Force'))==0)
-    portType ='force';
+if(length(portName) > 0)
+    if(isempty(strfind(portName,'Length'))==0)
+        portType ='length';
+    end
+    
+    if(isempty(strfind(portName,'Force'))==0)
+        portType ='force';
+    end
+    
+    if(isempty(strfind(portName,'Stimulator'))==0)
+        portType ='stimulator';
+    end
 end
-
-if(isempty(strfind(portName,'Stimulator'))==0)
-    portType ='stimulator';
-end
-
 
 
 

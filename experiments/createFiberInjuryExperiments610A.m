@@ -1,4 +1,5 @@
 function success = createFiberInjuryExperiments610A(  stochasticWaveSet,...
+                                                      perturbationConfig,...    
                                                       auroraConfig,...
                                                       projectFolders)
 
@@ -19,9 +20,15 @@ passiveLengthRamp(2) = struct('wait',0,'waitPostRamp',0,...
                     'lengths',[0,0],'lengthChange',0,...
                     'velocity',0,'duration',0,'options',[],'type','','port','');
 
+%
+% If the amount of activation time needs to be reduced then adjust
+% 1. Remove the square wave perturbations
+% 2. Reduce the active post-ramp wait time
+% 
+
 i=1;
 passiveLengthRamp(i).wait         = 1;
-passiveLengthRamp(i).waitPostRamp = 5;
+passiveLengthRamp(i).waitPostRamp = 5; 
 passiveLengthRamp(i).normLengths  = [-0.4,0.4];
 passiveLengthRamp(i).lengths      = ...
     passiveLengthRamp(i).normLengths...
@@ -60,7 +67,7 @@ activeLengthRamp(4) = struct('wait',0,'waitPostRamp',0,...
                     'velocity',0,'duration',0,'options',[],'type','');
 
 i=1;
-activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).wait         = auroraConfig.activationTime;
 activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).normLengths  = [0.1,-0.1];
 activeLengthRamp(i).lengths      = ...
@@ -73,7 +80,7 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Shortening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).wait         = auroraConfig.activationTime;
 activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).normLengths  = [0.1,-0.1];
 activeLengthRamp(i).lengths      = ...
@@ -86,7 +93,7 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Shortening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).wait         = auroraConfig.activationTime;
 activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).normLengths  = [-0.1,0.1];
 activeLengthRamp(i).lengths      = ...
@@ -99,7 +106,7 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Lengthening';
 
 i=i+1;
-activeLengthRamp(i).wait         = 1;
+activeLengthRamp(i).wait         = auroraConfig.activationTime;
 activeLengthRamp(i).waitPostRamp = 5;
 activeLengthRamp(i).normLengths  = [-0.1,0.1];
 activeLengthRamp(i).lengths      = ...
@@ -218,6 +225,7 @@ for i=1:1:length(passiveLengthRamp)
                         stochasticWaveSet,...
                         fullfile(codeDir,fname),...
                         fullfile(codeLabelDir,fnameLabels),...
+                        perturbationConfig,...
                         auroraConfig);
       
 end
@@ -229,7 +237,7 @@ for i=1:1:length(isometric)
     idx = idx+1;
     idxStr = getTrialIndexString(idx);
     
-    startLength = isometric(i).normLengths(1,1)+1;
+    startLength = isometric(i).normLength(1,1)+1;
     type        = 'isometric';
     takePhoto   = '';
     blockName   = 'Pre-injury';
@@ -278,6 +286,7 @@ for i=1:1:length(activeLengthRamp)
                         stochasticWaveSet,...
                         fullfile(codeDir,fname),...
                         fullfile(codeLabelDir,fnameLabels),...
+                        perturbationConfig,...
                         auroraConfig);
       
 end  

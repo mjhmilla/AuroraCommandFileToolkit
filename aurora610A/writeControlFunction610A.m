@@ -125,17 +125,17 @@ switch controlFunctionName
     case 'Stimulus-Twitch'
 
         smallestNextWaitTime   = 0;
-        commandDuration        = 0;
+        %commandDuration        = 0; just the wait time
 
     case 'Trigger'
 
         smallestNextWaitTime   = 0;
-        commandDuration        = 0;
+        %commandDuration        = 0; just the wait time
 
     case 'Stop'
 
         smallestNextWaitTime   = 0;
-        commandDuration        = 0;
+        %commandDuration        = 0; just the wait time
 
     otherwise
         assert(0, ['Error: ',controlFunctionName,...

@@ -1,6 +1,6 @@
 function [endTime, smallestNextWaitTime, lineCount] ...
     = writeLengthSineBlock610A( ...
-        fid,startTime,...
+        fid,startTime,waitTimeForBlock,...
         waitTimeVector,frequencyVector,lengthVector, durationVector,...
         lengthSineOptions,lineCount,auroraConfig)
 
@@ -13,11 +13,10 @@ for i=1:1:length(waitTimeVector)
     lengthSineOptions(1).value = frequencyVector(i,1);
     lengthSineOptions(2).value = lengthVector(i,1);
     lengthSineOptions(3).value = durationVector(i,1);
-
     waitTime = waitTimeVector(i,1);
 
-    if(i > 1 && smallestNextWaitTime > waitTime)
-        waitTime = smallestNextWaitTime;
+    if(i == 1 ) 
+        waitTime = waitTime + waitTimeForBlock;
     end
 
     

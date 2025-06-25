@@ -19,12 +19,17 @@ addpath(projectFolders.signals);
 % Script Configuration
 %%
 flag_generateRandomSignal   = 1;
+
+stochasticWaveSetType = 2;
+%1. Square + Sine waves with perturbation
+%2. Sine wave only, no perturbation
+
+
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
 ratMuscleName = 'EDL';
 muscleTemperatureInC = 12;
 sampleFrequency =1000;
-
 
 
 %%
@@ -100,7 +105,11 @@ auroraConfig = getDefaultAuroraConfiguration610A(...
 % Create the system identification vibration signal
 %   This is quite challenging because we are limited to 945 commands.
 %%
+
 if(flag_generateRandomSignal==1)
+
+
+    
     %%
     % Square
     %%
@@ -147,9 +156,11 @@ if(flag_generateRandomSignal==1)
             fullfile(projectFolders.output_plots,...
             'fig_randomSquareWave.fig'));    
 
+
     %%
     % Sine
     %%
+
     verbose=1;
     figSinePerturbation=figure;
 
@@ -169,6 +180,8 @@ if(flag_generateRandomSignal==1)
                                                 perturbationPlotConfig,...
                                                 verbose);
 
+    
+
     save(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'),...
          'sineStochasticWave','-mat');        
     save(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'),...
@@ -180,13 +193,17 @@ if(flag_generateRandomSignal==1)
     saveas(figSinePerturbation,fullfile(projectFolders.output_plots,...
                     'fig_randomSineWave'),'pdf');
     savefig(figSinePerturbation,fullfile(projectFolders.output_plots,...
-                    'fig_randomSineWave.fig'));      
+                    'fig_randomSineWave.fig'));  
+
 
 else
+
     load(fullfile(projectFolders.output_structs,'squareStochasticWave.mat'));
     load(fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat'));
+
     load(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'));
     load(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'));
+
     load(fullfile(projectFolders.output_structs,'configStochasticWave.mat'));
 end
 
@@ -196,48 +213,63 @@ end
 %%
 
 %
-% Put all of the stochastic waveforms into a struct: all of these
-% will be applied at the beginning and end of each trial
+% Package the stochastic waves into the set that will 
+% be applied to the specimen
 %
-lineCountStochastic = ...
-    length(squarePreconditioningWave.controlFunctions.waitDuration) ...
-  + length(squareStochasticWave.controlFunctions.waitDuration) ...
-  + length(sinePreconditioningWave.controlFunctions.waitDuration) ...
-  + length(sineStochasticWave.controlFunctions.waitDuration);
+
+switch stochasticWaveSetType
+    case 1
+        waveSet = {'squarePreconditioningWave','squareStochasticWave',...
+                   'sinePreconditioningWave','sineStochasticWave'};
+        stochasticWaves(4)...
+            =struct('controlFunction',[],'waitDuration',[],...
+                    'optionValues',[],'options',[],'type','');
+        
+    case 2
+        waveSet = {'sineStochasticWave'};
+        stochasticWaves(1)...
+            =struct('controlFunction',[],'waitDuration',[],...
+                    'optionValues',[],'options',[],'type','');        
+    otherwise
+        assert(0,'Error: stochasticWaveSetType incorrectly set');
+end
+
+controlFields = {'controlFunction','waitDuration','optionValues','options'};
+lineCountStochastic = 0;
+
+disp('Including stochastic waves:');
+for i=1:1:length(waveSet)
+    wave= [];
+    fprintf('\t%s\n',waveSet{i});
+    switch waveSet{i}
+        case 'squarePreconditioningWave'
+            wave = squarePreconditioningWave;
+        case 'squareStochasticWave'
+            wave = squareStochasticWave;
+        case 'sinePreconditioningWave'
+            wave = sinePreconditioningWave;
+        case 'sineStochasticWave'
+            wave = sineStochasticWave;
+        otherwise
+            assert(0,'Error: waveSet set incorrectly');
+    end
+
+    for j=1:1:length(controlFields)    
+        stochasticWaves(i).(controlFields{j}) = ...
+            squarePreconditioningWave.controlFunctions.(controlFields{j});
+        stochasticWaves(i).type = 'Length-Ramp-Preconditioning';
+        stochasticWaves(i).config=configStochasticWave;    
+    end
+    lineCountStochastic = lineCountStochastic ...
+        + size(wave.controlFunctions.optionValues,1);
+end
 
 assert(lineCountStochastic*2 < (auroraConfig.maximumNumberOfCommands + 40),...
       'Error: the number of perturbation commands is too high');
 
-stochasticWaves(4)=struct('controlFunction',[],'waitDuration',[],...
-                         'optionValues',[],'options',[],'type','');
-
-controlFields = {'controlFunction','waitDuration','optionValues','options'};
-
-for j=1:1:length(controlFields)
-    stochasticWaves(1).(controlFields{j}) = ...
-        squarePreconditioningWave.controlFunctions.(controlFields{j});
-    stochasticWaves(1).type = 'Length-Ramp-Preconditioning';
-    stochasticWaves(1).config=configStochasticWave;
-
-    stochasticWaves(2).(controlFields{j}) = ...
-        squareStochasticWave.controlFunctions.(controlFields{j});
-    stochasticWaves(2).type = 'Length-Ramp-Stochastic';
-    stochasticWaves(2).config=configStochasticWave;
-    
-    stochasticWaves(3).(controlFields{j}) = ...
-        sinePreconditioningWave.controlFunctions.(controlFields{j});
-    stochasticWaves(3).type = 'Length-Sine-Preconditioning';
-    stochasticWaves(3).config=configStochasticWave;
-    
-    stochasticWaves(4).(controlFields{j}) = ...
-        sineStochasticWave.controlFunctions.(controlFields{j});
-    stochasticWaves(4).type = 'Length-Sine-Stochastic';
-    stochasticWaves(4).config=configStochasticWave;
-    
-end
-
 
 success = createFiberInjuryExperiments610A(...        
                   stochasticWaves,...
+                  configStochasticWave,...                
                   auroraConfig,...
                   projectFolders);

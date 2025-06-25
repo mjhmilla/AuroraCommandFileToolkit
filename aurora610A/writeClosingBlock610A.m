@@ -1,9 +1,8 @@
 function [endTime, lineCount] = ...
-    writeClosingBlock610A(fid, startTime, lineCount, auroraConfig)
+    writeClosingBlock610A(fid, startTime, waitTime, lineCount, auroraConfig)
 
-disableOptions = getCommandFunctionOptions600A('Stop',auroraConfig);
+disableOptions = getCommandFunctionOptions610A('Stop','',auroraConfig);
 
-waitTime = 1;
 
 [smallestNextWaitTime, commandDuration]...
      = writeControlFunction610A(fid,...

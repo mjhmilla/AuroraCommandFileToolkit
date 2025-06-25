@@ -30,8 +30,6 @@ disp('  Note: Find the maximum of commands for the 300E');
 auroraConfig.maximumNumberOfCommands = 945;
 
 
-auroraConfig.activationTime = 0.5;
-
 auroraConfig.defaultLengthUnit      = 'mm';
 auroraConfig.defaultForceUnit       = 'mN';
 auroraConfig.defaultTimeUnit        = 's';
@@ -60,5 +58,21 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        ['Error: many functions in the 610 only accept seconds',... 
         ' seconds must be the default time unit']);
 
-auroraConfig.stimulation.frequencyHz=50;
+%
+auroraConfig.activationTime              = 0.5;
+auroraConfig.restTimeBetweenActivations   = 10;
+auroraConfig.activationTimeAfterMovement = 0.5;
+
+
+%Used for long active blocks
+auroraConfig.stimulation.frequencyHz =50;
 auroraConfig.stimulation.pulseWidthMs=5;
+auroraConfig.stimulation.maxDuration =5;
+
+%Used to probe the active tension of the muscle
+auroraConfig.twitch.frequencyHz = 70;
+auroraConfig.twitch.pulseWidthMs= 5;
+auroraConfig.twitch.duration    = 0.2;
+auroraConfig.twitch.restTimeAfterTwitch = 1;
+
+auroraConfig.stop.waitTime = 1;
