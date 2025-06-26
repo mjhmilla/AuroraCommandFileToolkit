@@ -1,7 +1,8 @@
 function success = createIsometricImpedanceTrial610A(...
                     stochasticWaveSet,...
                     trialFileFullPath,...
-                    trialBlockLabelFullPath,...                    
+                    trialBlockLabelFullPath,...    
+                    perturbationConfig,...
                     auroraConfig)
 
 
@@ -13,7 +14,7 @@ lineCount=0;
 [startTime,lineCount] = writePreamble610A(fid,lineCount,auroraConfig);
 
 %Perturb
-waitTimeForBlock = 0;
+waitTimeForBlock=0;
 
 for i=1:1:length(stochasticWaveSet)
     switch stochasticWaveSet(i).controlFunction
@@ -50,30 +51,22 @@ for i=1:1:length(stochasticWaveSet)
     end
 end
 
-
-%Twitch probe
-disp('createIsometricImpedanceTrials610A line 55: you are here, adding probe twitches');
-waitTime = 0;
-[stimulationEndTime, smallestNextWaitTime, lineCount] = ...
-    writeTwitchProbeBlock610A(fid, startTime, waitTime, lineCount, auroraConfig);
-
-waitTime = smallestNextWaitTime;
-
-
+%%
 %Activate
-waveDurationInS = 0;
+%%
 
+waveDurationInS = 0;
 for i=1:1:length(stochasticWaveSet)
-    waveDurationInS = waveDurationInS + ...
-        ( stochasticWaveSet(i).config.points...
-         /stochasticWaveSet(i).config.frequencyHz);
+    waveDurationInS = waveDurationInS ...
+         + (stochasticWaveSet(i).config.points...
+           /stochasticWaveSet(i).config.frequencyHz);
 end
 
 stimulationDurationInS = waveDurationInS ...
                         + auroraConfig.activationTime ...
-                        + auroraConfig.activationTimeAfterMovement;
+                        + auroraConfig.activationPaddingTime;
 
-
+waitTime=1;
 
 [stimulationEndTime, smallestNextWaitTime, lineCount] = ...
     writeStimulusTetanusBlock610A(fid, startTime, waitTime, stimulationDurationInS,...
@@ -82,8 +75,10 @@ stimulationDurationInS = waveDurationInS ...
 
 fprintf(fidLabel,'%s,%1.6f,%1.6f\n','Activation',startTime,stimulationEndTime);
 
+waitTimeForBlock=auroraConfig.activationTime;
 
 %Perturb
+startTimeBlock = startTime;
 for i=1:1:length(stochasticWaveSet)
 
     switch stochasticWaveSet(i).controlFunction
@@ -118,10 +113,17 @@ for i=1:1:length(stochasticWaveSet)
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
-
+    waitTimeForBlock = 0;
 end
 
-waitTime = auroraConfig.stop.waitTime;
+assert(abs((startTime-startTimeBlock)...
+          -(waveDurationInS+auroraConfig.activationTime)) < 1e-3,...
+        ['Error: duration of activationTime and the perturbation blocks do ',...
+        ' not add up']);
+
+waitTime =   auroraConfig.activationPaddingTime ...
+           + auroraConfig.restTimeBetweenActivations ...
+           + auroraConfig.stop.waitTime;
 
 [endTime, lineCount] = ...
     writeClosingBlock610A(fid, startTime,waitTime,lineCount, auroraConfig);
@@ -129,6 +131,10 @@ waitTime = auroraConfig.stop.waitTime;
 success = 1;
 assert(lineCount < auroraConfig.maximumNumberOfCommands,...
     'Error: maximumNumberOfCommandsExceeded');
+
+fprintf(fidLabel,'%s,%1.6f,%1.6f\n','Stop',...
+    (startTime+waitTime),endTime);
+
 
 fclose(fid);
 fclose(fidLabel);

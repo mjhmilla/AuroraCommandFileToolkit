@@ -60,8 +60,8 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
 
 %
 auroraConfig.activationTime              = 0.5;
-auroraConfig.restTimeBetweenActivations   = 10;
-auroraConfig.activationTimeAfterMovement = 0.5;
+auroraConfig.restTimeBetweenActivations  = 10;
+auroraConfig.activationPaddingTime       = 0.25;
 
 
 %Used for long active blocks

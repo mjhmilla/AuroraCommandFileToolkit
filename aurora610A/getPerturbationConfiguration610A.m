@@ -36,17 +36,20 @@ if(strcmp(auroraConfig.defaultTimeUnit,'ms'))
     config.waitTimeRange = config.waitTimeRange/1000;
 end
 
-config.duration    = ((config.points-1.5*config.frequencyHz) ...
-                      /config.frequencyHz);  
 
-config.paddingDuration  =  ((config.points/config.frequencyHz) ...
-                            -config.duration)*0.5;
+config.paddingDuration  = 0.25;
+
+config.duration    = ...
+       ((config.points-2*config.paddingDuration*config.frequencyHz) ...
+       /config.frequencyHz);  
+
+
 
 config.probe.frequencyHz = 20;
 config.probe.magnitude   = magnitude; 
 config.probe.cycles      = round(config.probe.frequencyHz*0.5);
 config.probe.duration    = (1/config.probe.frequencyHz)*config.probe.cycles;
-
+config.probe.type        = 'Probe-Length-Sine-Wave';
 
 dtMin = (config.duration+2*config.paddingDuration)/config.points;
 

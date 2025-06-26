@@ -44,11 +44,10 @@ timeVecDense(i,1)    =timeVecDense(i-1,1)+config.paddingDuration;
 signalVecDense(i,1)  =signalVecDense(i-1,1);
 
 j = 1;
-waitVec(j,1)      = auroraConfig.lengthStepResponseTime;
-frequencyVec(j,1) = 10;
+waitVec(j,1)      = 0;
+frequencyVec(j,1) = (1/config.paddingDuration);
 amplitudeVec(j,1) = 0;
-durationVec(j,1)  = config.paddingDuration*scaleControlFunctionTime...
-                           -auroraConfig.lengthStepResponseTime;
+durationVec(j,1)  = config.paddingDuration*scaleControlFunctionTime;
 cycleVec(j,1)     = 1;
 
 timeVecSum   = timeVecSum + waitVec(j,1) + durationVec(j,1);
@@ -139,10 +138,10 @@ signalVec = interp1(timeVecDense,signalVecDense,timeVec);
 paddingTime = endTime*scaleControlFunctionTime - timeVecSum;
 
 %padding interval
-waitVec(j,1)        = auroraConfig.lengthStepResponseTime;
-frequencyVec(j,1)   = 10;
+waitVec(j,1)        = 0;
 amplitudeVec(j,1)   = 0;
-durationVec(j,1)    = paddingTime-waitVec(j,1);
+durationVec(j,1)    = paddingTime;
+frequencyVec(j,1)   = 1/durationVec(j,1);
 cycleVec(j,1)       = 1;
 timeVecSum          = timeVecSum + waitVec(j,1) + durationVec(j,1);
 
