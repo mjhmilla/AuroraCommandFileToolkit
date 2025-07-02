@@ -1,14 +1,21 @@
-function [smallestNextWaitTime, commandDuration] = ...
-    writeControlFunction610A(   fid,...
-                                waitTimeInS,...
-                                controlFunctionName,...
-                                options,...
-                                auroraConfig)
+function programMetaData  = ...
+            writeControlFunction610A(   ...
+                fid,...
+                waitTimeInS,...
+                controlFunctionName,...
+                controlFunctionOptions,...
+                auroraConfig,...
+                programMetaData,...
+                flag_printMetaDataToFile)
 
-%options has fields of
-% value
-% unit
-% printUnit
+
+
+assert(waitTimeInS >= programMetaData.smallestNextWaitTime,...
+       ['Error: waitTimeInS is not larger than',...
+        ' programMetaData.smallestNextWaitTime']);
+
+
+startTime = programMetaData.nextStartTime;
 
 
 success= 0;
@@ -22,120 +29,155 @@ assert(strcmp(auroraConfig.defaultForceUnit,'mN'),...
 assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
         'Error: auroraConfig.defaultTimeUnit must be in mm');
 
-commandDuration = waitTimeInS;
+commandDuration = nan;
+nextStartTime   = nan;
 
 
 switch controlFunctionName
     case 'Step'
-        smallestNextWaitTime  = auroraConfig.lengthStepResponseTime;
-        commandDuration       = commandDuration ...
-                              + auroraConfig.lengthStepResponseTime;
+
+        smallestNextWaitTime  = auroraConfig.lengthStepResponseTime;        
+        commandDuration       = auroraConfig.lengthStepResponseTime;
+
+        nextStartTime   = startTime + waitTimeInS ...
+                        + commandDuration + smallestNextWaitTime;
 
     case 'Ramp'
         
-        assert(strcmp(options(2).type,'time'),...
+        assert(strcmp(controlFunctionOptions(2).type,'time'),...
                'Error: Expected a duration at this option index');
 
+        if(controlFunctionOptions(2).value ...
+                < auroraConfig.lengthStepResponseTime)
 
-        if(options(2).value < auroraConfig.lengthStepResponseTime)
-            commandDuration         = commandDuration ...
-                                    + auroraConfig.lengthStepResponseTime;
+            commandDuration         = auroraConfig.lengthStepResponseTime;
             smallestNextWaitTime    = auroraConfig.lengthStepResponseTime;
+
         else
-            commandDuration         = commandDuration + options(2).value;        
+            commandDuration         = controlFunctionOptions(2).value;        
             smallestNextWaitTime    = 0;            
         end
 
+        nextStartTime   = startTime + waitTimeInS ...
+                        + commandDuration + smallestNextWaitTime;
+
+
     case 'Sine Wave'
-        assert(strcmp(options(1).type,'frequency'),...
+        assert(strcmp(controlFunctionOptions(1).type,'frequency'),...
                'Error: Expected a frequency at this option index');
 
-        assert(strcmp(options(3).type,'cycles'),...
+        assert(strcmp(controlFunctionOptions(3).type,'cycles'),...
                'Error: Expected cycles at this option index');
 
 
 
-        f = options(1).value;
-        c = options(3).value;
+        f = controlFunctionOptions(1).value;
+        c = controlFunctionOptions(3).value;
         dtCycle = (1/f)*c;
 
 
         if(dtCycle < auroraConfig.lengthStepResponseTime)
-            commandDuration     = commandDuration ...
-                                + auroraConfig.lengthStepResponseTime ;
-            smallestNextWaitTime = auroraConfig.lengthStepResponseTime;
+            commandDuration     = auroraConfig.lengthStepResponseTime ;
+            smallestNextWaitTime= auroraConfig.lengthStepResponseTime;
+
         else
-            commandDuration         =  commandDuration + dtCycle;
+            commandDuration         = dtCycle;
             smallestNextWaitTime    = 0;
+
         end
+
+        nextStartTime   = startTime + waitTimeInS ...
+                        + commandDuration + smallestNextWaitTime;
+
 
 
     case 'Sum-Sine Wave'
 
-        assert(strcmp(options(5).type,'time'),...
+        assert(strcmp(controlFunctionOptions(5).type,'time'),...
                'Error: Expected time at this option index');
 
 
-        if(options(5).value < auroraConfig.lengthStepResponseTime)
-            commandDuration      = commandDuration ...
-                                 + auroraConfig.lengthStepResponseTime;
-            smallestNextWaitTime = auroraConfig.lengthStepResponseTime;                                 
+        if(controlFunctionOptions(5).value ...
+                < auroraConfig.lengthStepResponseTime)
+
+            commandDuration      = auroraConfig.lengthStepResponseTime;
+            smallestNextWaitTime = auroraConfig.lengthStepResponseTime; 
+
+            nextStartTime   = startTime + waitTimeInS ...
+                            + smallestNextWaitTime;                                
         else
-            commandDuration         = commandDuration + options(5).value;
+            commandDuration         = controlFunctionOptions(5).value;
             smallestNextWaitTime    = 0;
+            nextStartTime   = startTime + waitTimeInS ...
+                            + controlFunctionOptions(5).value;
         end
+        
+        nextStartTime   = startTime + waitTimeInS ...
+                        + commandDuration + smallestNextWaitTime;
+
         
 
     case 'Stimulus-Train'
 
-        assert(strcmp(options(1).type,'time'),...
+        assert(strcmp(controlFunctionOptions(1).type,'time'),...
                'Error: Expected a duration at this option index');
-        assert(strcmp(options(2).type,'frequency'),...
+        assert(strcmp(controlFunctionOptions(2).type,'frequency'),...
                'Error: Expected a frequency at this option index');
-        assert(strcmp(options(4).type,'pulses'),...
+        assert(strcmp(controlFunctionOptions(4).type,'pulses'),...
                'Error: Expected pulses at this option index');
-        assert(strcmp(options(5).type,'Hz'),...
+        assert(strcmp(controlFunctionOptions(5).type,'Hz'),...
                'Error: Expected Hz at this option index');
 
-        initialDelay    = options(1).value;
-        pulseFrequency  = options(2).value;
-        pulsesPerTrain  = options(4).value
-        trainFrequency  = options(5).value
+        initialDelay    = controlFunctionOptions(1).value;
+        pulseFrequency  = controlFunctionOptions(2).value;
+        pulsesPerTrain  = controlFunctionOptions(4).value;
+        trainFrequency  = controlFunctionOptions(5).value;
 
         smallestNextWaitTime = 0;
+        nextStartTime   = startTime + waitTimeInS;
 
         commandDuration = inf;
 
-
     case 'Stimulus-Tetanus'
 
-        assert(strcmp(options(1).type,'time'),...
+        assert(strcmp(controlFunctionOptions(1).type,'time'),...
                'Error: Expected a duration at this option index');
-        assert(strcmp(options(2).type,'frequency'),...
+        assert(strcmp(controlFunctionOptions(2).type,'frequency'),...
                'Error: Expected a frequency at this option index');
-        assert(strcmp(options(4).type,'time'),...
+        assert(strcmp(controlFunctionOptions(4).type,'time'),...
                'Error: Expected pulses at this option index');
 
-        initialDelay    = options(1).value;
-        timeDuration    = options(4).value;
+        initialDelay    = controlFunctionOptions(1).value;
+        timeDuration    = controlFunctionOptions(4).value;
 
         smallestNextWaitTime   = 0;
-        commandDuration        = commandDuration + initialDelay + timeDuration;
+        commandDuration        = initialDelay + timeDuration;
+
+        nextStartTime   = startTime + waitTimeInS;
+
 
     case 'Stimulus-Twitch'
 
         smallestNextWaitTime   = 0;
-        %commandDuration        = 0; just the wait time
+
+        initialDelay     = controlFunctionOptions(1).value;
+        pulseWidth       = controlFunctionOptions(2).value*0.001;
+
+        commandDuration  = initialDelay+pulseWidth;
+
+        nextStartTime   = startTime + waitTimeInS;
 
     case 'Trigger'
 
         smallestNextWaitTime   = 0;
-        %commandDuration        = 0; just the wait time
+        commandDuration        = 0; 
+        nextStartTime   = startTime + waitTimeInS;
 
     case 'Stop'
 
         smallestNextWaitTime   = 0;
-        %commandDuration        = 0; just the wait time
+        commandDuration        = 0; 
+        nextStartTime   = startTime + waitTimeInS;
 
     otherwise
         assert(0, ['Error: ',controlFunctionName,...
@@ -143,31 +185,98 @@ switch controlFunctionName
 end
 
 
-waitTimeStr = sprintf('%1.6f',waitTimeInS);
 
 
-if(length(options) > 0)
-    commandLine = sprintf('%s\t%s\t%s\t',waitTimeStr,controlFunctionName,options(1).port);
-else
-    commandLine = sprintf('%s\t%s',waitTimeStr,controlFunctionName);
+
+%%
+%Update the meta data struct
+%%
+
+programMetaData.controlFunction.startTime   = startTime + waitTimeInS;
+programMetaData.controlFunction.endTime     = startTime + waitTimeInS+commandDuration;
+programMetaData.controlFunction.duration    = commandDuration;
+
+programMetaData.startTime                   = startTime;
+programMetaData.nextStartTime               = nextStartTime;
+programMetaData.smallestNextWaitTime        = smallestNextWaitTime;
+
+programMetaData.lineCount                   = programMetaData.lineCount + 1;
+
+
+%%
+% Write the meta data
+%%
+
+
+if(flag_printMetaDataToFile)
+
+    %Stimulus-Twitch is a special case because it does not have a defined
+    %ending time.
+    if(strcmp(controlFunctionName,'Stimulus-Twitch'))
+
+        isStarting = 0;
+        for i=1:1:length(controlFunctionOptions)
+            if( abs(controlFunctionOptions(i).value) > 0)
+                isStarting = 1;
+            end
+        end
+        if(isStarting==1)
+            fprintf(programMetaData.labelFileHandle,'%s,%1.6f,\n',...
+                    controlFunctionName,...
+                    programMetaData.controlFunction.startTime);
+        else
+            fprintf(programMetaData.labelFileHandle,'%s,,%1.6f\n',...
+                    controlFunctionName,...
+                    programMetaData.controlFunction.startTime);
+        end
+
+    else
+        fprintf(programMetaData.labelFileHandle,'%s,%1.6f,%1.6f\n',...
+                controlFunctionName,...
+                programMetaData.controlFunction.startTime,...
+                programMetaData.controlFunction.endTime  );
+    end
+
 end
 
 
-if(isempty(options)==0)
-    for i=1:1:length(options)
+%%
+% Write the command
+%%
+
+waitTimeStr = sprintf('%1.6f',waitTimeInS);
 
 
-        unitStr = '';
-        valueStr = '';
-        switch options(i).type
+if(length(controlFunctionOptions) > 0)
+    commandLine = sprintf(  '%s\t%s\t%s\t',...
+                            waitTimeStr,...
+                            controlFunctionName,...
+                            controlFunctionOptions(1).port);
+else
+    commandLine = sprintf(  '%s\t%s',...
+                            waitTimeStr,...
+                            controlFunctionName);
+end
+
+
+
+
+
+if(isempty(controlFunctionOptions)==0)
+    for i=1:1:length(controlFunctionOptions)
+
+
+        unitStr     = '';
+        valueStr    = '';
+        switch controlFunctionOptions(i).type
 
             case 'time'
-                unitStr = options(i).unit;  
+                unitStr = controlFunctionOptions(i).unit;  
                 switch unitStr
                     case 'ms'
-                        valueStr = sprintf('%1.1f',options(i).value);
+                        valueStr = sprintf('%1.1f',controlFunctionOptions(i).value);
                     case 's'
-                        valueStr = sprintf('%1.6f',options(i).value);                    
+                        valueStr = sprintf('%1.6f',controlFunctionOptions(i).value);                    
                     otherwise 
                         assert(0,'Error: time unit must be ms or s');
                 end
@@ -175,48 +284,48 @@ if(isempty(options)==0)
 
 
             case 'length'
-                unitStr = options(i).unit;                    
-                if(options(i).isRelative==1)
-                    if(options(i).value >= 0)
-                        valueStr = sprintf('+%1.4f',options(i).value);
+                unitStr = controlFunctionOptions(i).unit;                    
+                if(controlFunctionOptions(i).isRelative==1)
+                    if(controlFunctionOptions(i).value >= 0)
+                        valueStr = sprintf('+%1.4f',controlFunctionOptions(i).value);
                     else
-                        valueStr = sprintf('%1.4f',options(i).value);
+                        valueStr = sprintf('%1.4f',controlFunctionOptions(i).value);
                     end
                 else
-                    valueStr = sprintf('%1.6f',options(i).value);                
+                    valueStr = sprintf('%1.6f',controlFunctionOptions(i).value);                
                 end
 
             case 'force'
-                unitStr = options(i).unit;                    
-                if(options(i).isRelative==1)
-                    if(options(i).value >= 0)
-                        valueStr = sprintf('+%1.4f',options(i).value);
+                unitStr = controlFunctionOptions(i).unit;                    
+                if(controlFunctionOptions(i).isRelative==1)
+                    if(controlFunctionOptions(i).value >= 0)
+                        valueStr = sprintf('+%1.4f',controlFunctionOptions(i).value);
                     else
-                        valueStr = sprintf('-%1.4f',options(i).value);
+                        valueStr = sprintf('-%1.4f',controlFunctionOptions(i).value);
                     end
                 else
-                    assert( options(i).value > 0, ...
+                    assert( controlFunctionOptions(i).value > 0, ...
                             'Error: an absolute force must be positive');                
-                    valueStr = sprintf('%1.6f',options(i).value);                
+                    valueStr = sprintf('%1.6f',controlFunctionOptions(i).value);                
                 end
 
             case 'frequency'
-                unitStr  = options(i).unit;  
+                unitStr  = controlFunctionOptions(i).unit;  
 
                 %Question: must all frequencies be whole number values?
-                valueStr = sprintf('%1.4f',options(i).value);            
+                valueStr = sprintf('%1.4f',controlFunctionOptions(i).value);            
 
 
             case 'cycles'
-                valueStr = sprintf('%1.4f',options(i).value);  
+                valueStr = sprintf('%1.4f',controlFunctionOptions(i).value);  
 
 
             case 'pulses'
-                valueStr = sprintf('%i',options(i).value);  
+                valueStr = sprintf('%i',controlFunctionOptions(i).value);  
 
 
             case 'integer'
-                valueStr = sprintf('%i',options(i).value);  
+                valueStr = sprintf('%i',controlFunctionOptions(i).value);  
 
         end
         
@@ -224,7 +333,7 @@ if(isempty(options)==0)
             valueStr=[',',valueStr];
         end
 
-        if(options(i).printUnit==1)
+        if(controlFunctionOptions(i).printUnit==1)
             commandLine = sprintf('%s%s %s',commandLine,valueStr,unitStr);
         else
             commandLine = sprintf('%s%s',commandLine,valueStr);
@@ -237,5 +346,7 @@ end
 
 
 fprintf(fid,'%s\n',commandLine);
+
+
 
 success= 1;

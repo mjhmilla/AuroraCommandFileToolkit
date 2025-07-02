@@ -59,7 +59,7 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
         ' seconds must be the default time unit']);
 
 %
-auroraConfig.activationTime              = 0.5;
+auroraConfig.timeToReachMaxActivation              = 0.5;
 auroraConfig.restTimeBetweenActivations  = 10;
 auroraConfig.activationPaddingTime       = 0.25;
 

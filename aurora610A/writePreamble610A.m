@@ -1,4 +1,5 @@
-function [endTime, lineCount] = writePreamble610A(fid,lineCount,auroraConfig)
+function programMetaData = writePreamble610A(fid,auroraConfig,...
+                                                programMetaData)
 
 
 fprintf(fid,'DMCv5.3 Protocol File\n');
@@ -9,7 +10,10 @@ fprintf(fid,'Output Sampling Frequency: %iHz\n',...
 fprintf(fid,'Protocol Type: Unitized\n');
 fprintf(fid,'Wait(s)    Then(action)    On(port)    Units   Parameters\n');
 
-endTime=0;
-lineCount=5;
+
+programMetaData.startTime                   = 0;
+programMetaData.nextStartTime               = 0;
+programMetaData.smallestNextWaitTime        = 0;
+programMetaData.lineCount                   = 5;
 
 
