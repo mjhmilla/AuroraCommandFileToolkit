@@ -3,6 +3,8 @@ function success = createMuscleInjuryExperiments610A( stochasticWaveSet,...
                                                       auroraConfig,...
                                                       projectFolders)
 
+seriesName = 'injury';
+
 %%
 % Check (some) of the inputs
 %%
@@ -29,7 +31,7 @@ passiveLengthRamp(2) = struct('wait',0,'waitPostRamp',0,...
 i=1;
 passiveLengthRamp(i).wait         = 1;
 passiveLengthRamp(i).waitPostRamp = 5; 
-passiveLengthRamp(i).normLengths  = [-0.4,0.4];
+passiveLengthRamp(i).normLengths  = [-0.35,0.35];
 passiveLengthRamp(i).lengths      = ...
     passiveLengthRamp(i).normLengths...
     .*auroraConfig.approximateSampleLengthInDefaultUnits;
@@ -42,7 +44,7 @@ passiveLengthRamp(i).type         = 'Passive-Length-Ramp';
 i=2;
 passiveLengthRamp(i).wait         = 1;
 passiveLengthRamp(i).waitPostRamp = 5;
-passiveLengthRamp(i).normLengths  = [-0.4,0.4];
+passiveLengthRamp(i).normLengths  = [-0.35,0.35];
 passiveLengthRamp(i).lengths      = ...
     passiveLengthRamp(i).normLengths...
     .*auroraConfig.approximateSampleLengthInDefaultUnits;
@@ -115,7 +117,35 @@ activeLengthRamp(i).options      = lengthRampOptions;
 activeLengthRamp(i).type         = 'Active-Lengthening';
 
 
+activeLengtheningInjury(2) = struct('wait',0,'waitPostRamp',0,...
+                    'lengths',[0,0],'lengthChange',0,...
+                    'velocity',0,'duration',0,'options',[],'type','');
 
+i=1;
+activeLengtheningInjury(i).wait         = 0;
+activeLengtheningInjury(i).normLengths  = [-0.1,0.5];
+activeLengtheningInjury(i).lengths      = ...
+    activeLengtheningInjury(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
+activeLengtheningInjury(i).lengthChange = diff(activeLengtheningInjury(i).lengths);
+activeLengtheningInjury(i).velocity     = (1/2)*auroraConfig.maximumRampSpeedInDefaultUnits;
+activeLengtheningInjury(i).duration     = activeLengtheningInjury(i).lengthChange ./ activeLengtheningInjury(i).velocity;
+activeLengtheningInjury(i).options      = lengthRampOptions;  
+activeLengtheningInjury(i).type         = 'Active-Lengthening-Injury';
+
+i=2;
+activeLengtheningInjury(i).wait         = 0;
+activeLengtheningInjury(i).normLengths  = [0.5,-0.1];
+activeLengtheningInjury(i).lengths      = ...
+    activeLengtheningInjury(i).normLengths ...
+    .*auroraConfig.approximateSampleLengthInDefaultUnits;
+activeLengtheningInjury(i).lengthChange = ...
+    diff(activeLengtheningInjury(i).lengths) ...
+    +activeLengtheningInjury(i-1).lengthChange;
+activeLengtheningInjury(i).velocity     = -(1/2)*activeLengtheningInjury(i-1).velocity;
+activeLengtheningInjury(i).duration     = activeLengtheningInjury(i-1).duration;
+activeLengtheningInjury(i).options      = lengthRampOptions;  
+activeLengtheningInjury(i).type         = 'Active-Lengthening-Injury';
 
 
 %%
@@ -172,7 +202,13 @@ fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s\n',...
     'Block','FileName','Comment');
 
 %%
-% 1. Starting isometric trial to see if the fiber is viable
+%
+% Characterization Block Round 1
+%
+%%
+
+%%
+% Starting isometric trial to see if the fiber is viable
 %%
 idx = 1;
 idxStr = getTrialIndexString(idx);
@@ -180,8 +216,8 @@ idxStr = getTrialIndexString(idx);
 startLength = 1;
 type        = 'isometric';
 blockName   = 'Pre-injury';
-fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
-fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
 
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -198,35 +234,29 @@ success = createIsometricImpedanceTrial610A(...
 %%
 % Block of passive trials
 %%
-flag_passiveTrialsReady = 0;
-
-if(flag_passiveTrialsReady==1)
-    for i=1:1:length(passiveLengthRamp)
-        idx=idx+1;
-        idxStr = getTrialIndexString(idx);
-        
-        startLength = passiveLengthRamp(i).normLengths(1,1)+1;
-        type        = 'passiveLengthening';
-        blockName   = 'Pre-injury';
-        fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
-        fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
-        
-        
-        fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
-            idxStr,type,startLength, blockName,fname,'');
-        
-           
+for i=1:1:length(passiveLengthRamp)
+    idx=idx+1;
+    idxStr = getTrialIndexString(idx);
     
-        %success = createActiveLengthRampImpedanceTrial610A(...
-        %                    isRampActive,...
-        %                    passiveLengthRamp(i),...
-        %                    stochasticWaveSet,...
-        %                    fullfile(codeDir,fname),...
-        %                    fullfile(codeLabelDir,fnameLabels),...
-        %                    perturbationConfig,...
-        %                    auroraConfig);
-          
-    end
+    startLength = passiveLengthRamp(i).normLengths(1,1)+1;
+    type        = 'passiveLengthening';
+    blockName   = 'Pre-injury';
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    
+    
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength, blockName,fname,'');
+    
+           
+    success = createPassiveLengthRampImpedanceTrial610A(...
+                    passiveLengthRamp(i),...
+                    stochasticWaveSet,...
+                    fullfile(codeDir,fname),...
+                    fullfile(codeLabelDir,fnameLabels),...
+                    perturbationConfig,...
+                    auroraConfig);
+      
 end
 
 %%
@@ -240,8 +270,8 @@ for i=1:1:length(isometric)
     type        = 'isometric';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
-    fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -270,8 +300,8 @@ for i=1:1:length(activeLengthRamp)
     end
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.dpf');
-    fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -288,6 +318,152 @@ for i=1:1:length(activeLengthRamp)
                         auroraConfig);
       
 end  
+
+
+%%
+%
+% Injury Trial
+%
+%%
+
+idx = idx+1;
+idxStr = getTrialIndexString(idx);
+
+startLength = activeLengtheningInjury(1).normLengths(1,1)+1;
+type        = 'injury';
+blockName   = 'Injury';
+fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+
+fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+    idxStr,type,startLength, blockName,fname,'');
+
+success = createActiveLengthRampSeriesTrial610A(...
+                    activeLengtheningInjury,...
+                    fullfile(codeDir,fname),...
+                    fullfile(codeLabelDir,fnameLabels),...
+                    auroraConfig);
+
+%%
+%
+% Characterization Block Round 2
+%
+%%
+
+
+
+%%
+% Starting isometric trial to see if the fiber is viable
+%%
+idx = idx+1;
+idxStr = getTrialIndexString(idx);
+
+startLength = 1;
+type        = 'isometric';
+blockName   = 'Pre-injury';
+fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+
+
+fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+    idxStr,type,startLength, blockName,fname,'');
+
+success = createIsometricImpedanceTrial610A(...
+                    stochasticWaveSet,...
+                    fullfile(codeDir,fname),...
+                    fullfile(codeLabelDir,fnameLabels),...
+                    perturbationConfig,...
+                    auroraConfig);
+  
+
+%%
+% Block of passive trials
+%%
+for i=1:1:length(passiveLengthRamp)
+    idx=idx+1;
+    idxStr = getTrialIndexString(idx);
+    
+    startLength = passiveLengthRamp(i).normLengths(1,1)+1;
+    type        = 'passiveLengthening';
+    blockName   = 'Pre-injury';
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    
+    
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength, blockName,fname,'');
+    
+           
+    success = createPassiveLengthRampImpedanceTrial610A(...
+                    passiveLengthRamp(i),...
+                    stochasticWaveSet,...
+                    fullfile(codeDir,fname),...
+                    fullfile(codeLabelDir,fnameLabels),...
+                    perturbationConfig,...
+                    auroraConfig);
+      
+end
+
+%%
+% Block of isometric trials
+%%
+for i=1:1:length(isometric)
+    idx = idx+1;
+    idxStr = getTrialIndexString(idx);
+    
+    startLength = isometric(i).normLength(1,1)+1;
+    type        = 'isometric';
+    takePhoto   = '';
+    blockName   = 'Pre-injury';
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    
+    
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength, blockName,fname,'');
+    
+    success = createIsometricImpedanceTrial610A(...
+                        stochasticWaveSet,...
+                        fullfile(codeDir,fname),...
+                        fullfile(codeLabelDir,fnameLabels),...
+                        perturbationConfig,...
+                        auroraConfig);
+end
+
+%%
+% Block of active ramp trials
+%%
+for i=1:1:length(activeLengthRamp)
+    idx=idx+1;
+    idxStr = getTrialIndexString(idx);
+    
+    startLength = activeLengthRamp(i).normLengths(1,1)+1;
+    if(activeLengthRamp(i).velocity > 0)
+        type        = 'activeLengthening';
+    else
+        type        = 'activeShortening';
+    end
+    takePhoto   = '';
+    blockName   = 'Pre-injury';
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    
+    
+    fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+        idxStr,type,startLength,blockName,fname,'');
+    
+       
+
+    success = createActiveLengthRampImpedanceTrial610A(...
+                        activeLengthRamp(i),...
+                        stochasticWaveSet,...
+                        fullfile(codeDir,fname),...
+                        fullfile(codeLabelDir,fnameLabels),...
+                        perturbationConfig,...
+                        auroraConfig);
+      
+end  
+
 
 
 

@@ -32,6 +32,8 @@ assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
 commandDuration = nan;
 nextStartTime   = nan;
 
+%auroraConfig.maximumLengthChangeInMM = 10;
+%auroraConfig.scaleLengthUnitsToMM = 1;
 
 switch controlFunctionName
     case 'Step'
@@ -294,6 +296,13 @@ if(isempty(controlFunctionOptions)==0)
                 else
                     valueStr = sprintf('%1.6f',controlFunctionOptions(i).value);                
                 end
+
+                lengthChange = controlFunctionOptions(i).value;
+                lengthChangeMM = lengthChange * auroraConfig.scaleLengthUnitsToMM;
+                assert(lengthChangeMM <= auroraConfig.maximumLengthChangeInMM,...
+                 ['Error: desired length change exceeds the maximum value of', ...
+                  sprintf('%1.1fmm',auroraConfig.maximumLengthChangeInMM)]);
+
 
             case 'force'
                 unitStr = controlFunctionOptions(i).unit;                    

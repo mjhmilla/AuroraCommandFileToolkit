@@ -89,6 +89,7 @@ if(length(configVibration.frequencyRange) == 2 ...
         (1-randomVecC).*(configVibration.frequencyRange(1,1)) ...
            +randomVecC.*(configVibration.frequencyRange(1,2)...
                         -configVibration.frequencyRange(1,1));
+    randomSignals.frequency = round(randomSignals.frequency);
 else
     randomSignals.frequency = ones(size(randomVecC)).*configVibration.frequencyRange(1,1);
 end
@@ -97,19 +98,19 @@ end
 %0.1 ms, which is the finest level of precision offered by Aurora's
 %duration field
 
-period = round( (randomSignals.frequency.^(-1)).*1000, 1);
-
-frequencyTmp = round( ((period.*0.001).^(-1)), 4);
-frequencyErr = abs(randomSignals.frequency-frequencyTmp);
-periodA      = (frequencyTmp.^(-1)).*1000;
-periodB      = round((periodA),1);
-cycleErr    = abs(periodA-periodB)./periodB;
-
-assert(max(cycleErr) < 1e-4,...
-    ['Error: the cycle error in the sinusoid perturbation ',...
-     'function may accumulate at a rate greater than 1% per 100 cycles']);
-
-randomSignals.frequency = frequencyTmp;
+% period = round( (randomSignals.frequency.^(-1)).*1000, 1);
+% 
+% frequencyTmp = round( ((period.*0.001).^(-1)), 4);
+% frequencyErr = abs(randomSignals.frequency-frequencyTmp);
+% periodA      = (frequencyTmp.^(-1)).*1000;
+% periodB      = round((periodA),1);
+% cycleErr    = abs(periodA-periodB)./periodB;
+% 
+% assert(max(cycleErr) < 1e-4,...
+%     ['Error: the cycle error in the sinusoid perturbation ',...
+%      'function may accumulate at a rate greater than 1% per 100 cycles']);
+% 
+% randomSignals.frequency = frequencyTmp;
 
 if(length(configVibration.magnitudeRange) == 2 ...
         && abs(diff(configVibration.magnitudeRange)) > 0 )

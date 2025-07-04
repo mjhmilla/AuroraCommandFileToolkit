@@ -25,6 +25,8 @@ auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 auroraConfig.lengthStepResponseTime = 0.002;  
 % Set to 2 x the length-step reponse time of the 305B and 305B-LR
 
+auroraConfig.maximumLengthChangeInMM = 10;
+auroraConfig.scaleLengthUnitsToMM = 1;
 
 disp('  Note: Find the maximum of commands for the 300E');
 auroraConfig.maximumNumberOfCommands = 945;
@@ -34,6 +36,8 @@ auroraConfig.defaultLengthUnit      = 'mm';
 auroraConfig.defaultForceUnit       = 'mN';
 auroraConfig.defaultTimeUnit        = 's';
 auroraConfig.defaultFrequencyUnit   = 'Hz';
+
+
 
 auroraConfig.approximateSampleLengthInDefaultUnits = ...
     approximateSampleLengthInMM;
@@ -57,6 +61,11 @@ auroraConfig.maximumRampSpeedInDefaultUnits = ...
 assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        ['Error: many functions in the 610 only accept seconds',... 
         ' seconds must be the default time unit']);
+
+%Passive properties
+auroraConfig.passive.recoveryTime = 10;
+%Amount of time needed for the enhanced passive force to subside
+%after lengthening the muscle passively
 
 %
 auroraConfig.timeToReachMaxActivation              = 0.5;

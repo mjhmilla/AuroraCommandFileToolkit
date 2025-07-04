@@ -2,6 +2,8 @@ function success = createFiberInjuryExperiments600A(  stochasticWaveSet,...
                                                       projectFolders,...                                                                                                            
                                                       auroraConfig)
 
+
+seriesName = 'injury';
 %%
 % Check (some) of the inputs
 %%
@@ -163,8 +165,8 @@ startLength = 1;
 type        = 'isometric';
 takePhoto   = 'Yes';
 blockName   = 'Pre-injury';
-fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
-fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
+fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
 
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -189,8 +191,8 @@ for i=1:1:length(passiveLengthRamp)
     type        = 'passiveLengthening';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -220,8 +222,8 @@ for i=1:1:length(isometric)
     type        = 'isometric';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -249,8 +251,8 @@ for i=1:1:length(activeLengthRamp)
     end
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
