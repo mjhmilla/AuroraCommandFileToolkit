@@ -1,9 +1,13 @@
 function auroraConfig =  getDefaultAuroraConfiguration610A(...                            
                             sampleFrequencyHz,...
-                            approximateSampleLengthInMM,...                            
+                            approximateSampleLengthInMM,...                                                        
                             maxNormalizedSpeedLPS)
 
 disp('Aurora Configuration for the 3EE');
+
+
+auroraConfig.approximateSampleLengthInDefaultUnits = ...
+    approximateSampleLengthInMM;
 
 
 %https://aurorascientific.com/products/muscle-physiology/controllers-levers-transducers/300e-dual-mode-muscle-levers/
@@ -39,8 +43,6 @@ auroraConfig.defaultFrequencyUnit   = 'Hz';
 
 
 
-auroraConfig.approximateSampleLengthInDefaultUnits = ...
-    approximateSampleLengthInMM;
 
 if(strcmp(auroraConfig.defaultLengthUnit,'m'))
     auroraConfig.approximateSampleLengthInDefaultUnits = ...
@@ -61,6 +63,9 @@ auroraConfig.maximumRampSpeedInDefaultUnits = ...
 assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        ['Error: many functions in the 610 only accept seconds',... 
         ' seconds must be the default time unit']);
+
+%Duration of pre/post trial positioning length ramps
+auroraConfig.prePostPositioningDuration = 1;
 
 %Passive properties
 auroraConfig.passive.recoveryTime = 10;

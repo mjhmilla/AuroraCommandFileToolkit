@@ -12,7 +12,7 @@ projectFolders = getProjectFolders(rootDir);
 addpath(projectFolders.aurora);
 addpath(projectFolders.aurora610A);
 addpath(projectFolders.postprocessing);
-addpath(projectFolders.experiments);
+addpath(projectFolders.common);
 addpath(projectFolders.signals);
 
 %%
@@ -23,6 +23,9 @@ flag_generateRandomSignal   = 1;
 stochasticWaveSetType = 2;
 %1. Square + Sine waves with perturbation
 %2. Sine wave only, no perturbation
+disp('Check on the 1200A: Length-Ramp is an absolute length change.');
+disp('                  : If so, the current Length-Ramp perturbations');
+disp('                  : will not function correctly.');
 
 
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;

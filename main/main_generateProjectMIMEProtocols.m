@@ -10,7 +10,7 @@ projectFolders = getProjectFolders(rootDir);
 
 addpath(projectFolders.aurora);
 addpath(projectFolders.postprocessing);
-addpath(projectFolders.experiments);
+addpath(projectFolders.common);
 addpath(projectFolders.signals);
 %%
 % Script Configuration

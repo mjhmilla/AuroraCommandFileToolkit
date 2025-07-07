@@ -12,7 +12,7 @@ projectFolders = getProjectFolders(rootDir);
 addpath(projectFolders.aurora);
 addpath(projectFolders.aurora600A);
 addpath(projectFolders.postprocessing);
-addpath(projectFolders.experiments);
+addpath(projectFolders.common);
 addpath(projectFolders.signals);
 
 %%

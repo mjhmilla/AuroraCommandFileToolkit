@@ -42,8 +42,8 @@ projectFolders.aurora610A  = fullfile(rootProjectDirectoryFullPath,'aurora610A' 
 projectFolders.signals  = fullfile(rootProjectDirectoryFullPath,'signals' );   
 
 projectFolders.output  = fullfile(rootProjectDirectoryFullPath,'output' );  
-projectFolders.experiments  = ...
-                    fullfile(rootProjectDirectoryFullPath,'experiments' );  
+projectFolders.common  = ...
+                    fullfile(rootProjectDirectoryFullPath,'common' );  
 projectFolders.postprocessing  ...
                 = fullfile(rootProjectDirectoryFullPath,'postprocessing' );  
 
