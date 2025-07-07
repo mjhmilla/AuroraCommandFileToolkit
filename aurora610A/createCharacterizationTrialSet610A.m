@@ -1,4 +1,4 @@
-function idx = createCharacterizationExperiments610A(...
+function idx = createCharacterizationTrialSet610A(...
                     startingIndex,...
                     isometricConfig,...
                     passiveLengthRampConfig,...
@@ -112,6 +112,10 @@ for i=1:1:length(activeLengthRampConfig)
     idx=idx+1;
     idxStr = getTrialIndexString(idx);
     
+    if(idx==15)
+        here=1;
+    end
+
     startLength = activeLengthRampConfig(i).normLengths(1,1)+1;
     if(activeLengthRampConfig(i).velocity > 0)
         type        = 'activeLengthening';
