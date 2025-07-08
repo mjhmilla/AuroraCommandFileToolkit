@@ -89,7 +89,10 @@ if(length(configVibration.frequencyRange) == 2 ...
         (1-randomVecC).*(configVibration.frequencyRange(1,1)) ...
            +randomVecC.*(configVibration.frequencyRange(1,2)...
                         -configVibration.frequencyRange(1,1));
-    randomSignals.frequency = round(randomSignals.frequency);
+
+    period = randomSignals.frequency.^(-1);
+    periodMS = round(period,3);           
+    randomSignals.frequency = periodMS.^(-1);
 else
     randomSignals.frequency = ones(size(randomVecC)).*configVibration.frequencyRange(1,1);
 end

@@ -19,6 +19,9 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
+sampleFrequency         = 1000;
+
+
 muscleName = 'EDL'; %'EDL', or 'SOL';
 
 specimenId = 1;
@@ -37,9 +40,7 @@ disp('                  : will not function correctly.');
 
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
-ratMuscleName           = 'EDL';
-muscleTemperatureInC    = 12;
-sampleFrequency         = 1000;
+
 
 
 %%

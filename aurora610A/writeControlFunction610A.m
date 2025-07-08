@@ -205,41 +205,7 @@ programMetaData.smallestNextWaitTime        = smallestNextWaitTime;
 programMetaData.lineCount                   = programMetaData.lineCount + 1;
 
 
-%%
-% Write the meta data
-%%
 
-
-if(flag_printMetaDataToFile)
-
-    %Stimulus-Twitch is a special case because it does not have a defined
-    %ending time.
-    if(strcmp(controlFunctionName,'Stimulus-Twitch'))
-
-        isStarting = 0;
-        for i=1:1:length(controlFunctionOptions)
-            if( abs(controlFunctionOptions(i).value) > 0)
-                isStarting = 1;
-            end
-        end
-        if(isStarting==1)
-            fprintf(programMetaData.labelFileHandle,'%s,%1.6f,\n',...
-                    controlFunctionName,...
-                    programMetaData.controlFunction.startTime);
-        else
-            fprintf(programMetaData.labelFileHandle,'%s,,%1.6f\n',...
-                    controlFunctionName,...
-                    programMetaData.controlFunction.startTime);
-        end
-
-    else
-        fprintf(programMetaData.labelFileHandle,'%s,%1.6f,%1.6f\n',...
-                controlFunctionName,...
-                programMetaData.controlFunction.startTime,...
-                programMetaData.controlFunction.endTime  );
-    end
-
-end
 
 
 %%
@@ -263,7 +229,7 @@ end
 
 
 
-
+valueStr = '-';
 if(isempty(controlFunctionOptions)==0)
     for i=1:1:length(controlFunctionOptions)
 
@@ -352,6 +318,56 @@ if(isempty(controlFunctionOptions)==0)
 
 end
 
+
+%%
+% Write the meta data
+%%
+
+
+if(flag_printMetaDataToFile)
+
+    portName = '-';
+    if(length(controlFunctionOptions) > 0)
+        portName = controlFunctionOptions(1).port;
+    end
+    idx=strfind(commandLine,char(9));
+    idx=idx+1;
+    commandLineShort = commandLine(1,idx:end);
+
+    %Stimulus-Twitch is a special case because it does not have a defined
+    %ending time.    
+    if(strcmp(controlFunctionName,'Stimulus-Twitch'))
+
+        isStarting = 0;
+        for i=1:1:length(controlFunctionOptions)
+            if( abs(controlFunctionOptions(i).value) > 0)
+                isStarting = 1;
+            end
+        end
+        if(isStarting==1)
+            fprintf(programMetaData.labelFileHandle,'%s,%s,%1.6f,,\"%s\"\n',...
+                    controlFunctionName,...
+                    portName,...
+                    programMetaData.controlFunction.startTime,...
+                    commandLineShort);
+        else
+            fprintf(programMetaData.labelFileHandle,'%s,%s,,%1.6f,\"%s\"\n',...
+                    controlFunctionName,...
+                    portName,...
+                    programMetaData.controlFunction.startTime,...
+                    commandLineShort);
+        end
+
+    else
+        fprintf(programMetaData.labelFileHandle,'%s,%s,%1.6f,%1.6f,\"%s\"\n',...
+                controlFunctionName,...
+                portName,...
+                programMetaData.controlFunction.startTime,...
+                programMetaData.controlFunction.endTime  ,...
+                commandLineShort);
+    end
+
+end
 
 
 fprintf(fid,'%s\n',commandLine);

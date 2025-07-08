@@ -346,7 +346,7 @@ fnameLabels = getTrialName(seriesName,idx,typeOfTrial,[],[dateId,'_labels'],'.cs
 
 
 fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s\n',...
-    idxStr,typeOfTrial,'-', blockName,fname,'See instruction 6 and 7');
+    idxStr,typeOfTrial,'0mm', blockName,fname,'See instruction 6 and 7');
 
 fid                 = fopen(fullfile(     codeDir,fname      ),'w');
 fullFilePathLabels  = fullfile(codeLabelDir,fnameLabels);
@@ -409,14 +409,14 @@ programMetaData = ...
 idx=idx+1;
 
 idxStr          = getTrialIndexString(idx);
-startingLength  = expConfig.normalization.forceVelocity.lengthsMM(1,1)+1;
+startingLength  = expConfig.normalization.forceVelocity.lengthsMM(1,1);
 typeOfTrial     = 'forceVelocity';
 blockName       = 'normalization';
 
 fname       = getTrialName(seriesName,idx,typeOfTrial,startingLength,dateId,'.dpf');
 fnameLabels = getTrialName(seriesName,idx,typeOfTrial,startingLength,[dateId,'_labels'],'.csv');
 
-fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
+fprintf(fidProtocol,'%s,%s,%1.1fmm,%s,%s,%s\n',...
     idxStr,typeOfTrial,startingLength, blockName,fname,'See instruction 9');
 
 fid                 = fopen(fullfile(     codeDir,fname      ),'w');
