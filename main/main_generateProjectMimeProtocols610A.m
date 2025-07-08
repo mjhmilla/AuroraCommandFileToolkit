@@ -13,11 +13,18 @@ addpath(projectFolders.aurora);
 addpath(projectFolders.aurora610A);
 addpath(projectFolders.postprocessing);
 addpath(projectFolders.common);
+addpath(projectFolders.experiments);
 addpath(projectFolders.signals);
 
 %%
 % Script Configuration
 %%
+muscleName = 'EDL'; %'EDL', or 'SOL';
+
+specimenId = 1;
+measuredMuscleParams = ...
+    getProjectMimeSpecimenMetaDataExperiments610A(specimenId);
+
 flag_generateRandomSignal   = 1;
 
 stochasticWaveSetType = 2;
@@ -30,9 +37,9 @@ disp('                  : will not function correctly.');
 
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
-ratMuscleName = 'EDL';
-muscleTemperatureInC = 12;
-sampleFrequency =1000;
+ratMuscleName           = 'EDL';
+muscleTemperatureInC    = 12;
+sampleFrequency         = 1000;
 
 
 %%
@@ -46,16 +53,43 @@ sampleFrequency =1000;
 % Transactions on Biomedical Engineering, vol. 58, no. 12, pp. 
 % 3328-3338, Dec. 2011, doi: 10.1109/TBME.2011.2106784. 
 
-g2N      = 9.81*0.001;
-edlParams.fisoN     = 225*g2N;   %225g 
-edlParams.lceOptMM  = 13.7;      %mm 
-edlParams.vceNMax   = 243/edlParams.lceOptMM; %Lo/s  
-edlParams.alphaOpt  = deg2rad(10);
-edlParams.ltSlkMM   = 9;         %mm
-edlParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
-
-perturbation.magnitude = 0.01*edlParams.lceOptMM;
+g2N                 = 9.81*0.001;
+switch muscleName
+    case 'EDL'
+        muscleParams.fisoN     = 265*g2N;   %225g 
+        muscleParams.lceOptMM  = 13.7;      %mm 
+        muscleParams.vceMaxLPS   = 243/muscleParams.lceOptMM; %Lo/s  
+        muscleParams.alphaOpt  = deg2rad(10);
+        muscleParams.ltSlkMM   = 9;         %mm
+        muscleParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
+    case 'SOL'
+        muscleParams.fisoN     = 234*g2N;   %225g 
+        muscleParams.lceOptMM  = 16.0;      %mm 
+        muscleParams.vceMaxLPS = 89/muscleParams.lceOptMM; %Lo/s  
+        muscleParams.alphaOpt  = deg2rad(4);
+        muscleParams.ltSlkMM   = 9.5;         %mm
+        muscleParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
+    otherwise
+        assert(0,'Error: Invalid muscle name');
+end
+perturbation.magnitude = 0.01*muscleParams.lceOptMM;
 perturbation.unit = 'mm';
+
+lceOptMM = nan;
+vceMaxLPS = nan;
+if(isempty(measuredMuscleParams.lceOptMM)==0)
+    lceOptMM = measuredMuscleParams.lceOptMM;
+else
+    lceOptMM = muscleParams.lceOptMM;
+end
+
+if(isempty(measuredMuscleParams.vceMaxMMPS)==0 ...
+    && isempty(measuredMuscleParams.lceOptMM)==0)
+    vceMaxLPS = measuredMuscleParams.vceMaxMMPS ...
+               /measuredMuscleParams.lceOptMM;
+else
+    vceMaxLPS = muscleParams.vceMaxLPS;
+end
 
 %%
 % Plot Configuration
@@ -86,18 +120,18 @@ plotConfig.plotHeight                       = 6;
 
 [subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
 
-
+%%
+% Exp Config
+%%
+expConfig = getDefaultExperimentConfiguration610A();
 
 %%
 % Aurora configuration
 %%
-
-
-
 auroraConfig = getDefaultAuroraConfiguration610A(...
                     sampleFrequency,...    
-                    edlParams.lceOptMM,...
-                    edlParams.vceNMax);
+                    lceOptMM,...
+                    vceMaxLPS);
 
 %%
 % System identification perturbation signal configuration
@@ -276,14 +310,21 @@ assert(lineCountStochastic*2 < (auroraConfig.maximumNumberOfCommands + 40),...
       'Error: the number of perturbation commands is too high');
 
 
+success = constructNormalizationExperiments610A(...
+                        auroraConfig,...
+                        expConfig,...
+                        projectFolders);
+
 success = constructInjuryExperiments610A(...        
                   stochasticWaves,...
                   configStochasticWave,...                
                   auroraConfig,...
+                  expConfig,...
                   projectFolders);
 
 success = constructCharacterizationExperiments610A(...        
                   stochasticWaves,...
                   configStochasticWave,...                
                   auroraConfig,...
+                  expConfig,...
                   projectFolders);

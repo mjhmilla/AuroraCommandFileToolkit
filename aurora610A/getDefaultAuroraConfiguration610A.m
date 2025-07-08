@@ -73,7 +73,7 @@ auroraConfig.passive.recoveryTime = 10;
 %after lengthening the muscle passively
 
 %
-auroraConfig.timeToReachMaxActivation              = 0.5;
+auroraConfig.timeToReachMaxActivation    = 0.5;
 auroraConfig.restTimeBetweenActivations  = 10;
 auroraConfig.activationPaddingTime       = 0.25;
 
@@ -82,6 +82,7 @@ auroraConfig.activationPaddingTime       = 0.25;
 auroraConfig.stimulation.frequencyHz =50;
 auroraConfig.stimulation.pulseWidthMs=5;
 auroraConfig.stimulation.maxDuration =5;
+auroraConfig.stimulation.minDuration =1;
 
 %Used to probe the active tension of the muscle
 auroraConfig.twitch.frequencyHz = 70;

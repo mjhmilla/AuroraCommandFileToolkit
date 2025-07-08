@@ -1,9 +1,13 @@
-function success = constructInjuryExperiments610A( stochasticWaveSet,...
-                                                      perturbationConfig,...    
-                                                      auroraConfig,...
-                                                      projectFolders)
+function success = constructInjuryExperiments610A(  ...
+                        stochasticWaveSet,...
+                        perturbationConfig,...    
+                        auroraConfig,...
+                        expConfig,...
+                        projectFolders)
+
 
 seriesName = 'injury';
+disp('constructInjuryExperiments610A running');
 
 %%
 % Check (some) of the inputs
@@ -18,7 +22,7 @@ assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
 %%
 lengthRampOptions=getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
-passiveLengthRampConfigConfig(2) =      ...
+passiveLengthRampConfig(2) =      ...
     struct( 'wait',0,'waitPostRamp',0,...
             'normLengths',[0,0],'normLengthChange',0, 'endNormLength', 0, ...    
             'lengths',[0,0],'lengthChange',0, 'endLength',0,...
@@ -58,79 +62,83 @@ activeLengtheningInjury(1) = ...
 %
 
 
-i=1;
-passiveLengthRampConfig(i).wait         = 1;
-passiveLengthRampConfig(i).waitPostRamp = 5; 
-passiveLengthRampConfig(i).normLengths  = [-0.35,0.35];
-passiveLengthRampConfig(i).normLengthChange = ...
-    diff(passiveLengthRampConfig(i).normLengths);
+assert(length(passiveLengthRampConfig) ...
+        == length(expConfig.passive.normVelocityRange),...
+        ['Error: Length of passiveLengthRampConfig and ',...
+         'expConfig.passive.normVelocityRange do not match']);
+
+for i=1:1:length(passiveLengthRampConfig)
+
+    passiveLengthRampConfig(i).wait         = 1;
+    passiveLengthRampConfig(i).waitPostRamp = 5; 
+    passiveLengthRampConfig(i).normLengths  = expConfig.passive.normLengths;
+    passiveLengthRampConfig(i).normLengthChange = ...
+        diff(passiveLengthRampConfig(i).normLengths);
 
 
-passiveLengthRampConfig(i).lengths      = ...
-    passiveLengthRampConfig(i).normLengths...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
+    passiveLengthRampConfig(i).lengths      = ...
+        passiveLengthRampConfig(i).normLengths...
+        .*auroraConfig.approximateSampleLengthInDefaultUnits;
 
-passiveLengthRampConfig(i).lengthChange = ...
-    diff(passiveLengthRampConfig(i).lengths);
-
-passiveLengthRampConfig(i).velocity     = ...
-    (1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-passiveLengthRampConfig(i).duration     = ...
-    passiveLengthRampConfig(i).lengthChange ...
-    ./ passiveLengthRampConfig(i).velocity;
+    passiveLengthRampConfig(i).lengthChange = ...
+        diff(passiveLengthRampConfig(i).lengths);
 
 
-passiveLengthRampConfig(i).endNormLength = 0;
-passiveLengthRampConfig(i).endLength     = ...
-    passiveLengthRampConfig(i).endNormLength ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
+    passiveLengthRampConfig(i).velocity     = ...
+                expConfig.passive.normVelocityRange(1,i)...
+                *auroraConfig.maximumRampSpeedInDefaultUnits;        
 
-passiveLengthRampConfig(i).options      = lengthRampOptions;  
-passiveLengthRampConfig(i).type         = 'Passive-Length-Ramp';
-
-i=2;
-passiveLengthRampConfig(i).wait         = 1;
-passiveLengthRampConfig(i).waitPostRamp = 5;
-passiveLengthRampConfig(i).normLengths  = [-0.35,0.35];
-passiveLengthRampConfig(i).normLengthChange = ...
-    diff(passiveLengthRampConfig(i).normLengths);
-
-passiveLengthRampConfig(i).lengths      = ...
-    passiveLengthRampConfig(i).normLengths...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-passiveLengthRampConfig(i).lengthChange = ...
-    diff(passiveLengthRampConfig(i).lengths);
-
-passiveLengthRampConfig(i).velocity     = ...
-    (2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-
-passiveLengthRampConfig(i).duration     = ...
-    passiveLengthRampConfig(i).lengthChange ...
-    ./ passiveLengthRampConfig(i).velocity;
-
-passiveLengthRampConfig(i).endNormLength = 0;
-passiveLengthRampConfig(i).endLength     = ...
-    passiveLengthRampConfig(i).endNormLength ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-
-passiveLengthRampConfig(i).options      = lengthRampOptions;  
-passiveLengthRampConfig(i).type         = 'Passive-Length-Ramp';
+    passiveLengthRampConfig(i).duration     = ...
+        passiveLengthRampConfig(i).lengthChange ...
+        ./ passiveLengthRampConfig(i).velocity;
 
 
+    passiveLengthRampConfig(i).endNormLength = expConfig.endNormLength;
+    passiveLengthRampConfig(i).endLength     = ...
+        passiveLengthRampConfig(i).endNormLength ...
+        .*auroraConfig.approximateSampleLengthInDefaultUnits;
+
+    passiveLengthRampConfig(i).options      = lengthRampOptions;  
+    passiveLengthRampConfig(i).type         = 'Passive-Length-Ramp';
+
+end
+
+%%
+% Isometric
+%%
+
+
+n=length(isometricConfig);
+n01 = [0:(1/(n-1)):1]';
+
+flag_optimalLengthTested=0;
+
+
+normLengths = zeros(length(isometricConfig),1);
+for i=1:1:length(isometricConfig)
+    normLength(i,1) = expConfig.isometric.normLengthRange(1,1).*(1-n01(i,1)) ...
+                    + expConfig.isometric.normLengthRange(1,2).*(n01(i,1)); 
+end
+
+normLength = [normLength;0];
+normLength = unique(sort(normLength));
+
+if(length(normLength) > length(isometricConfig))
+    n = length(normLength);
+    isometricConfig(n) =  ...            
+        struct( 'normLengths',[0],...        
+                'endNormLength',0,...
+                'lengths',[0],...
+                'endLength',0,...
+                'options',[],...
+                'type','');%,'port','');    
+end
+
+flag_normLengthTested = 0;
 
 for i=1:1:length(isometricConfig)
-    normLength = nan;
-    switch i 
-        case 1
-            normLength = -0.4;
-        case 2
-            normLength = 0;
-        case 3
-            normLength = 0.4;
-        otherwise
-            assert(0,'Error: isometric case not defined');
-    end
-    isometricConfig(i).normLengths = normLength;
+
+    isometricConfig(i).normLengths = normLength(i,1);
     isometricConfig(i).lengths = ...
         isometricConfig(i).normLengths...
             *auroraConfig.approximateSampleLengthInDefaultUnits;
@@ -143,7 +151,12 @@ for i=1:1:length(isometricConfig)
     isometricConfig(i).options = lengthRampOptions;
     isometricConfig(i).type = 'Isometric';
 
+    if(abs(normLength(i,1))<1e-6)
+        flag_normLengthTested=1;
+    end
 end
+
+assert(flag_normLengthTested==1,'Error: the optimal length is not tested');
 
 %
 % Active-lengthening ramp
@@ -153,182 +166,113 @@ end
 %                    'lengths',[0,0],'lengthChange',0,...
 %                    'velocity',0,'duration',0,'options',[],'type','');
 
-i=1;
-activeLengthRampConfig(i).wait         = auroraConfig.timeToReachMaxActivation;
-activeLengthRampConfig(i).normLengths  = [0.1,-0.1];
-activeLengthRampConfig(i).normLengthChange = diff(activeLengthRampConfig(i).normLengths);
+assert(length(activeLengthRampConfig) == ...
+        length(expConfig.activeRamp.normVelocityRange),...
+        ['Error: Number of trials in expConfig.activeRamp.normVelocityRange ',...
+         'does not match the size of activeLengthRampConfig']);
 
-activeLengthRampConfig(i).lengths      = ...
-    activeLengthRampConfig(i).normLengths ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
+assert(length(activeLengthRampConfig) == ...
+        size(expConfig.activeRamp.normLengthRange,1),...
+        ['Error: Number of trials in expConfig.activeRamp.normLengthRange ',...
+         'does not match the size of activeLengthRampConfig']);
 
-activeLengthRampConfig(i).lengthChange = diff(activeLengthRampConfig(i).lengths);
-activeLengthRampConfig(i).velocity     = -(1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-activeLengthRampConfig(i).duration     = activeLengthRampConfig(i).lengthChange ./ activeLengthRampConfig(i).velocity;
 
-activeLengthRampConfig(i).endLength = 0;
-activeLengthRampConfig(i).endNormLength = ...
-        activeLengthRampConfig(i).endLength ...
+k=1;
+
+for j=1:1:4
+
+    normLengths = expConfig.activeRamp.normLengthRange(j,:);
+    velocity    = expConfig.activeRamp.normVelocityRange(j,1) ...
+                 *auroraConfig.maximumSpeedInDefaultUnits;
+
+    activeLengthRampConfig(k).wait              = ...
+        auroraConfig.timeToReachMaxActivation;
+
+
+    activeLengthRampConfig(k).normLengths       = normLengths;
+    activeLengthRampConfig(k).normLengthChange  = ...
+        diff(activeLengthRampConfig(k).normLengths);
+
+    activeLengthRampConfig(k).lengths      = ...
+        activeLengthRampConfig(k).normLengths ...
         .*auroraConfig.approximateSampleLengthInDefaultUnits;
 
-activeLengthRampConfig(i).options      = lengthRampOptions;  
-activeLengthRampConfig(i).type         = 'Active-Shortening';
+    activeLengthRampConfig(k).lengthChange = ...
+        diff(activeLengthRampConfig(k).lengths);
+    activeLengthRampConfig(k).velocity     = velocity;
+    activeLengthRampConfig(k).duration     = ...
+        activeLengthRampConfig(k).lengthChange ...
+        ./ activeLengthRampConfig(k).velocity;
 
-i=i+1;
-activeLengthRampConfig(i).wait         = auroraConfig.timeToReachMaxActivation;
-activeLengthRampConfig(i).normLengths  = [0.1,-0.1];
-activeLengthRampConfig(i).normLengthChange = diff(activeLengthRampConfig(i).normLengths);
+    activeLengthRampConfig(k).endLength         = expConfig.endNormLength;
+    activeLengthRampConfig(k).endNormLength     = ...
+            activeLengthRampConfig(k).endLength ...
+            .*auroraConfig.approximateSampleLengthInDefaultUnits;
 
-activeLengthRampConfig(i).lengths      = ...
-    activeLengthRampConfig(i).normLengths ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-activeLengthRampConfig(i).lengthChange = diff(activeLengthRampConfig(i).lengths);
-
-activeLengthRampConfig(i).velocity     = -(2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-activeLengthRampConfig(i).duration     = activeLengthRampConfig(i).lengthChange ./ activeLengthRampConfig(i).velocity;
-
-activeLengthRampConfig(i).endLength = 0;
-activeLengthRampConfig(i).endNormLength = ...
-        activeLengthRampConfig(i).endLength ...
-        .*auroraConfig.approximateSampleLengthInDefaultUnits;
-
-activeLengthRampConfig(i).options      = lengthRampOptions;  
-activeLengthRampConfig(i).type         = 'Active-Shortening';
-
-i=i+1;
-activeLengthRampConfig(i).wait         = auroraConfig.timeToReachMaxActivation;
-activeLengthRampConfig(i).normLengths  = [-0.1,0.1];
-activeLengthRampConfig(i).normLengthChange = diff(activeLengthRampConfig(i).normLengths);
-
-activeLengthRampConfig(i).lengths      = ...
-    activeLengthRampConfig(i).normLengths ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-activeLengthRampConfig(i).lengthChange = diff(activeLengthRampConfig(i).lengths);
-
-activeLengthRampConfig(i).velocity     = (1/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-activeLengthRampConfig(i).duration     = activeLengthRampConfig(i).lengthChange ./ activeLengthRampConfig(i).velocity;
-
-activeLengthRampConfig(i).endLength = 0;
-activeLengthRampConfig(i).endNormLength = ...
-        activeLengthRampConfig(i).endLength ...
-        .*auroraConfig.approximateSampleLengthInDefaultUnits;
-
-activeLengthRampConfig(i).options      = lengthRampOptions;  
-activeLengthRampConfig(i).type         = 'Active-Lengthening';
-
-i=i+1;
-activeLengthRampConfig(i).wait         = auroraConfig.timeToReachMaxActivation;
-activeLengthRampConfig(i).normLengths  = [-0.1,0.1];
-activeLengthRampConfig(i).normLengthChange = diff(activeLengthRampConfig(i).normLengths);
-
-activeLengthRampConfig(i).lengths      = ...
-    activeLengthRampConfig(i).normLengths ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-activeLengthRampConfig(i).lengthChange = diff(activeLengthRampConfig(i).lengths);
-
-activeLengthRampConfig(i).velocity     = (2/3)*auroraConfig.maximumRampSpeedInDefaultUnits;
-activeLengthRampConfig(i).duration     = activeLengthRampConfig(i).lengthChange ./ activeLengthRampConfig(i).velocity;
-
-activeLengthRampConfig(i).endLength = 0;
-activeLengthRampConfig(i).endNormLength = ...
-        activeLengthRampConfig(i).endLength ...
-        .*auroraConfig.approximateSampleLengthInDefaultUnits;
-
-activeLengthRampConfig(i).options      = lengthRampOptions;  
-activeLengthRampConfig(i).type         = 'Active-Lengthening';
+    activeLengthRampConfig(k).options           = lengthRampOptions;  
+    if(velocity > 0)
+        activeLengthRampConfig(k).type = 'Active-Lengthening';
+    else
+        activeLengthRampConfig(k).type = 'Active-Shortening';
+    end
+    k=k+1;
+end
 
 %
 % Active-lengthening injury
 %
 
-i=1;
-activeLengtheningInjury(i).wait         = [0,0,0];
-activeLengtheningInjury(i).normLengths  = [-0.1,0.5,-0.1];
-activeLengtheningInjury(i).normLengthChange = diff(activeLengtheningInjury(i).normLengths);
+assert( size(expConfig.activeInjury.normLengthRange,1) ...
+         == length(activeLengtheningInjury), ...
+       ['Error: rows in expConfig.activeInjury.normLengthRange ',...
+        'should match length of activeLengtheningInjury']);
 
-activeLengtheningInjury(i).lengths      = ...
-    activeLengtheningInjury(i).normLengths ...
-    .*auroraConfig.approximateSampleLengthInDefaultUnits;
-activeLengtheningInjury(i).lengthChange = diff(activeLengtheningInjury(i).lengths);
+assert( size(expConfig.activeInjury.normVelocityRange,1) ...
+         == length(activeLengtheningInjury), ...
+       ['Error: rows in expConfig.activeInjury.normLengthRange ',...
+        'should match length of activeLengtheningInjury']);
 
-activeLengtheningInjury(i).velocity     = ...
-    [(1/2)*auroraConfig.maximumRampSpeedInDefaultUnits,...
-    -(1/2)*auroraConfig.maximumRampSpeedInDefaultUnits];
 
-activeLengtheningInjury(i).duration     = ...
-    activeLengtheningInjury(i).lengthChange ...
-    ./ activeLengtheningInjury(i).velocity;
+for i=1:1:length(activeLengtheningInjury)
+    activeLengtheningInjury(i).wait         = ...
+        zeros(size(expConfig.activeInjury.normLengthRange));
 
-activeLengtheningInjury(i).endLength = 0;
-activeLengtheningInjury(i).endNormLength = ...
-        activeLengtheningInjury(i).endLength ...
+    activeLengtheningInjury(i).normLengths  = ...
+        expConfig.activeInjury.normLengthRange(i,:);
+
+    activeLengtheningInjury(i).normLengthChange = ...
+        diff(activeLengtheningInjury(i).normLengths);
+
+    activeLengtheningInjury(i).lengths      = ...
+        activeLengtheningInjury(i).normLengths ...
         .*auroraConfig.approximateSampleLengthInDefaultUnits;
 
-activeLengtheningInjury(i).options      = lengthRampOptions;  
-activeLengtheningInjury(i).type         = 'Active-Lengthening-Injury';
+    activeLengtheningInjury(i).lengthChange = ...
+        diff(activeLengtheningInjury(i).lengths);
 
+    activeLengtheningInjury(i).velocity     = ...
+        expConfig.activeInjury.normVelocityRange(i,:) ...
+            .*auroraConfig.maximumRampSpeedInDefaultUnits;
+
+    activeLengtheningInjury(i).duration     = ...
+        activeLengtheningInjury(i).lengthChange ...
+        ./ activeLengtheningInjury(i).velocity;
+
+    activeLengtheningInjury(i).endLength = 0;
+    activeLengtheningInjury(i).endNormLength = ...
+            activeLengtheningInjury(i).endLength ...
+            .*auroraConfig.approximateSampleLengthInDefaultUnits;
+
+    activeLengtheningInjury(i).options      = lengthRampOptions;  
+    activeLengtheningInjury(i).type         = 'Active-Lengthening-Injury';
+end
 
 
 %%
 %Make the output folders, if necessary
 %%
-[y,m,d] = datevec(date());
-
-yStr = int2str(y);
-mStr = int2str(m);
-dStr = int2str(d);
-if(length(mStr)<2)
-    mStr = ['0',mStr];
-end
-if(length(dStr)<2)
-    dStr = ['0',dStr];
-end
-dateId = [yStr,mStr,dStr];
-
-dateDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
-codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A'],seriesName);
-codeLabelDir    = fullfile(projectFolders.output_code,[dateId,'_610A'],seriesName,'segmentLabels');
-
-
-fileFolderList=dir(projectFolders.output_code);
-
-dateDirExists=0;
-for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir ...
-            && strcmp(fileFolderList(i).name,[dateId,'_610A']))
-        dateDirExists=1;
-    end
-end
-
-if(dateDirExists==0)
-    mkdir(dateDir);
-end
-
-codeDirExists  = 0;
-fileFolderList = dir(dateDir);
-codeDirExists  = 0;
-for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir ...
-        && strcmp(fileFolderList(i).name,seriesName))
-        codeDirExists=1;
-    end
-end
-
-if(codeDirExists==0)
-    mkdir(codeDir);
-end
-
-codeLabelDirExists=0;   
-fileFolderList=dir(codeDir);
-for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir ...
-        && strcmp(fileFolderList(i).name,'segmentLabels'))
-        codeLabelDirExists=1;
-    end
-end
-if(codeLabelDirExists==0)
-    mkdir(codeLabelDir);
-end
+[dateId, dateDir, codeDir, codeLabelDir] = ...
+    makeExperimentSeriesFolders(seriesName, projectFolders);
 
 %%
 % 
@@ -373,13 +317,13 @@ idx = createCharacterizationTrialSet610A( ...
 idxStr = getTrialIndexString(idx);
 
 startLength = activeLengtheningInjury(1).normLengths(1,1)+1;
-type        = 'injury';
+typeOfTrial = 'injury';
 blockName   = 'Injury';
-fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
-fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialName(seriesName,idx,typeOfTrial,startLength,dateId,'.dpf');
+fnameLabels = getTrialName(seriesName,idx,typeOfTrial,startLength,[dateId,'_labels'],'.csv');
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
-    idxStr,type,startLength, blockName,fname,'');
+    idxStr,typeOfTrial,startLength, blockName,fname,'');
 
 success = createActiveLengthRampSeriesTrial610A(...
                     activeLengtheningInjury,...

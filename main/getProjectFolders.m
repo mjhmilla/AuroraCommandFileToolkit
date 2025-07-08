@@ -44,6 +44,9 @@ projectFolders.signals  = fullfile(rootProjectDirectoryFullPath,'signals' );
 projectFolders.output  = fullfile(rootProjectDirectoryFullPath,'output' );  
 projectFolders.common  = ...
                     fullfile(rootProjectDirectoryFullPath,'common' );  
+projectFolders.experiments  = ...
+                    fullfile(rootProjectDirectoryFullPath,'experiments' );  
+
 projectFolders.postprocessing  ...
                 = fullfile(rootProjectDirectoryFullPath,'postprocessing' );  
 
