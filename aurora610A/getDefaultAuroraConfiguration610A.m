@@ -1,13 +1,14 @@
-function auroraConfig =  getDefaultAuroraConfiguration610A(...                            
+function auroraConfig =  getDefaultAuroraConfiguration610A(...    
+                            unitSystem,...                        
                             sampleFrequencyHz,...
-                            approximateSampleLengthInMM,...                                                        
+                            specimenLceOptInMM,...                                                        
                             maxNormalizedSpeedLPS)
 
 disp('Aurora Configuration for the 3EE');
 
 
 auroraConfig.approximateSampleLengthInDefaultUnits = ...
-    approximateSampleLengthInMM;
+    specimenLceOptInMM;
 
 
 %https://aurorascientific.com/products/muscle-physiology/controllers-levers-transducers/300e-dual-mode-muscle-levers/
@@ -15,7 +16,7 @@ auroraConfig.approximateSampleLengthInDefaultUnits = ...
 
 auroraConfig.maximumRampSpeedInLPS = maxNormalizedSpeedLPS;
 auroraConfig.maximumRampSpeedInMPS = ...
-    maxNormalizedSpeedLPS*(approximateSampleLengthInMM/1000);
+    maxNormalizedSpeedLPS*(specimenLceOptInMM/1000);
 
 disp('  Note: Find the maximum Length-Ramp speed of the 300E');
 auroraConfig.maximumSpeedInMPS = auroraConfig.maximumRampSpeedInMPS;
@@ -36,28 +37,50 @@ disp('  Note: Find the maximum of commands for the 300E');
 auroraConfig.maximumNumberOfCommands = 945;
 
 
-auroraConfig.defaultLengthUnit      = 'mm';
-auroraConfig.defaultForceUnit       = 'mN';
-auroraConfig.defaultTimeUnit        = 's';
-auroraConfig.defaultFrequencyUnit   = 'Hz';
+auroraConfig.unitSystem = unitSystem;
+
+switch unitSystem
+    case 'mm_mN_s_Hz'
+        auroraConfig.defaultLengthUnit      = 'mm';
+        auroraConfig.defaultForceUnit       = 'mN';
+        auroraConfig.defaultTimeUnit        = 's';
+        auroraConfig.defaultFrequencyUnit   = 'Hz';
+
+        auroraConfig.approximateSampleLengthInDefaultUnits = ...
+            specimenLceOptInMM/1000;
+
+        auroraConfig.maximumSpeedInDefaultUnits = ...
+            auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
+
+        auroraConfig.maximumRampSpeedInDefaultUnits = ...
+            auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
+
+        auroraConfig.maximumLengthChangeInDefaultUnits = ...
+            auroraConfig.maximumLengthChangeInMM;
+        auroraConfig.scaleLengthUnitsToMM = 1;            
+
+    case 'Ref_s_Hz'
+        auroraConfig.defaultLengthUnit      = 'Ref';
+        auroraConfig.defaultForceUnit       = 'Ref';
+        auroraConfig.defaultTimeUnit        = 's';
+        auroraConfig.defaultFrequencyUnit   = 'Hz';
+
+        auroraConfig.approximateSampleLengthInDefaultUnits = 1;
+
+        auroraConfig.maximumSpeedInDefaultUnits = ...
+            auroraConfig.maximumRampSpeedInLPS;
+
+        auroraConfig.maximumRampSpeedInDefaultUnits = ...
+            auroraConfig.maximumRampSpeedInLPS;
+
+        auroraConfig.maximumLengthChangeInDefaultUnits = ...
+            auroraConfig.maximumLengthChangeInMM ...
+            ./ specimenLceOptInMM;
+        auroraConfig.scaleLengthUnitsToMM = specimenLceOptInMM;            
 
 
-
-
-if(strcmp(auroraConfig.defaultLengthUnit,'m'))
-    auroraConfig.approximateSampleLengthInDefaultUnits = ...
-        approximateSampleLengthInMM/1000;
 end
 
-auroraConfig.scaleFrequencyUnit     = 1; %To put it in cycles/millisecond 
-
-auroraConfig.useRelativeUnits       = 1;
-
-auroraConfig.maximumSpeedInDefaultUnits = ...
-    auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
-
-auroraConfig.maximumRampSpeedInDefaultUnits = ...
-    auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
 
 
 assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...

@@ -15,8 +15,11 @@ disp('constructCharacterizationExperiments610A running');
 success=0;
 assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        'Error: printed time values configured for s only.');
-assert(strcmp(auroraConfig.defaultLengthUnit,'mm'),...
-      'Error: Assumed length unit is mm');
+
+assert(   strcmp(auroraConfig.defaultLengthUnit,'mm') ...
+       || strcmp(auroraConfig.defaultLengthUnit,'Ref'),...
+      'Error: Assumed length unit is mm or Ref');
+
 %%
 %Experiment configuration
 %%
@@ -295,11 +298,16 @@ end
 
 [dateId, dateDir, codeDir, codeLabelDir] = ...
     makeExperimentSeriesFolders(seriesName, projectFolders);
+
 %%
-% 
+% Protocol data
 %%
 
 fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
+
+fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s\n',...
+    'unit_system',auroraConfig.unitSystem,'',...
+    '','','');
 
 fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s\n',...
     'Number','Type','Starting_Length_Lo',...

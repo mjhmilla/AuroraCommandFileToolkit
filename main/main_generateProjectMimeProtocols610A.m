@@ -19,18 +19,19 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
-sampleFrequency         = 1000;
-
-
 muscleName = 'EDL'; %'EDL', or 'SOL';
 
-specimenId = 1;
-measuredMuscleParams = ...
-    getProjectMimeSpecimenMetaDataExperiments610A(specimenId);
 
+sampleFrequency         = 1000;
+unitSystem = 'Ref_s_Hz'; %Alternative: 'mm_mN_s_Hz'
+
+measuredMuscleParams.lceOptMM   = [];
+measuredMuscleParams.vceMaxMMPS = [];
+
+normPerturbationLength      = 0.01;
 flag_generateRandomSignal   = 1;
+stochasticWaveSetType       = 2;
 
-stochasticWaveSetType = 2;
 %1. Square + Sine waves with perturbation
 %2. Sine wave only, no perturbation
 disp('Check on the 1200A: Length-Ramp is an absolute length change.');
@@ -73,8 +74,9 @@ switch muscleName
     otherwise
         assert(0,'Error: Invalid muscle name');
 end
-perturbation.magnitude = 0.01*muscleParams.lceOptMM;
-perturbation.unit = 'mm';
+
+
+
 
 lceOptMM = nan;
 vceMaxLPS = nan;
@@ -91,6 +93,21 @@ if(isempty(measuredMuscleParams.vceMaxMMPS)==0 ...
 else
     vceMaxLPS = muscleParams.vceMaxLPS;
 end
+
+%%
+% Perturbation settings
+%%
+switch unitSystem
+    case 'mm_mN_s_Hz'
+        perturbation.magnitude = normPerturbationLength*muscleParams.lceOptMM;
+        perturbation.unit = 'mm';
+    case 'Ref_s_Hz'
+        perturbation.magnitude = normPerturbationLength;
+        perturbation.unit = 'Ref';
+    otherwise
+        assert(0,'Error: unrecognized unit settings');
+end     
+
 
 %%
 % Plot Configuration
@@ -129,20 +146,34 @@ expConfig = getDefaultExperimentConfiguration610A();
 %%
 % Aurora configuration
 %%
+
+%During normalization the specimen parameters are not known
+auroraConfigNormalization = getDefaultAuroraConfiguration610A(...
+                                'mm_mN_s_Hz',...
+                                sampleFrequency,...    
+                                lceOptMM,...
+                                vceMaxLPS);
+
+%After normalization, the other unit systems can be used
 auroraConfig = getDefaultAuroraConfiguration610A(...
+                    unitSystem,...
                     sampleFrequency,...    
                     lceOptMM,...
                     vceMaxLPS);
 
 %%
+% Generate the normalization trials
+%%
+success = constructNormalizationExperiments610A(...
+                        auroraConfigNormalization,...
+                        expConfig,...
+                        projectFolders);
+
+
+%%
 % System identification perturbation signal configuration
 %%
 
-
-%%
-% Create the system identification vibration signal
-%   This is quite challenging because we are limited to 945 commands.
-%%
 
 if(flag_generateRandomSignal==1)
 
@@ -311,10 +342,6 @@ assert(lineCountStochastic*2 < (auroraConfig.maximumNumberOfCommands + 40),...
       'Error: the number of perturbation commands is too high');
 
 
-success = constructNormalizationExperiments610A(...
-                        auroraConfig,...
-                        expConfig,...
-                        projectFolders);
 
 success = constructInjuryExperiments610A(...        
                   stochasticWaves,...
