@@ -10,10 +10,12 @@ function programMetaData  = ...
 
 
 
-assert(waitTimeInS >= programMetaData.smallestNextWaitTime,...
+%initialWaitTimeInS = waitTimeInS;
+%initialSmallestNextWaitTime = programMetaData.smallestNextWaitTime;
+
+assert(waitTimeInS >= programMetaData.smallestNextWaitTime, ...
        ['Error: waitTimeInS is not larger than',...
         ' programMetaData.smallestNextWaitTime']);
-
 
 startTime = programMetaData.nextStartTime;
 
@@ -205,9 +207,6 @@ programMetaData.nextStartTime               = nextStartTime;
 programMetaData.smallestNextWaitTime        = smallestNextWaitTime;
 
 programMetaData.lineCount                   = programMetaData.lineCount + 1;
-
-
-
 
 
 %%

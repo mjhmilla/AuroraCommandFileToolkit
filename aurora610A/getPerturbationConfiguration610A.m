@@ -43,9 +43,11 @@ config.duration    = ...
        ((config.points-2*config.paddingDuration*config.frequencyHz) ...
        /config.frequencyHz);  
 
+probeFrequency  = 20;
+probePeriod     = round(1/probeFrequency,3);
+probeFrequency  = 1/probePeriod;
 
-
-config.probe.frequencyHz = 20;
+config.probe.frequencyHz = probeFrequency;
 config.probe.magnitude   = magnitude; 
 config.probe.cycles      = round(config.probe.frequencyHz*0.5);
 config.probe.duration    = (1/config.probe.frequencyHz)*config.probe.cycles;

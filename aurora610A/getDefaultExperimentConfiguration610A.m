@@ -1,8 +1,8 @@
 function expConfig = getDefaultExperimentConfiguration610A()
 
 
-expConfig.normalization.forceVelocity.lengthsMM = [   1,-1;...
-                                                     -1, 1];
+expConfig.normalization.forceVelocity.lengthsMM = [   0,-2;...
+                                                     -2, 0];
 
 expConfig.normalization.forceVelocity.forceRampDurationS = [1;nan];
 expConfig.normalization.forceVelocity.forceRampForceMN   = [1;nan];

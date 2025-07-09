@@ -23,20 +23,23 @@ muscleName = 'EDL'; %'EDL', or 'SOL';
 
 
 sampleFrequency         = 1000;
-unitSystem = 'Ref_s_Hz'; %Alternative: 'mm_mN_s_Hz'
+unitSystem = 'mm_mN_s_Hz'; %Alternative: 'mm_mN_s_Hz'
+
+assert(strcmp(unitSystem,'Ref_s_Hz')==0, ...
+   ['Error: Cannot use Ref_s_Hz because this unit system does not work',...
+    ' properly on the 1200A']);
 
 measuredMuscleParams.lceOptMM   = [];
 measuredMuscleParams.vceMaxMMPS = [];
 
 normPerturbationLength      = 0.01;
+stochasticWaveScalesToTest = [0.5,1,2,4,8];
 flag_generateRandomSignal   = 1;
-stochasticWaveSetType       = 2;
 
 %1. Square + Sine waves with perturbation
-%2. Sine wave only, no perturbation
-disp('Check on the 1200A: Length-Ramp is an absolute length change.');
-disp('                  : If so, the current Length-Ramp perturbations');
-disp('                  : will not function correctly.');
+%2. Sine wave only, no perturbation: do not use: ramps are in absolute
+%   coordinates
+stochasticWaveSetType       = 2;
 
 
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
@@ -94,12 +97,17 @@ else
     vceMaxLPS = muscleParams.vceMaxLPS;
 end
 
+disp('Generating dpf files for:');
+disp(muscleName);
+fprintf('%1.1f mm\tlceOpt\n',lceOptMM);
+fprintf('%1.1f mm\tvceMaxLPS\n',vceMaxLPS);
+
 %%
 % Perturbation settings
 %%
 switch unitSystem
     case 'mm_mN_s_Hz'
-        perturbation.magnitude = normPerturbationLength*muscleParams.lceOptMM;
+        perturbation.magnitude = normPerturbationLength*lceOptMM;
         perturbation.unit = 'mm';
     case 'Ref_s_Hz'
         perturbation.magnitude = normPerturbationLength;
@@ -162,19 +170,8 @@ auroraConfig = getDefaultAuroraConfiguration610A(...
                     vceMaxLPS);
 
 %%
-% Generate the normalization trials
-%%
-success = constructNormalizationExperiments610A(...
-                        auroraConfigNormalization,...
-                        expConfig,...
-                        projectFolders);
-
-
-%%
 % System identification perturbation signal configuration
 %%
-
-
 if(flag_generateRandomSignal==1)
 
 
@@ -277,10 +274,6 @@ else
 end
 
 
-%%
-% Generate the injury experiment protocol files
-%%
-
 %
 % Package the stochastic waves into the set that will 
 % be applied to the specimen
@@ -341,6 +334,21 @@ end
 assert(lineCountStochastic*2 < (auroraConfig.maximumNumberOfCommands + 40),...
       'Error: the number of perturbation commands is too high');
 
+
+%%
+% Generate the normalization trials
+%%
+success = constructNormalizationExperiments610A(...
+                        stochasticWaveScalesToTest,...
+                        stochasticWaves,...
+                        configStochasticWave,...                    
+                        auroraConfigNormalization,...
+                        expConfig,...
+                        projectFolders);
+
+%%
+% Generate the injury experiment protocol files
+%%
 
 
 success = constructInjuryExperiments610A(...        

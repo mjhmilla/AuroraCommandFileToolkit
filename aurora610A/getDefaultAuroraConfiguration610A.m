@@ -15,11 +15,11 @@ auroraConfig.approximateSampleLengthInDefaultUnits = ...
 %We are using the 300E
 
 auroraConfig.maximumRampSpeedInLPS = maxNormalizedSpeedLPS;
-auroraConfig.maximumRampSpeedInMPS = ...
-    maxNormalizedSpeedLPS*(specimenLceOptInMM/1000);
+auroraConfig.maximumRampSpeedInMMPS = ...
+    maxNormalizedSpeedLPS*(specimenLceOptInMM);
 
 disp('  Note: Find the maximum Length-Ramp speed of the 300E');
-auroraConfig.maximumSpeedInMPS = auroraConfig.maximumRampSpeedInMPS;
+auroraConfig.maximumSpeedInMMPS = auroraConfig.maximumRampSpeedInMMPS;
 auroraConfig.maximumSpeedInLPS = auroraConfig.maximumRampSpeedInLPS;
 
 
@@ -47,13 +47,13 @@ switch unitSystem
         auroraConfig.defaultFrequencyUnit   = 'Hz';
 
         auroraConfig.approximateSampleLengthInDefaultUnits = ...
-            specimenLceOptInMM/1000;
+            specimenLceOptInMM;
 
         auroraConfig.maximumSpeedInDefaultUnits = ...
-            auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
+            auroraConfig.maximumRampSpeedInMMPS; %mm/s
 
         auroraConfig.maximumRampSpeedInDefaultUnits = ...
-            auroraConfig.maximumRampSpeedInMPS*1000; %mm/s
+            auroraConfig.maximumRampSpeedInMMPS; %mm/s
 
         auroraConfig.maximumLengthChangeInDefaultUnits = ...
             auroraConfig.maximumLengthChangeInMM;
