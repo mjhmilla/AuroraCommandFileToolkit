@@ -12,11 +12,20 @@ if(isempty(startingLength)==0)
         lengthStr = ['0',lengthStr];
     end
 
-    trialName = [seriesName,'_',trialNumberStr,'_',trialType,...
-                      '_',lengthStr,'Lo_',nameId,extensionStr];
+    if(isempty(seriesName))
+        trialName = [trialNumberStr,'_',trialType,...
+                          '_',lengthStr,'Lo_',nameId,extensionStr];
+    else
+        trialName = [seriesName,'_',trialNumberStr,'_',trialType,...
+                          '_',lengthStr,'Lo_',nameId,extensionStr];
+    end
 
 else
-    trialName = [seriesName,'_',trialNumberStr,'_',trialType,...
-                 '_',nameId,extensionStr];
-
+    if(isempty(seriesName))
+        trialName = [trialNumberStr,'_',trialType,...
+                     '_',nameId,extensionStr];
+    else
+        trialName = [seriesName,'_',trialNumberStr,'_',trialType,...
+                     '_',nameId,extensionStr];
+    end
 end

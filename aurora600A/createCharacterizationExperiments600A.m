@@ -1,9 +1,13 @@
-function success = createFiberInjuryExperiments600A(  stochasticWaveSet,...
+function indexEnd = createCharacterizationExperiments600A(  seriesName,...
+                                                      indexStart,...
+                                                      stochasticWaveSet,...
                                                       projectFolders,...                                                                                                            
-                                                      auroraConfig)
+                                                      auroraConfig,...
+                                                      fidProtocol,...
+                                                      writeProtocolHeader)
 
 
-seriesName = 'injury';
+%seriesName = 'injury';
 %%
 % Check (some) of the inputs
 %%
@@ -105,68 +109,31 @@ activeLengthRamp(i).type         = 'Active-Lengthening';
 %%
 %Make the output folders, if necessary
 %%
-[y,m,d] = datevec(date());
+[codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders);
 
-yStr = int2str(y);
-mStr = int2str(m);
-dStr = int2str(d);
-if(length(mStr)<2)
-    mStr = ['0',mStr];
-end
-if(length(dStr)<2)
-    dStr = ['0',dStr];
-end
-dateId = [yStr,mStr,dStr];
 
-codeDir         = fullfile(projectFolders.output_code,[dateId,'_600A']);
-codeLabelDir    = fullfile(projectFolders.output_code,[dateId,'_600A'],'segmentLabels');
-
-fileFolderList=dir(projectFolders.output_code);
-codeDirExists=0;
-for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,'_600A']))
-        codeDirExists=1;
-    end
-end
-
-if(codeDirExists==1)
-    codeLabelDirExists=0;   
-    fileFolderList=dir(codeDir);
-    for i=1:1:length(fileFolderList)
-        if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,'segmentLabels'))
-            codeLabelDirExists=1;
-        end
-    end
-    if(codeLabelDirExists==0)
-        mkdir(codeLabelDir);
-    end
-else
-    mkdir(codeDir);
-    mkdir(codeLabelDir);    
-end
 
 %%
 % 
 %%
 
-fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
-
-fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s,%s\n',...
-    'Number','Type','Starting_Length_Lo',...
-    'Take_Photo','Block','FileName','Comment');
-
+if(writeProtocolHeader==1)
+    fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s,%s\n',...
+        'Number','Type','Starting_Length_Lo',...
+        'Take_Photo','Block','FileName','Comment');
+end
 %%
 % 1. Starting isometric trial to see if the fiber is viable
 %%
-idx = 1;
+idx = indexStart;
 idxStr = getTrialIndexString(idx);
 
 startLength = 1;
 type        = 'isometric';
 takePhoto   = 'Yes';
 blockName   = 'Pre-injury';
-fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
-fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.pro');
+fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
 
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -191,8 +158,8 @@ for i=1:1:length(passiveLengthRamp)
     type        = 'passiveLengthening';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -222,8 +189,8 @@ for i=1:1:length(isometric)
     type        = 'isometric';
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -251,8 +218,8 @@ for i=1:1:length(activeLengthRamp)
     end
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialNameUpd(seriesName,idx,type,startLength,dateId,'.pro');
-    fnameLabels = getTrialNameUpd(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -273,5 +240,5 @@ end
 
 
 
-fclose(fidProtocol);
-success=1;
+%fclose(fidProtocol);
+indexEnd = idx;

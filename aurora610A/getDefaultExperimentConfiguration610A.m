@@ -1,5 +1,7 @@
 function expConfig = getDefaultExperimentConfiguration610A()
 
+expConfig.normalization.forceVelocity.vmax.edl = -243 * 0.5;
+expConfig.normalization.forceVelocity.vmax.sol = -89 * 0.5;
 
 expConfig.normalization.forceVelocity.lengthsMM = [   0,-2;...
                                                      -2, 0];
@@ -11,7 +13,7 @@ expConfig.normalization.forceVelocity.velocityRangeMMPS = [nan;10];
 
 expConfig.endNormLength = 0;
 
-expConfig.passive.normLengths           = [ -0.35, 0.35 ];
+expConfig.passive.normLengths           = [-3.25,3.25]./5;%[ -0.4, 0.4 ];
 
 expConfig.passive.normVelocityRange     = [ (1/3), (2/3)];
 

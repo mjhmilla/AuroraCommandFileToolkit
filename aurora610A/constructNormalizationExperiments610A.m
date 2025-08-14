@@ -133,8 +133,8 @@ fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
 fidMetaData = fopen(fullfile(codeDir,['metaData_',dateId,'.csv']),'w');
 
 fprintf(fidMetaData,'\"animal_name\",rat\n');
-fprintf(fidMetaData,'\"time_of_death\",rat\n');
-fprintf(fidMetaData,'\"time_of_experiment\",rat\n');
+fprintf(fidMetaData,'\"time_of_death\",n');
+fprintf(fidMetaData,'\"time_of_experiment\",\n');
 fprintf(fidMetaData,'\"muscle_name\",\n');
 fprintf(fidMetaData,'\"sex\",\n');
 fprintf(fidMetaData,'\"daily_muscle_count\",\n');
@@ -259,7 +259,7 @@ programMetaData = writePreamble610A(fid,auroraConfig,programMetaData);
 waitTime                        = 0;
 flag_printMetaDataToFile        = 1;
 
-lengthRampOptions(1).value      = 10; %mm
+lengthRampOptions(1).value      = 7; %mm
 lengthRampOptions(2).value      = 10; %s
 
 programMetaData ...
@@ -314,7 +314,7 @@ waitTime                        = 0;
 flag_printMetaDataToFile        = 1;
 
 lengthDelta = -1; %1mm;
-lengthStart = 10;
+lengthStart = 7;
 lengthEnd   = -10;
 n = (lengthEnd-lengthStart)/lengthDelta;
 
@@ -455,9 +455,11 @@ programMetaData = ...
 
 fvSeries(2) = struct('velocity',[],'name','');
 fvSeries(1).name = 'EDL';
-fvSeries(1).velocity = [0.5,0.75,0.875,1.0,1.125,1.25,1.5].*(-243);
+fvSeries(1).velocity = [0.125,0.25,0.5,0.75,1.0,1.25,1.5]...
+    .*(expConfig.normalization.forceVelocity.vmax.edl);
 fvSeries(2).name = 'SOL';
-fvSeries(2).velocity = [0.5,0.75,0.875,1.0,1.125,1.25,1.5].*(-89);
+fvSeries(2).velocity = [0.5,0.75,0.875,1.0,1.125,1.25,1.5]...
+    .*(expConfig.normalization.forceVelocity.vmax.sol);
 
 for idxFvSeries = 1:1:length(fvSeries)
 

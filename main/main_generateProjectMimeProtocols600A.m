@@ -18,12 +18,14 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
-flag_generateRandomSignal   = 1;
+flag_generateRandomSignal   = 0;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
 ratMuscleName           = 'EDL';
 muscleTemperatureInC    = 12;
 perturbationMagnitude   = 0.005;
+
+
 
 %%
 % Plot Configuration
@@ -219,8 +221,91 @@ for j=1:1:length(controlFields)
     
 end
 
+%%
+% Generate the injury protocol
+%%
 
-success = createFiberInjuryExperiments600A(...        
+
+scaleTime=1;
+switch auroraConfig.defaultTimeUnit
+    case 's'
+        scaleTime=1;
+    case 'ms'
+        scaleTime=1000;
+    otherwise
+        assert(0,'Error: Unrecognized time unit');
+end
+
+%%
+% Characterization
+%%
+[codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders);
+
+fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
+
+idxStart = 1;
+writeProtocolHeader = 1;
+idxEnd = createCharacterizationExperiments600A(...
+                  '',...
+                  idxStart,...
                   stochasticWaves,...
                   projectFolders,...
-                  auroraConfig);
+                  auroraConfig,...
+                  fidProtocol,...
+                  writeProtocolHeader);
+
+idxStart=idxEnd+1;
+writeProtocolHeader = 0;
+
+%%
+%Injury trial
+%%
+lengthRampOptions=getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
+
+stretchShortenRamp.wait         = [1,0,0]'.*scaleTime;
+stretchShortenRamp.waitPostRamp = [1,0,15]'.*scaleTime;
+stretchShortenRamp.lengths      = [1.0, 1.8, 1.0]';
+stretchShortenRamp.lengthChange = [0,0.8,-0.8]';
+stretchShortenRamp.velocity     = [(1/3),(1/3),-(1/3)]'.*auroraConfig.maximumRampSpeedInDefaultUnits;
+stretchShortenRamp.duration     = stretchShortenRamp.lengthChange ./ stretchShortenRamp.velocity;
+stretchShortenRamp.type         = 'Stretch-Shorten-Cycle';
+
+idxUpd = find(stretchShortenRamp.wait < auroraConfig.minimumWaitTime);
+stretchShortenRamp.wait(idxUpd) = auroraConfig.minimumWaitTime;
+
+stretchShortenRamp.options      = lengthRampOptions;  
+
+
+
+isRampActive=1;
+
+trialType = 'injurySSC';
+startLength=1;
+fname       = getTrialName('',idxStart,trialType,startLength,dateId,'.pro');
+fnameLabels = getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
+
+auroraConfigInjury=auroraConfig;
+auroraConfigInjury.maximumNormalizedLength=max(stretchShortenRamp.lengths+0.1);
+
+success = createLengthRampTrial600A(...
+                    isRampActive,...
+                    stretchShortenRamp,...               
+                    fullfile(codeDir,fname),...
+                    fullfile(codeLabelDir,fnameLabels),...
+                    auroraConfigInjury);
+
+idxStart=idxStart+1;
+%%
+% Characterization
+%%
+
+idxEnd = createCharacterizationExperiments600A(...
+                  '',...
+                  idxStart,...
+                  stochasticWaves,...
+                  projectFolders,...
+                  auroraConfig,...
+                  fidProtocol,...
+                  writeProtocolHeader);
+
+fclose(fidProtocol);

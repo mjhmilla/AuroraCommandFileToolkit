@@ -1,4 +1,5 @@
-function auroraConfig =  getDefaultAuroraConfiguration610A(...    
+function auroraConfig =  getDefaultAuroraConfiguration610A(... 
+                            muscleName,...
                             unitSystem,...                        
                             sampleFrequencyHz,...
                             specimenLceOptInMM,...                                                        
@@ -96,15 +97,26 @@ auroraConfig.passive.recoveryTime = 10;
 %after lengthening the muscle passively
 
 %
-auroraConfig.timeToReachMaxActivation    = 0.5;
 auroraConfig.restTimeBetweenActivations  = 10;
 auroraConfig.activationPaddingTime       = 0.25;
 
 
 %Used for long active blocks
-auroraConfig.stimulation.frequencyHz =50;
+switch muscleName
+    case 'EDL'
+        auroraConfig.stimulation.frequencyHz =80;
+        auroraConfig.timeToReachMaxActivation= 0.5;
+        auroraConfig.stimulation.maxDuration =5;
+
+    case 'SOL'
+        auroraConfig.stimulation.frequencyHz  = 70;
+        auroraConfig.timeToReachMaxActivation = 2;
+        auroraConfig.stimulation.maxDuration  = 7;
+
+    otherwise
+        assert(0, 'Error: unrecognized muscle');
+end
 auroraConfig.stimulation.pulseWidthMs=5;
-auroraConfig.stimulation.maxDuration =5;
 auroraConfig.stimulation.minDuration =1;
 
 %Used to probe the active tension of the muscle

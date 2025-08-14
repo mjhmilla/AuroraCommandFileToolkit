@@ -2,6 +2,8 @@ clc;
 close all;
 clear all;
 
+disp('Update script to take in measured parameters: lceOptMM, fceMax, lpeHalf, fpeHalf')
+
 %% 66 50 LR.: 10N max
 % Folders
 %%
@@ -19,7 +21,7 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
-muscleName = 'EDL'; %'EDL', or 'SOL';
+muscleName = 'SOL'; %'EDL', or 'SOL';
 
 
 sampleFrequency         = 1000;
@@ -29,10 +31,10 @@ assert(strcmp(unitSystem,'Ref_s_Hz')==0, ...
    ['Error: Cannot use Ref_s_Hz because this unit system does not work',...
     ' properly on the 1200A']);
 
-measuredMuscleParams.lceOptMM   = [];
-measuredMuscleParams.vceMaxMMPS = [];
+measuredMuscleParams.lceOptMM   =5;%6.66;
+measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
 
-normPerturbationLength      = 0.01;
+normPerturbationLength      = 0.005;
 stochasticWaveScalesToTest = [0.5,1,2,4,8];
 flag_generateRandomSignal   = 1;
 
@@ -100,7 +102,7 @@ end
 disp('Generating dpf files for:');
 disp(muscleName);
 fprintf('%1.1f mm\tlceOpt\n',lceOptMM);
-fprintf('%1.1f mm\tvceMaxLPS\n',vceMaxLPS);
+fprintf('%1.1f lps\tvceMaxLPS\n',vceMaxLPS);
 
 %%
 % Perturbation settings
@@ -157,6 +159,7 @@ expConfig = getDefaultExperimentConfiguration610A();
 
 %During normalization the specimen parameters are not known
 auroraConfigNormalization = getDefaultAuroraConfiguration610A(...
+                                muscleName,...
                                 'mm_mN_s_Hz',...
                                 sampleFrequency,...    
                                 lceOptMM,...
@@ -164,6 +167,7 @@ auroraConfigNormalization = getDefaultAuroraConfiguration610A(...
 
 %After normalization, the other unit systems can be used
 auroraConfig = getDefaultAuroraConfiguration610A(...
+                    muscleName,...
                     unitSystem,...
                     sampleFrequency,...    
                     lceOptMM,...
