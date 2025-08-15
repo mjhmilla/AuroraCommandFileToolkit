@@ -58,6 +58,7 @@ if(flag_useLengthRampInjury==1)
         .*auroraConfig.maximumRampSpeedInDefaultUnits;
     stretchShortenRamp.duration     =   stretchShortenRamp.lengthChange...
                                         ./ stretchShortenRamp.velocity;
+    stretchShortenRamp.duration(1,1) = 1*scaleTime;
     stretchShortenRamp.type         = 'Stretch-Shorten-Cycle-Length';
     
     idxUpd = find(stretchShortenRamp.wait < auroraConfig.minimumWaitTime);

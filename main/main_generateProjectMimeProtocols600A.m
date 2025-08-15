@@ -38,7 +38,7 @@ settingsLengthRampInjury.enable         = 1;
 settingsForceRampInjury.normLength      = [1.0];
 settingsForceRampInjury.enable          = 1;
 settingsForceRampInjury.normForce       = [1.0,2.75,1.0];
-settingsForceRampInjury.duration        = [1.0,0.25,0.25];
+settingsForceRampInjury.duration        = [1.0,0.25,0.25].*1000;
  
 
 flag_generateRandomSignal   = 0;
