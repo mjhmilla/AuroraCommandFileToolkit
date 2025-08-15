@@ -18,6 +18,29 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
+flag_useForceRampInjury     = 1;
+flag_useLengthRampInjury    = 1;
+
+settingsCharacterization.passive.normLengths             = [0.6,1.55];
+settingsCharacterization.passive.normVelocities          = [0.1,1];
+
+settingsCharacterization.isometricNormLengths           = [0.6,1,1.4];
+
+settingsCharacterization.activeLengthening.normLengths  = [   0.9,  1.1 ];
+settingsCharacterization.activeLengthening.normVelocity = [ (1/3), (2/3)];
+settingsCharacterization.activeShortening.normLengths   = [   1.1,  0.9 ];
+settingsCharacterization.activeShortening.normVelocity  = [-(1/3),-(2/3)];
+
+settingsLengthRampInjury.normLengths    = [1.0, 1.8, 1.0];
+settingsLengthRampInjury.normVelocity   = [1,1,-1].*(1/3);
+settingsLengthRampInjury.enable         = 1;
+
+settingsForceRampInjury.normLength      = [1.0];
+settingsForceRampInjury.enable          = 1;
+settingsForceRampInjury.normForce       = [1.0,2.75,1.0];
+settingsForceRampInjury.duration        = [1.0,0.25,0.25];
+ 
+
 flag_generateRandomSignal   = 0;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
@@ -75,11 +98,12 @@ switch ratMuscleName
         assert(0,'Error: muscleName not found');
 end
 
-auroraConfig = getDefaultAuroraConfiguration600A(approximateSampleLengthInMM,...
-                                        sampleFrequency,...
-                                        minNormLength,...
-                                        maxNormLength,...
-                                        maxNormalizedSpeedLPS);
+auroraConfig = getDefaultAuroraConfiguration600A(...
+                    approximateSampleLengthInMM,...
+                    sampleFrequency,...
+                    minNormLength,...
+                    maxNormLength,...
+                    maxNormalizedSpeedLPS);
 
 %%
 % System identification perturbation signal configuration
@@ -226,86 +250,15 @@ end
 %%
 
 
-scaleTime=1;
-switch auroraConfig.defaultTimeUnit
-    case 's'
-        scaleTime=1;
-    case 'ms'
-        scaleTime=1000;
-    otherwise
-        assert(0,'Error: Unrecognized time unit');
-end
 
-%%
-% Characterization
-%%
-[codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders);
-
-fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
-
-idxStart = 1;
-writeProtocolHeader = 1;
-idxEnd = createCharacterizationExperiments600A(...
-                  '',...
-                  idxStart,...
-                  stochasticWaves,...
-                  projectFolders,...
-                  auroraConfig,...
-                  fidProtocol,...
-                  writeProtocolHeader);
-
-idxStart=idxEnd+1;
-writeProtocolHeader = 0;
-
-%%
-%Injury trial
-%%
-lengthRampOptions=getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
-
-stretchShortenRamp.wait         = [1,0,0]'.*scaleTime;
-stretchShortenRamp.waitPostRamp = [1,0,15]'.*scaleTime;
-stretchShortenRamp.lengths      = [1.0, 1.8, 1.0]';
-stretchShortenRamp.lengthChange = [0,0.8,-0.8]';
-stretchShortenRamp.velocity     = [(1/3),(1/3),-(1/3)]'.*auroraConfig.maximumRampSpeedInDefaultUnits;
-stretchShortenRamp.duration     = stretchShortenRamp.lengthChange ./ stretchShortenRamp.velocity;
-stretchShortenRamp.type         = 'Stretch-Shorten-Cycle';
-
-idxUpd = find(stretchShortenRamp.wait < auroraConfig.minimumWaitTime);
-stretchShortenRamp.wait(idxUpd) = auroraConfig.minimumWaitTime;
-
-stretchShortenRamp.options      = lengthRampOptions;  
+success = createInjuryExperiments600A( ...
+                settingsCharacterization,...
+                settingsLengthRampInjury,...
+                settingsForceRampInjury,...
+                stochasticWaves,...
+                projectFolders,...                                                                                                            
+                auroraConfig);
 
 
 
-isRampActive=1;
 
-trialType = 'injurySSC';
-startLength=1;
-fname       = getTrialName('',idxStart,trialType,startLength,dateId,'.pro');
-fnameLabels = getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
-
-auroraConfigInjury=auroraConfig;
-auroraConfigInjury.maximumNormalizedLength=max(stretchShortenRamp.lengths+0.1);
-
-success = createLengthRampTrial600A(...
-                    isRampActive,...
-                    stretchShortenRamp,...               
-                    fullfile(codeDir,fname),...
-                    fullfile(codeLabelDir,fnameLabels),...
-                    auroraConfigInjury);
-
-idxStart=idxStart+1;
-%%
-% Characterization
-%%
-
-idxEnd = createCharacterizationExperiments600A(...
-                  '',...
-                  idxStart,...
-                  stochasticWaves,...
-                  projectFolders,...
-                  auroraConfig,...
-                  fidProtocol,...
-                  writeProtocolHeader);
-
-fclose(fidProtocol);

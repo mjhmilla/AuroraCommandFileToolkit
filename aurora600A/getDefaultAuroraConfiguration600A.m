@@ -5,7 +5,6 @@ function auroraConfig =  getDefaultAuroraConfiguration600A(...
                             maxLengthLo,...
                             maxNormalizedSpeedLPS)
 
-disp('Aurora Configuration for the 322 C-1');
 
 %pg 3 of the manual for 322 C-I: 300um in 700us
 auroraConfig.maximumSpeedInMPS = (300e-6/700e-6);

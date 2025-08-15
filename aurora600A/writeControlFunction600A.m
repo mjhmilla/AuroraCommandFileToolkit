@@ -98,7 +98,7 @@ if(isempty(options)==0)
                     if(options(i).value >= 0)
                         valueStr = sprintf('+%1.4f',options(i).value);
                     else
-                        valueStr = sprintf('-%1.4f',options(i).value);
+                        valueStr = sprintf('%1.4f',options(i).value);
                     end
                 else
                     assert( options(i).value > 0, ...
