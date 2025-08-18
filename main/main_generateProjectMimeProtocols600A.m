@@ -86,7 +86,7 @@ plotConfig.plotHeight                       = 6;
 approximateSampleLengthInMM=1.5;
 sampleFrequency =1000;
 minNormLength = 0.5;
-maxNormLength = 1.6;
+maxNormLength = 1.85;
 
 switch ratMuscleName
     case 'SOL'

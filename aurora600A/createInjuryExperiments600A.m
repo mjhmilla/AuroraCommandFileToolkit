@@ -77,7 +77,10 @@ if(flag_useLengthRampInjury==1)
         getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
     
     auroraConfigInjury=auroraConfig;
-    auroraConfigInjury.maximumNormalizedLength=max(stretchShortenRamp.lengths+0.1);
+    maxLengthInjurySSC=max([(stretchShortenRamp.lengths+0.1),...
+                             auroraConfig.maximumNormalizedLength]);
+
+    auroraConfigInjury.maximumNormalizedLength=maxLengthInjurySSC;
     
     success = createLengthRampTrial600A(...
                         isRampActive,...
@@ -91,7 +94,8 @@ if(flag_useLengthRampInjury==1)
     blockName = 'Injury';
 
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
-        idxStr,trialType,startLength,takePhoto, blockName,fname,'Hold on to your butt ...');    
+        idxStr,trialType,startLength,takePhoto, blockName,fname,...
+            'Hold on to your butt ...');    
 
     idxStart=idxStart+1;
 
@@ -123,15 +127,13 @@ if(flag_useForceRampInjury==1)
     fname       = getTrialName('',idxStart,trialType,startLength,dateId,'.pro');
     fnameLabels = getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
     
-    auroraConfigInjury=auroraConfig;
-    auroraConfigInjury.maximumNormalizedLength=max(settingsForceRampInjury.normForce+0.1);
     
     success = createForceRampTrial600A(...
                         isRampActive,...
                         settingsForceRampInjury,...               
                         fullfile(codeDir,fname),...
                         fullfile(codeLabelDir,fnameLabels),...
-                        auroraConfigInjury);
+                        auroraConfig);
         
     idxStr = getTrialIndexString(idxStart);
     takePhoto = '';
