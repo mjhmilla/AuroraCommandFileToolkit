@@ -42,20 +42,54 @@ end
 %%
 %  Create the random hold vector vector
 %%
-rng(1,'twister'); 
-randomVecA = rand(configVibration.points,1);
+switch configVibration.distribution
+    case 'uniform'
+        rng(1,'twister'); 
+        randomVecA = rand(configVibration.points,1);
+        
+        rng(2,'twister'); 
+        randomVecB = rand(configVibration.points,1);
+        
+        rng(3,'twister'); 
+        randomVecC = rand(configVibration.points,1);
+        
+        rng(4,'twister'); 
+        randomVecD = rand(configVibration.points,1);
+        
+        rng(5,'twister'); 
+        randomVecE = rand(configVibration.points,1);
 
-rng(2,'twister'); 
-randomVecB = rand(configVibration.points,1);
+    case 'normal'
+        mu = 0.5;
+        sigma = (1-mu)/1.5;
 
-rng(3,'twister'); 
-randomVecC = rand(configVibration.points,1);
+        rng(1,'twister'); 
+        randomVecA = normrnd(mu,sigma,[configVibration.points,1]);
+        randomVecA(randomVecA < 0)=0;
+        randomVecA(randomVecA>1)=1;
 
-rng(4,'twister'); 
-randomVecD = rand(configVibration.points,1);
-
-rng(5,'twister'); 
-randomVecE = rand(configVibration.points,1);
+        rng(2,'twister'); 
+        randomVecB = normrnd(mu,sigma,[configVibration.points,1]);
+        randomVecB(randomVecB < 0)=0;
+        randomVecB(randomVecB>1)=1;
+        
+        rng(3,'twister'); 
+        randomVecC = normrnd(mu,sigma,[configVibration.points,1]);
+        randomVecC(randomVecC < 0)=0;
+        randomVecC(randomVecC>1)=1;
+        
+        rng(4,'twister'); 
+        randomVecD = normrnd(mu,sigma,[configVibration.points,1]);
+        randomVecD(randomVecD < 0)=0;
+        randomVecD(randomVecD>1)=1;
+        
+        rng(5,'twister'); 
+        randomVecE = normrnd(mu,sigma,[configVibration.points,1]);
+        randomVecE(randomVecE < 0)=0;
+        randomVecE(randomVecE>1)=1;
+        
+    otherwise assert(0,'Error: unrecognized distribution');
+end
 
 signOfFirstChange=1;
 

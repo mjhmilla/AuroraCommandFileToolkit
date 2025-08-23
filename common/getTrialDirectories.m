@@ -1,4 +1,4 @@
-function [codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders)
+function [codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders, appendIdName)
 
 [y,m,d] = datevec(date());
 
@@ -13,13 +13,13 @@ if(length(dStr)<2)
 end
 dateId = [yStr,mStr,dStr];
 
-codeDir         = fullfile(projectFolders.output_code,[dateId,'_600A']);
-codeLabelDir    = fullfile(projectFolders.output_code,[dateId,'_600A'],'segmentLabels');
+codeDir         = fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A']);
+codeLabelDir    = fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A'],'segmentLabels');
 
 fileFolderList=dir(projectFolders.output_code);
 codeDirExists=0;
 for i=1:1:length(fileFolderList)
-    if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,'_600A']))
+    if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,appendIdName,'_600A']))
         codeDirExists=1;
     end
 end

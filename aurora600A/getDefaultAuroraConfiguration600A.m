@@ -43,7 +43,7 @@ auroraConfig.maximumNormalizedLength    = maxLengthLo;
 auroraConfig.pdDeadBand                 = 0;
 auroraConfig.bath.changeTime            = 0.5*s2ms;
 auroraConfig.bath.preActivationDuration = 60*s2ms;
-auroraConfig.bath.activationDuration    = 20*s2ms;
+auroraConfig.bath.activationDuration    = 40*s2ms; %20
 
 auroraConfig.bath.passive               = 1;
 auroraConfig.bath.preActivation         = 2;
@@ -51,7 +51,7 @@ auroraConfig.bath.active                = 3;
 
 
 auroraConfig.defaultLengthUnit      = 'Lo';
-auroraConfig.defaultForceUnit       = 'Fo';
+auroraConfig.defaultForceUnit       = 'Fmax';
 auroraConfig.defaultTimeUnit        = 'ms';
 auroraConfig.defaultFrequencyUnit   = 'Hz';
 

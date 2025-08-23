@@ -21,10 +21,25 @@ addpath(projectFolders.signals);
 flag_useForceRampInjury     = 1;
 flag_useLengthRampInjury    = 1;
 
+%%
+% Detailed impedance block
+%%
+settingsImpedance.isometricNormLengths           = [0.6:0.1:1.4];
+
+settingsImpedance.isometricActivationDurationMultiple= ...
+    ones(size(settingsImpedance.isometricNormLengths));
+
+settingsImpedance.isometricActivationDurationMultiple(...
+    settingsImpedance.isometricNormLengths < 0.8) = 2;
+    
+%%
+% Characterization block
+%%
 settingsCharacterization.passive.normLengths             = [0.6,1.55];
 settingsCharacterization.passive.normVelocities          = [0.1,1];
 
-settingsCharacterization.isometricNormLengths           = [0.6,1,1.4];
+settingsCharacterization.isometricNormLengths           = [0.7,1,1.4];
+settingsCharacterization.isometricActivationDurationMultiple= [2,1,1];
 
 settingsCharacterization.activeLengthening.normLengths  = [   0.9,  1.1 ];
 settingsCharacterization.activeLengthening.normVelocity = [ (1/3), (2/3)];
@@ -41,12 +56,30 @@ settingsForceRampInjury.normForce       = [1.0,2.75,1.0];
 settingsForceRampInjury.duration        = [1.0,0.25,0.25].*1000;
  
 
-flag_generateRandomSignal   = 0;
+flag_generateRandomSignal   = 1;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
+flag_generateWideBandwidthRandomSignal=0;
 
-ratMuscleName           = 'EDL';
-muscleTemperatureInC    = 12;
-perturbationMagnitude   = 0.005;
+ratMuscleName                   = 'EDL';
+muscleTemperatureInC            = 12;
+perturbationSettings.mode       = 1; %0. default, 1. high bandwidth
+perturbationSettings.magnitude  = 0.005;
+
+switch perturbationSettings.mode
+    case 0
+        perturbationSettings.frequencyRange=[5,39];
+        perturbationSettings.normSpeedRange=[0.1,1];
+        perturbationSettings.holdRange = [(1/100),(1/11.4)];
+        perturbationSettings.distribution = 'uniform';
+    case 1
+        perturbationSettings.frequencyRange=[10,80];
+        perturbationSettings.normSpeedRange=[0.1,2];
+        perturbationSettings.holdRange = [(1/500),(1/50)];
+        perturbationSettings.distribution = 'normal';
+    otherwise
+        assert(0,'Error: invalid perturbation mode setting');
+end
+
 
 
 
@@ -125,7 +158,9 @@ if(flag_generateRandomSignal==1)
     perturbationPlotConfig.config = plotConfig_3R1C;
 
     configVibration = ...
-        getPerturbationConfiguration600A(perturbationMagnitude,auroraConfig);
+        getPerturbationConfiguration600A(...
+        perturbationSettings,...
+        auroraConfig);
 
     lengthRampOption = ...
         getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
@@ -221,34 +256,65 @@ lineCountStochastic = ...
 assert(lineCountStochastic*2 < (auroraConfig.maximumNumberOfCommands + 40),...
       'Error: the number of perturbation commands is too high');
 
-stochasticWaves(4)=struct('controlFunction',[],'waitDuration',[],...
-                         'optionValues',[],'options',[],'type','');
+switch perturbationSettings.mode
+    case 0
+        stochasticWaves(4)=struct('controlFunction',[],'waitDuration',[],...
+                                 'optionValues',[],'options',[],'type','');
+        
+        controlFields = {'controlFunction','waitDuration','optionValues','options'};
+        
+        for j=1:1:length(controlFields)
+            stochasticWaves(1).(controlFields{j}) = ...
+                squarePreconditioningWave.controlFunctions.(controlFields{j});
+            stochasticWaves(1).type = 'Length-Ramp-Preconditioning';
+        
+            stochasticWaves(2).(controlFields{j}) = ...
+                squareStochasticWave.controlFunctions.(controlFields{j});
+            stochasticWaves(2).type = 'Length-Ramp-Stochastic';
+            
+            stochasticWaves(3).(controlFields{j}) = ...
+                sinePreconditioningWave.controlFunctions.(controlFields{j});
+            stochasticWaves(3).type = 'Length-Sine-Preconditioning';
+            
+            stochasticWaves(4).(controlFields{j}) = ...
+                sineStochasticWave.controlFunctions.(controlFields{j});
+            stochasticWaves(4).type = 'Length-Sine-Stochastic';
+            
+        end
+    case 1
+        %These perturbations have a higher bandwidth, which means a 
+        %far greater number of commands. If we use both square and 
+        %sine perturbations we exceed the allowed number of commands
+        stochasticWaves(2)=struct('controlFunction',[],'waitDuration',[],...
+                                 'optionValues',[],'options',[],'type','');
+        
+        controlFields = {'controlFunction','waitDuration','optionValues','options'};
+        
+        for j=1:1:length(controlFields)
 
-controlFields = {'controlFunction','waitDuration','optionValues','options'};
-
-for j=1:1:length(controlFields)
-    stochasticWaves(1).(controlFields{j}) = ...
-        squarePreconditioningWave.controlFunctions.(controlFields{j});
-    stochasticWaves(1).type = 'Length-Ramp-Preconditioning';
-
-    stochasticWaves(2).(controlFields{j}) = ...
-        squareStochasticWave.controlFunctions.(controlFields{j});
-    stochasticWaves(2).type = 'Length-Ramp-Stochastic';
-    
-    stochasticWaves(3).(controlFields{j}) = ...
-        sinePreconditioningWave.controlFunctions.(controlFields{j});
-    stochasticWaves(3).type = 'Length-Sine-Preconditioning';
-    
-    stochasticWaves(4).(controlFields{j}) = ...
-        sineStochasticWave.controlFunctions.(controlFields{j});
-    stochasticWaves(4).type = 'Length-Sine-Stochastic';
-    
+            stochasticWaves(1).(controlFields{j}) = ...
+                sinePreconditioningWave.controlFunctions.(controlFields{j});
+            stochasticWaves(1).type = 'Length-Sine-Preconditioning';
+            
+            stochasticWaves(2).(controlFields{j}) = ...
+                sineStochasticWave.controlFunctions.(controlFields{j});
+            stochasticWaves(2).type = 'Length-Sine-Stochastic';
+            
+        end
+        
+    otherwise assert(0,'Error: Unexpected perturbationSetting.mode');
 end
-
 %%
 % Generate the injury protocol
 %%
 
+indexEnd = createImpedanceForceLengthExperiments600A(...
+                        '',...
+                        '',...
+                        settingsImpedance,...
+                        stochasticWaves,...
+                        projectFolders,...                                                                                                            
+                        auroraConfig);
 
 
 success = createInjuryExperiments600A( ...
@@ -258,7 +324,6 @@ success = createInjuryExperiments600A( ...
                 stochasticWaves,...
                 projectFolders,...                                                                                                            
                 auroraConfig);
-
 
 
 
