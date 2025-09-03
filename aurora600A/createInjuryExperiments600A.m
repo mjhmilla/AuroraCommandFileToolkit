@@ -13,9 +13,9 @@ function success = createInjuryExperiments600A( settingsCharacterization,...
 
 fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
 
-characterizationFolders.codeDir=codeDir;
-characterizationFolders.codeLabelDir=codeLabelDir;
-characterizationFolders.dateId=dateId;
+characterizationFolders.codeDir         = codeDir;
+characterizationFolders.codeLabelDir    = codeLabelDir;
+characterizationFolders.dateId          = dateId;
 
 idxStart = 1;
 writeProtocolHeader = 1;
@@ -109,17 +109,24 @@ end
 
 if(flag_useForceRampInjury==1)
 
-    forceRampOptions=getCommandFunctionOptions600A('Force-Ramp',auroraConfig);
-    
+    auroraConfigForceCommands = auroraConfig;
+    auroraConfigForceCommands.useRelativeUnits=0;
+
+    forceRampOptions=getCommandFunctionOptions600A('Force-Ramp',...
+                                    auroraConfigForceCommands);
+        
     settingsForceRampInjury.wait         = [1,0,0]'.*scaleTime;
     settingsForceRampInjury.waitPostRamp = [1,0,15]'.*scaleTime;
     settingsForceRampInjury.force        = settingsForceRampInjury.normForce';
-    settingsForceRampInjury.forceChange  = [0,diff(settingsForceRampInjury.normForce)]';
+    %settingsForceRampInjury.forceChange  = [0,diff(settingsForceRampInjury.normForce)]';
     settingsForceRampInjury.duration     = settingsForceRampInjury.duration';
     settingsForceRampInjury.type         = 'Stretch-Shorten-Cycle-Force';
     
-    idxUpd = find(settingsForceRampInjury.wait < auroraConfig.minimumWaitTime);
-    settingsForceRampInjury.wait(idxUpd) = auroraConfig.minimumWaitTime;
+    idxUpd = find(settingsForceRampInjury.wait ...
+                    < auroraConfigForceCommands.minimumWaitTime);
+    
+    settingsForceRampInjury.wait(idxUpd) = ...
+            auroraConfigForceCommands.minimumWaitTime;
     
     settingsForceRampInjury.options      = forceRampOptions;  
         
@@ -138,7 +145,7 @@ if(flag_useForceRampInjury==1)
                         settingsForceRampInjury,...               
                         fullfile(codeDir,fname),...
                         fullfile(codeLabelDir,fnameLabels),...
-                        auroraConfig);
+                        auroraConfigForceCommands);
         
     idxStr = getTrialIndexString(idxStart);
     takePhoto = '';

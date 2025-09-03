@@ -10,6 +10,10 @@ config.frequencyUnits='Hz';
 config.lengthUnits = auroraConfig.defaultLengthUnit;
 
 config.points           = 2^12;
+if(isfield(perturbationSettings,'points'))
+    config.points = perturbationSettings.points;
+end
+
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
 
 config.magnitudeRange    = [1,1].*magnitude;
@@ -33,6 +37,14 @@ config.duration    = ((config.points-1.5*config.frequencyHz) ...
 
 config.paddingDuration  =  ((config.points/config.frequencyHz) ...
                             -config.duration)*0.5;
+
+if(isfield(perturbationSettings,'paddingDuration'))
+    config.paddingDuration  =  perturbationSettings.paddingDuration;
+
+    config.duration    = (config.points/config.frequencyHz) ...
+                        - 2*config.paddingDuration;
+end
+
 
 dtMin = (config.duration+2*config.paddingDuration)/config.points;
 

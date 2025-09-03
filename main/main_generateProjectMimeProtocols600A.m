@@ -15,11 +15,34 @@ addpath(projectFolders.postprocessing);
 addpath(projectFolders.common);
 addpath(projectFolders.signals);
 
+
 %%
-% Script Configuration
+% Aurora configuration
 %%
-flag_useForceRampInjury     = 1;
-flag_useLengthRampInjury    = 1;
+ratMuscleName                   = 'EDL';
+
+approximateSampleLengthInMM=1.5;
+sampleFrequency =1000;
+minNormLength = 0.5;
+maxNormLength = 1.85;
+
+switch ratMuscleName
+    case 'SOL'
+        maxNormalizedSpeedLPS = 1.02; 
+        % in units of norm fiber lengths/second        
+    case 'EDL'
+        maxNormalizedSpeedLPS = 2.25;  
+    otherwise 
+        assert(0,'Error: muscleName not found');
+end
+
+auroraConfig = getDefaultAuroraConfiguration600A(...
+                    approximateSampleLengthInMM,...
+                    sampleFrequency,...
+                    minNormLength,...
+                    maxNormLength,...
+                    maxNormalizedSpeedLPS);
+
 
 %%
 % Detailed impedance block
@@ -32,6 +55,49 @@ settingsImpedance.isometricActivationDurationMultiple= ...
 settingsImpedance.isometricActivationDurationMultiple(...
     settingsImpedance.isometricNormLengths < 0.8) = 2;
     
+%%
+% Force-Velocity using Force-Ramp block
+%%
+
+settingsForceRampFV.activeLengthening.normLength  = [ 0.9     ];
+settingsForceRampFV.activeLengthening.normForce   = [ 1.0, 1.6];
+settingsForceRampFV.activeLengthening.duration    = [ 1.0, 1.0];
+settingsForceRampFV.activeShortening.normLength   = [ 1.1     ];
+settingsForceRampFV.activeShortening.normForce    = [ 1.0, 0.1];
+settingsForceRampFV.activeShortening.duration     = [ 1.0, 1.0];
+
+%%
+% Test protocol to investigate force distribution between 
+% titin and cross-bridges
+%
+% Impedance across the force-length-relation isometric/lengthening
+%%
+settingsTRSS2017Impedance.rampNormLengths           = [0.70,1.15;...
+                                                       0.85,1.30;...
+                                                       1.0,1.45];
+settingsTRSS2017Impedance.normLengths = ...
+    zeros(size(settingsTRSS2017Impedance.rampNormLengths));
+
+settingsTRSS2017Impedance.normLengths(:,1) =...
+    settingsTRSS2017Impedance.rampNormLengths(:,1)+0.02;
+settingsTRSS2017Impedance.normLengths(:,2) =...
+    settingsTRSS2017Impedance.rampNormLengths(:,2)-0.08;
+
+settingsTRSS2017Impedance.activationDurationMultiple= [ 1.5,1;...
+                                                        1.5,1;...
+                                                        1.5,1];
+
+dl = settingsTRSS2017Impedance.rampNormLengths(:,2) ...
+     -settingsTRSS2017Impedance.rampNormLengths(:,1);
+assert(abs(dl(1,1)-dl(2,1)) < 1e-6);
+assert(abs(dl(2,1)-dl(3,1)) < 1e-6);
+
+v = 0.11*maxNormalizedSpeedLPS;
+
+settingsTRSS2017Impedance.rampDuration              = ones(3,1).*([dl(1,1)/v].*1000);
+settingsTRSS2017Impedance.perturbationMagnitude     = ones(3,1).*0.005;
+settingsTRSS2017Impedance.perturbationHoldTime      = ones(3,1).*([1/50].*1000);
+settingsTRSS2017Impedance.perturbationCycles        = ones(3,1).*5;
 %%
 % Characterization block
 %%
@@ -46,6 +112,10 @@ settingsCharacterization.activeLengthening.normVelocity = [ (1/3), (2/3)];
 settingsCharacterization.activeShortening.normLengths   = [   1.1,  0.9 ];
 settingsCharacterization.activeShortening.normVelocity  = [-(1/3),-(2/3)];
 
+
+flag_useForceRampInjury     = 1;
+flag_useLengthRampInjury    = 1;
+
 settingsLengthRampInjury.normLengths    = [1.0, 1.8, 1.0];
 settingsLengthRampInjury.normVelocity   = [1,1,-1].*(1/3);
 settingsLengthRampInjury.enable         = 1;
@@ -58,11 +128,11 @@ settingsForceRampInjury.duration        = [1.0,0.25,0.25].*1000;
 
 flag_generateRandomSignal   = 1;
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
-flag_generateWideBandwidthRandomSignal=0;
+flag_generateWideBandwidthRandomSignal=1;
 
-ratMuscleName                   = 'EDL';
+
 muscleTemperatureInC            = 12;
-perturbationSettings.mode       = 1; %0. default, 1. high bandwidth
+perturbationSettings.mode       = flag_generateWideBandwidthRandomSignal; %0. default, 1. high bandwidth
 perturbationSettings.magnitude  = 0.005;
 
 switch perturbationSettings.mode
@@ -73,7 +143,7 @@ switch perturbationSettings.mode
         perturbationSettings.distribution = 'uniform';
     case 1
         perturbationSettings.frequencyRange=[10,80];
-        perturbationSettings.normSpeedRange=[0.1,2];
+        perturbationSettings.normSpeedRange=[0.1,1.5];
         perturbationSettings.holdRange = [(1/500),(1/50)];
         perturbationSettings.distribution = 'normal';
     otherwise
@@ -107,36 +177,12 @@ plotConfig.plotHeight                       = 6;
 
 plotConfig.numberOfHorizontalPlotColumns    = 1;
 plotConfig.numberOfVerticalPlotRows         = 3;
-plotConfig.plotWidth                        = 18;
-plotConfig.plotHeight                       = 6;
+plotConfig.plotWidth                        = 5;
+plotConfig.plotHeight                       = 1.5;
 
 [subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
 
 
-%%
-% Aurora configuration
-%%
-approximateSampleLengthInMM=1.5;
-sampleFrequency =1000;
-minNormLength = 0.5;
-maxNormLength = 1.85;
-
-switch ratMuscleName
-    case 'SOL'
-        maxNormalizedSpeedLPS = 1.02; 
-        % in units of norm fiber lengths/second        
-    case 'EDL'
-        maxNormalizedSpeedLPS = 2.25;  
-    otherwise 
-        assert(0,'Error: muscleName not found');
-end
-
-auroraConfig = getDefaultAuroraConfiguration600A(...
-                    approximateSampleLengthInMM,...
-                    sampleFrequency,...
-                    minNormLength,...
-                    maxNormLength,...
-                    maxNormalizedSpeedLPS);
 
 %%
 % System identification perturbation signal configuration
@@ -231,12 +277,6 @@ end
 
 
 
-%%
-% Experiment configuration
-%%
-
-
-[endTime,lineCount] = createTestExperiment(auroraConfig, projectFolders);
 
 
 %%
@@ -307,6 +347,17 @@ end
 %%
 % Generate the injury protocol
 %%
+
+success= ...
+    createTestExperiments600A( ...
+            settingsForceRampFV,...
+            settingsTRSS2017Impedance,...
+            perturbationSettings,...
+            stochasticWaves,...    
+            projectFolders,...                                                                                                            
+            auroraConfig);
+
+
 
 indexEnd = createImpedanceForceLengthExperiments600A(...
                         '',...

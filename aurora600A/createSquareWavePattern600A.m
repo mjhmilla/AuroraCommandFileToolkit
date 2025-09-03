@@ -21,7 +21,7 @@ switch auroraConfig.defaultTimeUnit
 end
 
 duration        = config.duration;
-amplitude       = config.magnitudeRange(1,1) ;
+amplitude       = config.magnitudeRange(1,1)*0.5;
 paddingDuration = config.paddingDuration;
 
 minTime = config.holdRange(1,1);
@@ -136,7 +136,7 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
         signalVec(i,1)  = signalVec(i-1,1);
 
 
-        assert(stepTime > minStepTimeInS,...
+        assert(stepTime >= minStepTimeInS,...
                'Error: ramp duration is too small');
 
         i=i+1;
@@ -183,7 +183,7 @@ end
 timeVec(i,1)    = timeVec(i-1,1)+holdTime;
 signalVec(i,1)  = signalVec(i-1,1);
 
-assert(stepTime > minStepTimeInS,...
+assert(stepTime >= minStepTimeInS,...
        'Error: ramp duration is too small');
 
 i=i+1;

@@ -167,6 +167,9 @@ switch controlFunctionName
 
         options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
+
         i=1;
         options(i).unit = auroraConfig.defaultForceUnit;
         options(i).printUnit = 1;
@@ -181,6 +184,9 @@ switch controlFunctionName
     case 'Force-Square'
 
         options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
 
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;
@@ -200,6 +206,10 @@ switch controlFunctionName
 
         options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
+
+
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;
         options(i).printUnit = 1;
@@ -215,6 +225,10 @@ switch controlFunctionName
         options(i).type ='time';
 
     case 'Force-Sweep'
+
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
+
 
         options(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
@@ -238,6 +252,9 @@ switch controlFunctionName
 
     case 'Force-Sample'
         
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
+
         options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
@@ -251,6 +268,9 @@ switch controlFunctionName
 
     case 'Force-Hold'
 
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
+
         options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 
         i=1;
@@ -259,6 +279,9 @@ switch controlFunctionName
         options(i).type ='integer';               
 
     case 'Force-Clamp'
+
+        assert(auroraConfig.useRelativeUnits==0,...
+            'Error: Force commands do not appear to work with relative units');
 
         options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
 

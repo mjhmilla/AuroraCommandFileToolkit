@@ -7,7 +7,7 @@ if(length(trialNumberStr)<2)
 end
 
 if(isempty(startingLength)==0)
-    lengthStr = int2str(round(startingLength,1)*10);
+    lengthStr = int2str(round(startingLength,2)*100);
     if(startingLength < 1)
         lengthStr = ['0',lengthStr];
     end
