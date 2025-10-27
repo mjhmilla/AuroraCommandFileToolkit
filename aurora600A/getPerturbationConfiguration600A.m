@@ -5,6 +5,10 @@ function config = getPerturbationConfiguration600A(perturbationSettings,...
 magnitude      = perturbationSettings.magnitude;
 frequencyRange = perturbationSettings.frequencyRange;
 
+config.arbitraryWaveform.fileName ='';
+config.arbitraryWaveform.seed     = 6;
+config.arbitraryWaveform.lengthUnit = 'Lo';
+
 config.timeUnits = 's';
 config.frequencyUnits='Hz';
 config.lengthUnits = auroraConfig.defaultLengthUnit;

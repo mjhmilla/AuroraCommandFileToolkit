@@ -150,7 +150,21 @@ switch controlFunctionName
 
     case 'Length-Arb'
 
-        options = [];
+        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        i=1;
+        options(i).unit = 'string';
+        options(i).printUnit = 0;
+        options(i).isRelative = 0;
+        options(i).type ='filename';        
+        i=i+1;        
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='length';
+        i=i+1;
+        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).printUnit = 1;   
+        options(i).type ='time';
 
     case 'Force-Step'
 
