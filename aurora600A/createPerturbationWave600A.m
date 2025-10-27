@@ -369,8 +369,11 @@ if(isempty(figPerturbation)==0)
         plot(stochasticWave.signal.t,...
              stochasticWave.signal.x,'-k',...
              'LineWidth',0.25,'DisplayName','x(t)');
-        yticks([-0.0025,0,0.0025]);
-        axis tight;
+        yticks([-max(configVibration.magnitudeRange),0,max(configVibration.magnitudeRange)]);
+        xlim([min(stochasticWave.signal.t),max(stochasticWave.signal.t)]);
+        ylim([-max(configVibration.magnitudeRange).*1.01,...
+               max(configVibration.magnitudeRange).*1.01]);
+
         xlabel('Time (s)');
         ylabel(['Length (', auroraConfig.defaultLengthUnit,')']);
         title('Perturbation waveform');

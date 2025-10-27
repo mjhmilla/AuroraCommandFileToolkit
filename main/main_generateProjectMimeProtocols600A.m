@@ -239,8 +239,8 @@ plotConfig.plotHeight                       = 6;
 
 plotConfig.numberOfHorizontalPlotColumns    = 1;
 plotConfig.numberOfVerticalPlotRows         = 3;
-plotConfig.plotWidth                        = 5;
-plotConfig.plotHeight                       = 1.5;
+plotConfig.plotWidth                        = 15;
+plotConfig.plotHeight                       = 5;
 
 [subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
 
@@ -374,9 +374,9 @@ if(flag_generateRandomSignal==1)
     save(fullfile(projectFolders.output_structs,'larbPreconditioningWave.mat'),...
          'larbPreconditioningWave','-mat');    
     
-    saveas(figSinePerturbation,fullfile(projectFolders.output_plots,...
+    saveas(figLarbPerturbation,fullfile(projectFolders.output_plots,...
                     'fig_randomLarbWave'),'pdf');
-    savefig(figSinePerturbation,fullfile(projectFolders.output_plots,...
+    savefig(figLarbPerturbation,fullfile(projectFolders.output_plots,...
                     'fig_randomLarbWave.fig'));        
 
 else

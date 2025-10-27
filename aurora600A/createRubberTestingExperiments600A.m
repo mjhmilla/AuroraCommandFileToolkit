@@ -188,7 +188,7 @@ for i=1:1:length(stochasticWaveSet)
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
-        case 'Length-Larb'
+        case 'Length-Arb'
             disp('Here');
             assert(0,'Error: still need to write this');
         otherwise
@@ -289,7 +289,7 @@ for i=1:1:length(stochasticWaveSet)
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
-        case 'Length-Larb'
+        case 'Length-Arb'
             disp('Here');
                 assert(0,'Error: still need to write this');
 

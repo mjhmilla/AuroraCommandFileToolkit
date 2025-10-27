@@ -64,18 +64,21 @@ switch signalType
                 assert(0,'Error: unrecognized distribution');
         end
         
-        randomVec = randomVecArb;
-        randomVec = randomVec-mean(randomVec);
-        randomVec = randomVec./max(abs(randomVec));
-        randomVec = randomVec .* max(config.magnitudeRange);
+        randomVecArb = randomVecArb-mean(randomVecArb);
+        randomVecArb = randomVecArb./max(abs(randomVecArb));
         
-        signalVecRaw = [paddingVec;randomVec;paddingVec];
-        
+        signalVecRaw = [paddingVec;randomVecArb;paddingVec];
+        [b,a] = butter(2, (bandwidthHz/(frequencyHz*0.5)),'low');
+        signalVec = filtfilt(b,a,signalVecRaw);
+
+        signalVec = signalVec./max(abs(signalVec));
+        signalVec = signalVec .* max(config.magnitudeRange);
+
+
         assert((length(signalVecRaw)-npts)==0,...
                 'Error: arbitrary signal length is incorrect');
         
-        [b,a] = butter(2, (bandwidthHz/(frequencyHz*0.5)),'low');
-        signalVec = filtfilt(b,a,signalVecRaw);
+
     case 'preconditioning'
 
         preconditioningFrequencyHz = round(bandwidthHz/2);
