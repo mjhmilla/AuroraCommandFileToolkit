@@ -31,6 +31,8 @@ switch controlFunctionName
         id = 10;
     case 'Length-Arb'
         id = 11;
+    case 'Larb'
+        id = 12;        
     case 'Force-Step'
         id = 20;
     case 'Force-Ramp'

@@ -43,6 +43,7 @@ end
 assert(strcmp(auroraConfig.defaultLengthUnit,'Lo'),...
       'Error: Assumed length unit is Lo');
 
+idLarb = 1;
 
 %%
 % File setup
@@ -142,6 +143,7 @@ lineCount = lineCount+1;
 %%
 %2. Move to Lo
 %%
+nominalLength=settingsRubber.normLength;
 
 absLengthRampOptions(1).value=settingsRubber.normLength;
 absLengthRampOptions(2).value=1*scaleTime;
@@ -163,6 +165,7 @@ lineCount = lineCount+1;
 for i=1:1:length(stochasticWaveSet)
     switch stochasticWaveSet(i).controlFunction
         case 'Length-Ramp'
+
             [endTime, lineCount] = ...
                 writeLengthRampBlock600A(fid, startTime,...
                             stochasticWaveSet(i).waitDuration,...
@@ -176,6 +179,7 @@ for i=1:1:length(stochasticWaveSet)
             startTime = endTime + auroraConfig.minimumWaitTime;
 
         case 'Length-Sine'
+
             [endTime,lineCount] = ...
                 writeLengthSineBlock600A(fid, startTime,...
                     stochasticWaveSet(i).waitDuration,...
@@ -188,9 +192,27 @@ for i=1:1:length(stochasticWaveSet)
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
-        case 'Length-Arb'
-            disp('Here');
-            assert(0,'Error: still need to write this');
+
+        case 'Larb'
+
+            waveDir = fullfile(codeDir, 'wave');
+            if(exist(waveDir)==0)
+                mkdir(waveDir);
+            end   
+            [endTime, lineCount] =  writeLarbBlock600A(...
+                                      fid,...                                      
+                                      startTime,...
+                                      nominalLength,...
+                                      waveDir,...
+                                      stochasticWaveSet(i).fileName,...
+                                      stochasticWaveSet(i).fileData,...
+                                      stochasticWaveSet(i).options,...
+                                      lineCount,...
+                                      auroraConfig);
+            fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
+                stochasticWaveSet(i).type,startTime,endTime);            
+            startTime = endTime + auroraConfig.minimumWaitTime;
+
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
@@ -243,7 +265,7 @@ lineCount = lineCount+1;
 %%
 %7. Move to Lo
 %%
-
+nominalLength=settingsRubber.normLength;
 absLengthRampOptions(1).value=settingsRubber.normLength;
 absLengthRampOptions(2).value=1*scaleTime;
 
@@ -264,6 +286,7 @@ lineCount = lineCount+1;
 for i=1:1:length(stochasticWaveSet)
     switch stochasticWaveSet(i).controlFunction
         case 'Length-Ramp'
+
             [endTime, lineCount] = ...
                 writeLengthRampBlock600A(fid, startTime,...
                             stochasticWaveSet(i).waitDuration,...
@@ -277,6 +300,7 @@ for i=1:1:length(stochasticWaveSet)
             startTime = endTime + auroraConfig.minimumWaitTime;
 
         case 'Length-Sine'
+
             [endTime,lineCount] = ...
                 writeLengthSineBlock600A(fid, startTime,...
                     stochasticWaveSet(i).waitDuration,...
@@ -289,9 +313,28 @@ for i=1:1:length(stochasticWaveSet)
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
-        case 'Length-Arb'
-            disp('Here');
-                assert(0,'Error: still need to write this');
+
+        case 'Larb'
+
+            waveDir = fullfile(codeDir, 'wave');
+            if(exist(waveDir)==0)
+                mkdir(waveDir);
+            end        
+
+            [endTime, lineCount] =  ...
+                writeLarbBlock600A(   fid,...                                      
+                                      startTime,...
+                                      nominalLength,...
+                                      waveDir,...
+                                      stochasticWaveSet(i).fileName,...
+                                      stochasticWaveSet(i).fileData,...
+                                      stochasticWaveSet(i).options,....
+                                      lineCount,...
+                                      auroraConfig);
+            
+            fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
+                stochasticWaveSet(i).type,startTime,endTime);            
+            startTime = endTime + auroraConfig.minimumWaitTime;
 
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');

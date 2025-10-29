@@ -42,7 +42,7 @@ arbitraryWaveformManualSettings.seed          = 6;
 arbitraryWaveformManualSettings.lengthUnit    = 'Lo';
 
 dateId = getDateId();
-arbitraryWaveformManualSettings.fileName = ['larb_',dateId,'.dat'];
+arbitraryWaveformManualSettings.fileName = ['larb_',dateId,'_1.dat'];
 
 
 rubber.approximateSampleLengthInMM=1.183;
@@ -340,7 +340,7 @@ if(flag_generateRandomSignal==1)
     perturbationPlotConfig.config = plotConfig_3R1C;
 
     lengthLarbOption = ...
-        getCommandFunctionOptions600A('Length-Arb',auroraConfig);    
+        getCommandFunctionOptions600A('Larb',auroraConfig);    
 
     switch arbitraryWaveformManualSettings.lengthUnits
         case 'rel'
@@ -361,13 +361,14 @@ if(flag_generateRandomSignal==1)
 
     [larbStochasticWave, ...
      larbPreconditioningWave, ...
-     figLarbPerturbation] = createPerturbationWave600A('Length-Arb',...
-                                                lengthLarbOption,...
-                                                configArbitraryWaveformVibration,...
-                                                auroraConfig, ...
-                                                figLarbPerturbation,...
-                                                perturbationPlotConfig,...
-                                                verbose);
+     figLarbPerturbation] = createPerturbationWave600A(...
+                                'Larb',...
+                                lengthLarbOption,...
+                                configArbitraryWaveformVibration,...
+                                auroraConfig, ...
+                                figLarbPerturbation,...
+                                perturbationPlotConfig,...
+                                verbose);
 
     save(fullfile(projectFolders.output_structs,'larbStochasticWave.mat'),...
          'larbStochasticWave','-mat');        
@@ -461,19 +462,23 @@ switch perturbationSettings.mode
         stochasticWaves(2)=struct('controlFunction',[],'waitDuration',[],...
                                  'optionValues',[],'options',[],'type','');
         
-        controlFields = {'controlFunction','waitDuration','optionValues','options'};
+        controlFields = {'controlFunction','waitDuration','optionValues',...
+                        'options','fileName','fileData'};
         
         for j=1:1:length(controlFields)
 
             stochasticWaves(1).(controlFields{j}) = ...
                 larbPreconditioningWave.controlFunctions.(controlFields{j});
-            stochasticWaves(1).type = 'Length-Arb-Preconditioning';
-            
+            stochasticWaves(1).type = 'Larb-Preconditioning';
+            stochasticWaves(1).options(1).value=1; %Larb file id
+
             stochasticWaves(2).(controlFields{j}) = ...
                 larbStochasticWave.controlFunctions.(controlFields{j});
-            stochasticWaves(2).type = 'Length-Arb-Stochastic';
-            
-        end    
+            stochasticWaves(2).type = 'Larb-Stochastic';
+            stochasticWaves(2).options(1).value=2; %Larb file id
+                        
+        end 
+
         
     otherwise assert(0,'Error: Unexpected perturbationSetting.mode');
 end

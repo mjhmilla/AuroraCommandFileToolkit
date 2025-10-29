@@ -121,8 +121,7 @@ if(isempty(options)==0)
             case 'integer'
                 valueStr = sprintf('%i',options(i).value);  
 
-                if(    strcmp(controlFunctionName,'Stimulus') ...
-                    || strcmp(controlFunctionName,'Trigger1') ...
+                if(   strcmp(controlFunctionName,'Trigger1') ...
                     || strcmp(controlFunctionName,'Trigger2'))
 
                     assert(options(i).value >= 1 && options(i).value <= 10,...
@@ -130,6 +129,11 @@ if(isempty(options)==0)
                     assert(abs(options(i).value-round(options(i).value))==0,...
                            'Error: Stimulus pattern must be an integer');
 
+                end                
+                if(    strcmp(controlFunctionName,'Larb') )
+
+                    assert(options(i).value >= 1 && options(i).value <= 4,...
+                           'Error: Larb file id must be 1-4');
                 end
 
                 if(strcmp(controlFunctionName,'Bath'))
@@ -138,6 +142,9 @@ if(isempty(options)==0)
                         || options(i).value == 3,...
                         'Error: Bath option must be 1, 2, or 3');
                 end
+            case 'string'
+                unitStr  = options(i).unit;
+                valueStr = options(i).value; 
 
         end
         

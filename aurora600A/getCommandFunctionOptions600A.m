@@ -12,7 +12,8 @@ msg = '';
 switch controlFunctionName
     case 'Length-Step'
 
-        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(1) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultLengthUnit;
@@ -22,7 +23,8 @@ switch controlFunctionName
 
     case 'Length-Ramp'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultLengthUnit;
@@ -37,7 +39,8 @@ switch controlFunctionName
 
     case 'Length-Square'
 
-        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;
@@ -57,7 +60,8 @@ switch controlFunctionName
 
     case 'Length-Sine'
 
-        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;
@@ -75,7 +79,8 @@ switch controlFunctionName
 
     case 'Length-Sweep'
 
-        options(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(4) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;
@@ -97,7 +102,8 @@ switch controlFunctionName
 
     case 'Length-Sample'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = 'integer';
@@ -110,7 +116,8 @@ switch controlFunctionName
 
     case 'Length-Hold'
 
-        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(1) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = 'integer';
@@ -119,7 +126,8 @@ switch controlFunctionName
 
     case 'Read-Larb'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
         i=1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
@@ -132,7 +140,8 @@ switch controlFunctionName
 
     case 'Write-Larb'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultLengthUnit;
@@ -150,7 +159,8 @@ switch controlFunctionName
 
     case 'Length-Arb'
 
-        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
         i=1;
         options(i).unit = 'string';
         options(i).printUnit = 0;
@@ -166,9 +176,30 @@ switch controlFunctionName
         options(i).printUnit = 1;   
         options(i).type ='time';
 
+    case 'Larb'
+
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
+        i=1;
+        options(i).unit = 'fileId';
+        options(i).printUnit = 0;
+        options(i).isRelative = 0;
+        options(i).type ='integer';        
+        i=i+1;        
+        options(i).unit = auroraConfig.defaultLengthUnit;
+        options(i).printUnit = 1;
+        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).type ='string';
+        options(i).value = '';
+        i=i+1;
+        options(i).unit = auroraConfig.defaultFrequencyUnit;
+        options(i).printUnit = 1;   
+        options(i).type ='frequency'; 
+        
     case 'Force-Step'
 
-        options(1) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(1) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultForceUnit;
@@ -179,7 +210,8 @@ switch controlFunctionName
 
     case 'Force-Ramp'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         assert(auroraConfig.useRelativeUnits==0,...
             'Error: Force commands do not appear to work with relative units');
@@ -197,7 +229,8 @@ switch controlFunctionName
 
     case 'Force-Square'
 
-        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         assert(auroraConfig.useRelativeUnits==0,...
             'Error: Force commands do not appear to work with relative units');
@@ -218,7 +251,8 @@ switch controlFunctionName
 
     case 'Force-Sine'
 
-        options(3) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         assert(auroraConfig.useRelativeUnits==0,...
             'Error: Force commands do not appear to work with relative units');
@@ -244,7 +278,8 @@ switch controlFunctionName
             'Error: Force commands do not appear to work with relative units');
 
 
-        options(4) = struct('unit','','value',nan,'printUnit',nan,'isRelative',nan,'type','');
+        options(4) = struct('unit','','value',nan,'printUnit',nan,...
+                            'isRelative',nan,'type','');
 
         i=1;
         options(i).unit = auroraConfig.defaultFrequencyUnit;

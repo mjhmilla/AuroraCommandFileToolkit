@@ -6,6 +6,7 @@ function [timeVec,signalVec,controlFunctions,lineCount] = ...
                                 auroraConfig)
 
 
+disp('createArbitraryWavePattern600A : will work with 600A.v5');
 
 scaleTime=1;
 switch auroraConfig.defaultTimeUnit
@@ -18,18 +19,13 @@ switch auroraConfig.defaultTimeUnit
 end
 
 %Generate the signal
-period      = round((1/config.frequencyHz)*scaleTime,1);
-periodStr   = sprintf('%1.1f',period);
-frequencyHz = 1/(period/scaleTime);
+period          = (1/config.frequencyHz);
+frequencyHz     = config.frequencyHz;
 
-switch auroraConfig.defaultTimeUnit
-    case 's'
-        periodStr = [periodStr,' s'];
-    case 'ms'
-        periodStr = [periodStr,' ms'];        
-    otherwise
-        assert(0,'Error: Unrecognized time unit');
-end
+assert(strcmp(auroraConfig.defaultFrequencyUnit,'Hz')==1,...
+    'Error: the defeault frequency unit should be Hz');
+assert(abs(frequencyHz-round(frequencyHz))==0,...
+    'Error: the arbitrary waveform frequency should be a whole number.');
 
 bandwidthHz = max(config.frequencyRange);
 assert( abs(frequencyHz/bandwidthHz) > 2,...
@@ -47,7 +43,7 @@ paddingVec = zeros(ppts,1);
 %%
 randomVecArb = [];
 
-timeVec = [0:1:(npts-1)]' .* (period/scaleTime);
+timeVec = [0:1:(npts-1)]' .* (period);
 
 switch signalType
     case 'random'
@@ -105,14 +101,21 @@ controlFunctions = struct('controlFunction','',...
                           'options',[],...
                           'fileName','',...
                           'fileData',[]);
-controlFunctions.controlFunction = 'Length-Arb';
+controlFunctions.controlFunction = 'Larb';
 controlFunctions.waitDuration  = 1*scaleTime;
 
 fileName    = [signalType,'_',config.arbitraryWaveform.fileName];
-lengthUnit  = config.arbitraryWaveform.lengthUnit;
 
-controlFunctions.optionValues  = [{fileName},{lengthUnit},{periodStr}];
+lengthUnit  = config.arbitraryWaveform.lengthUnit;
+functionOption(2).unit=lengthUnit;
+
+
+controlFunctions.optionValues  = [{fileName},{''},{frequencyHz}];
 controlFunctions.options       = functionOption;
+for i=1:1:length(controlFunctions.options)
+    controlFunctions.options(i).value = ...
+        controlFunctions.optionValues{i};
+end
 controlFunctions.fileName      = fileName;
 controlFunctions.fileData      = signalVec;
 lineCount = 1;

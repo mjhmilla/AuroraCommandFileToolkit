@@ -217,7 +217,7 @@ switch controlFunctionName
                         randomSignals.wait,...
                         functionOptions,...                            
                         auroraConfig);
-    case 'Length-Arb'
+    case 'Larb'
 
         [timeVec,...
         signalVec,...
@@ -310,7 +310,7 @@ switch controlFunctionName
                                     functionOptions,...
                                     auroraConfig);        
 
-    case 'Length-Arb'
+    case 'Larb'
         %
         % Use the sine wave command to pre-condition the fiber
         %
