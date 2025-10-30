@@ -87,6 +87,10 @@ switch signalType
         
         [b,a] = butter(2, (bandwidthHz/(frequencyHz*0.5)),'low');
         signalVec = filtfilt(b,a,signalVecRaw);
+
+        signalVec = signalVec./max(abs(signalVec));
+        signalVec = signalVec .* max(config.magnitudeRange);
+
         
     otherwise
         assert(0,'Error: signalType must be random or preconditioning');
