@@ -193,7 +193,7 @@ for i=1:1:length(stochasticWaveSet)
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
 
-        case 'Larb'
+        case 'Length-Arb'
 
             waveDir = fullfile(codeDir, 'wave');
             if(exist(waveDir)==0)
@@ -314,7 +314,7 @@ for i=1:1:length(stochasticWaveSet)
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
 
-        case 'Larb'
+        case 'Length-Arb'
 
             waveDir = fullfile(codeDir, 'wave');
             if(exist(waveDir)==0)

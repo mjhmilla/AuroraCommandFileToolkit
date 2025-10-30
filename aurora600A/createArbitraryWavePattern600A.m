@@ -105,16 +105,14 @@ controlFunctions = struct('controlFunction','',...
                           'options',[],...
                           'fileName','',...
                           'fileData',[]);
-controlFunctions.controlFunction = 'Larb';
+controlFunctions.controlFunction = 'Length-Arb';
 controlFunctions.waitDuration  = 1*scaleTime;
 
 fileName    = [signalType,'_',config.arbitraryWaveform.fileName];
 
 lengthUnit  = config.arbitraryWaveform.lengthUnit;
-functionOption(2).unit=lengthUnit;
 
-
-controlFunctions.optionValues  = [{fileName},{''},{frequencyHz}];
+controlFunctions.optionValues  = [{fileName},{frequencyHz}];
 controlFunctions.options       = functionOption;
 for i=1:1:length(controlFunctions.options)
     controlFunctions.options(i).value = ...

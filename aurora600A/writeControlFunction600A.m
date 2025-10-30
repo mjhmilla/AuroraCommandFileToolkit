@@ -130,7 +130,7 @@ if(isempty(options)==0)
                            'Error: Stimulus pattern must be an integer');
 
                 end                
-                if(    strcmp(controlFunctionName,'Larb') )
+                if(    strcmp(controlFunctionName,'Length-Arb') )
 
                     assert(options(i).value >= 1 && options(i).value <= 4,...
                            'Error: Larb file id must be 1-4');
