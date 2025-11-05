@@ -16,24 +16,38 @@ addpath(projectFolders.common);
 addpath(projectFolders.signals);
 
 %%
-% Experiments to generate
+% Script configuration
 %%
+flag_generateRandomSignal   = 0;
+
+% Experiments to generate
 flag_generateRubberProtocol                 = 0;
 flag_generateForceRampProtocol              = 0;
 flag_generateTRSS2017PerturbationProtocol   = 0;
-flag_generateImpedanceProtocol              = 0;
+flag_generateImpedanceProtocol_v00          = 0;
 flag_generateInjuryProtocol                 = 0;
 
-flag_generateArbitraryWaveImpedanceProtocol = 1;
+flag_generateArbitraryWaveImpedanceProtocol = 0; 
+flag_generateImpedanceProtocol_v01          = 1;
 
-%%
-% Aurora configuration
-%%
-typePerturbation=2;
+
+usingArbitraryWaves = 0;
+typePerturbation    = 1;
 % 0. Lower-frequency Length-Ramp & Sine-Wave 
 % 1. Higher-frequency Length-Ramp & Sine-Wave
 % 2. Arbitrary Waveform
 % Applies to the random Length-Ramp and Sine-Ramp waveforms.
+
+if(flag_generateArbitraryWaveImpedanceProtocol ...
+        || flag_generateImpedanceProtocol_v01)
+    usingArbitraryWaves=1;
+    typePerturbation=2;
+end
+
+%%
+% Aurora configuration
+%%
+mergedArbitraryWaveformSettings.paddingTime = 1;
 
 arbitraryWaveformManualSettings.lengthUnits   = 'rel';
 arbitraryWaveformManualSettings.magnitude     = 0.01;
@@ -45,15 +59,43 @@ dateId = getDateId();
 arbitraryWaveformManualSettings.fileName = ['larb_',dateId];
 
 
-if(flag_generateArbitraryWaveImpedanceProtocol==1)
-    arbitraryWaveformManualSettings.magnitude     = ...
-        [0.01, 0.01, 0.001, 0.001];
-    arbitraryWaveformManualSettings.bandwidth     = ...
-        [15, 90, 15, 90];
+if(usingArbitraryWaves==1)
+
+    if(flag_generateArbitraryWaveImpedanceProtocol==1)
+        arbitraryWaveformManualSettings.frequencyHz   = 1000;
+
+        arbitraryWaveformManualSettings.points        = ...
+            [2^13,2^13,2^13,2^13];
+        arbitraryWaveformManualSettings.magnitude     = ...
+            [0.01, 0.01, 0.001, 0.001];
+        arbitraryWaveformManualSettings.bandwidth     = ...
+            [35, 90, 35, 90];        
+        arbitraryWaveformManualSettings.isIsometric = ...
+            [1,1,1,1];   
+        arbitraryWaveformManualSettings.paddingDuration= ...
+            [1,1,1,1].*0.125;
+    end
+    if(flag_generateImpedanceProtocol_v01==1)
+        arbitraryWaveformManualSettings.frequencyHz   = ...
+            [1000,1000,1000,1000,  1000];        
+        arbitraryWaveformManualSettings.points        = ...
+            [2^12,2^12,2^12,2^12,  454];
+        arbitraryWaveformManualSettings.magnitude     = ...
+            [0.01, 0.01, 0.001, 0.001,  0.001];
+        arbitraryWaveformManualSettings.bandwidth     = ...
+            [35, 90, 35, 90, 90];
+        arbitraryWaveformManualSettings.isIsometric = ...
+            [1,1,1,1, 0];
+
+
+        arbitraryWaveformManualSettings.paddingDuration= ...
+            round(arbitraryWaveformManualSettings.points.*0.05) ...
+            ./arbitraryWaveformManualSettings.frequencyHz;
+        
+    end
+    
 
 end
-
-
 
 rubber.approximateSampleLengthInMM=1.183;
 rubber.minNormLength              = 0.75; %short is fine
@@ -61,10 +103,10 @@ rubber.maxNormLength              = 1.02; %long is not
 rubber.maxNormalizedSpeedLPS      = 2.0;
 
 ratMuscleName                   = 'EDL';
-approximateSampleLengthInMM=1.5;
-sampleFrequency =1000;
-minNormLength = 0.5;
-maxNormLength = 1.85;
+approximateSampleLengthInMM     = 1.5;
+sampleFrequency                 = 1000;
+minNormLength                   = 0.5;
+maxNormLength                   = 1.85;
 
 switch ratMuscleName
     case 'SOL'
@@ -104,7 +146,8 @@ settingsRubber.rubberType = 'nitrile';
 %%
 % Detailed impedance block
 %%
-settingsImpedance.isometricNormLengths           = [0.6:0.1:1.4];
+settingsImpedance.isometricNormLengths           = [0.6,0.8,1,1.4];
+                                                    %[0.6:0.1:1.4];
 
 settingsImpedance.isometricActivationDurationMultiple= ...
     ones(size(settingsImpedance.isometricNormLengths));
@@ -183,10 +226,11 @@ settingsForceRampInjury.normForce       = [1.0,2.75,1.0];
 settingsForceRampInjury.duration        = [1.0,0.25,0.25].*1000;
  
 
-flag_generateRandomSignal   = 1;
+
+%%
+% Set perturbation settings
+%%
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
-
-
 
 muscleTemperatureInC            = 12;
 perturbationSettings.mode       = typePerturbation; %0. default, 1. high bandwidth
@@ -198,18 +242,21 @@ switch perturbationSettings.mode
         perturbationSettings.normSpeedRange=[0.1,1];
         perturbationSettings.holdRange = [(1/100),(1/11.4)];
         perturbationSettings.distribution = 'uniform';
+        perturbationSettings.isIsometric=1;
 
     case 1
         perturbationSettings.frequencyRange=[10,80];
         perturbationSettings.normSpeedRange=[0.1,1.5];
         perturbationSettings.holdRange = [(1/500),(1/50)];
         perturbationSettings.distribution = 'normal';
+        perturbationSettings.isIsometric=1;
 
     case 2
-        perturbationSettings.frequencyRange=[10,80];
+        perturbationSettings.frequencyRange=[10,90];
         perturbationSettings.normSpeedRange=[0.1,1.5];
         perturbationSettings.holdRange = [(1/500),(1/50)];
         perturbationSettings.distribution = 'normal';
+        perturbationSettings.isIsometric=1;
 
     otherwise
         assert(0,'Error: invalid perturbation mode setting');
@@ -266,8 +313,10 @@ if(flag_generateRandomSignal==1)
     verbose=1;
     figSquarePerturbation=figure;
 
-    perturbationPlotConfig.subplot=subplotPanel_3R1C;
+    perturbationPlotConfig.subplot= subplotPanel_3R1C;
     perturbationPlotConfig.config = plotConfig_3R1C;
+    perturbationPlotConfig.column=1;
+
 
     configVibration = ...
         getPerturbationConfiguration600A(...
@@ -310,6 +359,8 @@ if(flag_generateRandomSignal==1)
 
     perturbationPlotConfig.subplot=subplotPanel_3R1C;
     perturbationPlotConfig.config = plotConfig_3R1C;
+    perturbationPlotConfig.column=1;
+
 
     lengthSineOption = ...
         getCommandFunctionOptions600A('Length-Sine',auroraConfig);
@@ -340,9 +391,6 @@ if(flag_generateRandomSignal==1)
     verbose=1;
     figLarbPerturbation=figure;
 
-    perturbationPlotConfig.subplot= subplotPanel_3R1C;
-    perturbationPlotConfig.config = plotConfig_3R1C;
-
     lengthLarbOption = ...
         getCommandFunctionOptions600A('Length-Arb',auroraConfig);    
 
@@ -356,28 +404,59 @@ if(flag_generateRandomSignal==1)
 
     nWave = length(arbitraryWaveformManualSettings.magnitude);
 
-    larbStochasticWaveSet(nWave) = struct('wave',[]);
+    plotConfig.numberOfHorizontalPlotColumns    = nWave;
+    plotConfig.numberOfVerticalPlotRows         = 3;
+    plotConfig.plotWidth                        = 15;
+    plotConfig.plotHeight                       = 5;    
+    [subplotPanel_wave,plotConfig_wave]=plotConfigGeneric(plotConfig);  
+
+    arbitraryWavePlotConfig=perturbationPlotConfig;
+    arbitraryWavePlotConfig.subplot = subplotPanel_wave;
+    arbitraryWavePlotConfig.config  = plotConfig_wave;
+    arbitraryWavePlotConfig.column=1;
+
+    auroraConfigWave = auroraConfig;
 
     for idxWave = 1:1:nWave
+        
+        arbitraryWaveformSettings = perturbationSettings; 
 
-        arbitraryWaveformSettings =perturbationSettings;        
+        arbitraryWaveformSettings.paddingDuration=...
+            arbitraryWaveformManualSettings.paddingDuration(idxWave);
+
+        auroraConfigWave.analogToDigitalSampleRateHz = ...
+            arbitraryWaveformManualSettings.frequencyHz(idxWave);
+        
+        configWaveVibration = ...
+            getPerturbationConfiguration600A(...
+                arbitraryWaveformSettings,...
+                auroraConfigWave);
+        
         arbitraryWaveformSettings.magnitude = ...
             arbitraryWaveformManualSettings.magnitude(idxWave);
+
         arbitraryWaveformSettings.frequencyRange = ...
             [0,arbitraryWaveformManualSettings.bandwidth(idxWave)];
-        arbitraryWaveformSettings.points = 2^13;
+
+        arbitraryWaveformSettings.points = ...
+            arbitraryWaveformManualSettings.points(idxWave);
 
         configArbitraryWaveformVibration = ...
             getPerturbationConfiguration600A(...
                 arbitraryWaveformSettings,...
-                auroraConfig);
-    
-    
+                auroraConfigWave);
+
+
         configArbitraryWaveformVibration.arbitraryWaveform.fileName = ...
            [arbitraryWaveformManualSettings.fileName,'_',num2str(idxWave),'.dat'];
+
         configArbitraryWaveformVibration.arbitraryWaveform.seed = ...
             arbitraryWaveformManualSettings.seed;
 
+        configArbitraryWaveformVibration.isIsometric = ...
+            arbitraryWaveformManualSettings.isIsometric(idxWave);
+
+        arbitraryWavePlotConfig.column=idxWave;
 
         [larbStochasticWave, ...
          larbPreconditioningWave, ...
@@ -385,11 +464,13 @@ if(flag_generateRandomSignal==1)
                                     'Length-Arb',...
                                     lengthLarbOption,...
                                     configArbitraryWaveformVibration,...
-                                    auroraConfig, ...
+                                    auroraConfigWave, ...
                                     figLarbPerturbation,...
-                                    perturbationPlotConfig,...
+                                    arbitraryWavePlotConfig,...
                                     verbose);
         larbStochasticWaveSet(idxWave).wave = larbStochasticWave;
+        larbStochasticWaveSet(idxWave).auroraConfig=auroraConfigWave;
+        larbStochasticWaveSet(idxWave).waveConfig=configArbitraryWaveformVibration;
     end
     save(fullfile(projectFolders.output_structs,'larbStochasticWaveSet.mat'),...
          'larbStochasticWaveSet','-mat');        
@@ -405,8 +486,7 @@ else
     load(fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat'));
     load(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'));
     load(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'));
-    load(fullfile(projectFolders.output_structs,'larbStochasticWave.mat'));
-    load(fullfile(projectFolders.output_structs,'larbPreconditioningWaveSet.mat'));
+    load(fullfile(projectFolders.output_structs,'larbStochasticWaveSet.mat'));
 
 end
 
@@ -480,8 +560,10 @@ switch perturbationSettings.mode
     case 2
     % Arbitrary waveforms
         nWaves = length(larbStochasticWaveSet);
-        stochasticWaves(nWaves)=struct('controlFunction',[],'waitDuration',[],...
-                                 'optionValues',[],'options',[],'type','');
+        stochasticWaves(nWaves)=...
+            struct('controlFunction',[],'waitDuration',[],...
+                   'optionValues',[],'options',[],'type','','metadata',[],...
+                   'auroraConfig',[],'waveConfig',[]);
         
         controlFields = {'controlFunction','waitDuration','optionValues',...
                         'options','fileName','fileData'};
@@ -491,9 +573,28 @@ switch perturbationSettings.mode
     
                 stochasticWaves(i).(controlFields{j}) = ...
                     larbStochasticWaveSet(i).wave.controlFunctions.(controlFields{j});
-                stochasticWaves(i).type = 'Larb-Stochastic';
-                stochasticWaves(i).options(1).value=i; %Larb file id    
+                
             end 
+
+            stochasticWaves(i).type = 'Larb-Stochastic';
+            stochasticWaves(i).options(1).value=i; %Larb file id   
+
+            stochasticWaves(i).metadata.bandwidth = ...
+                max(larbStochasticWaveSet(i).wave.config.frequencyRange);
+            stochasticWaves(i).metadata.amplitude = ...
+                max(larbStochasticWaveSet(i).wave.config.magnitudeRange);
+            stochasticWaves(i).metadata.points = ...
+                max(larbStochasticWaveSet(i).wave.config.points);
+            stochasticWaves(i).metadata.frequencyHz = ...
+                max(larbStochasticWaveSet(i).wave.config.frequencyHz);
+
+            stochasticWaves(i).auroraConfig = ...
+                larbStochasticWaveSet(i).auroraConfig;
+            stochasticWaves(i).waveConfig = ...
+                larbStochasticWaveSet(i).waveConfig;
+ 
+            here=1;
+            
         end
 
         
@@ -502,6 +603,106 @@ end
 %%
 % Generate the protocols
 %%
+if(flag_generateImpedanceProtocol_v01==1)
+  
+    % pilot to establish the decrease in force with each perturbation trial
+    %
+    % version of TRSS2017 with perturbation during the lengthening
+    %
+
+    %%
+    % Merge the isometric waves
+    %%
+    mergedStochasticWave = [];
+
+    for i=1:1:length(stochasticWaves)
+        if(stochasticWaves(i).waveConfig.isIsometric==1)
+            if(isempty(mergedStochasticWave)==1)
+
+                mergedStochasticWave = stochasticWaves(i);
+
+                %Update the file names
+                mergedStochasticWave.waveConfig.arbitraryWaveform.fileName = ...
+                    ['merged_',stochasticWaves(i).waveConfig.arbitraryWaveform.fileName];
+                mergedStochasticWave.optionValues(1,1) = ...
+                    {['merged_',stochasticWaves(i).optionValues{1}]};
+                mergedStochasticWave.fileName = ...
+                    ['merged_',stochasticWaves(i).fileName];
+            else
+                if(mergedStochasticWave.waveConfig.frequencyHz ...
+                        == stochasticWaves(i).waveConfig.frequencyHz)
+
+                    %Update the data
+                    nPaddingPoints = ...
+                        round(mergedArbitraryWaveformSettings.paddingTime ...
+                             *mergedStochasticWave.waveConfig.frequencyHz);
+                    paddingPoints = zeros(nPaddingPoints,1);
+                    mergedStochasticWave.fileData = ...
+                        [mergedStochasticWave.fileData;...
+                        paddingPoints;...
+                        stochasticWaves(i).fileData];
+
+                    %Update the meta data
+                    metaFields =...
+                        {'bandwidth','amplitude','points','frequencyHz'};
+                    paddingData=...
+                        [0,0,nPaddingPoints,...
+                        mergedStochasticWave.waveConfig.frequencyHz];
+
+                    for j=1:1:length(metaFields)
+
+                        mergedStochasticWave.metadata.(metaFields{j}) = ...
+                        [mergedStochasticWave.metadata.(metaFields{j}),...
+                        paddingData(1,j)];
+
+                        mergedStochasticWave.metadata.(metaFields{j}) = ...
+                        [mergedStochasticWave.metadata.(metaFields{j}),...
+                        stochasticWaves(i).metadata.(metaFields{j})];                        
+
+                    end
+                   
+                end
+            end
+        end
+    end
+
+
+    %%
+    % Write the impedance files
+    %%
+    indexStart=1;
+    isActive=1;
+    writeProtocolHeader = 1;
+
+    indexEnd = createImpedanceForceLengthExperiments600A_v01(...
+                    indexStart,...
+                    isActive,...
+                    'larb',...
+                    'passive',...
+                    settingsImpedance,...
+                    mergedStochasticWave,...
+                    writeProtocolHeader,...
+                    projectFolders,...                                                                                                            
+                    auroraConfig);  
+    
+    indexStart=indexEnd;
+    isActive=0;
+    writeProtocolHeader = 0;
+
+    indexEnd = createImpedanceForceLengthExperiments600A_v01(...
+                    indexStart,...
+                    isActive,...
+                    'larb',...
+                    'active',...
+                    settingsImpedance,...
+                    mergedStochasticWave,...
+                    writeProtocolHeader,...
+                    projectFolders,...                                                                                                            
+                    auroraConfig);      
+
+    
+end
+
 if(flag_generateArbitraryWaveImpedanceProtocol==1)
     auroraConfigRubber = getDefaultAuroraConfiguration600A(...
                             rubber.approximateSampleLengthInMM,...
@@ -552,14 +753,14 @@ if(flag_generateTRSS2017PerturbationProtocol ==1 )
                 auroraConfig);
 end
 
-if(flag_generateImpedanceProtocol==1)
-    indexEnd = createImpedanceForceLengthExperiments600A(...
-                            '',...
-                            '',...
-                            settingsImpedance,...
-                            stochasticWaves,...
-                            projectFolders,...                                                                                                            
-                            auroraConfig);
+if(flag_generateImpedanceProtocol_v00==1)
+    indexEnd = createImpedanceForceLengthExperiments600A_v00(...
+                    '',...
+                    '',...
+                    settingsImpedance,...
+                    stochasticWaves,...
+                    projectFolders,...                                                                                                            
+                    auroraConfig);
 end
 
 if(flag_generateInjuryProtocol==1)

@@ -372,7 +372,8 @@ if(isempty(figPerturbation)==0)
     plotConfig   = perturbationPlotConfig.config;
 
     figure(figPerturbation);
-    subplot('Position',reshape(subplotPanel(1,1,:),1,4));
+    col = perturbationPlotConfig.column;
+    subplot('Position',reshape(subplotPanel(1,col,:),1,4));
 %         plot((preConditioningWave.signal.t-max(preConditioningWave.signal.t)),...
 %              preConditioningWave.signal.x,'-','Color',[1,1,1].*0.75,...
 %              'LineWidth',0.25,'DisplayName','Pre-conditioning');
@@ -394,7 +395,7 @@ if(isempty(figPerturbation)==0)
         hold on;
 
     figure(figPerturbation);
-    subplot('Position',reshape(subplotPanel(2,1,:),1,4));
+    subplot('Position',reshape(subplotPanel(2,col,:),1,4));
 
 %     plot((preConditioningWave.signal.t-max(preConditioningWave.signal.t)),...
 %          preConditioningWave.signal.xdot,'-','Color',[1,1,1].*0.75,...
@@ -414,7 +415,7 @@ if(isempty(figPerturbation)==0)
     
     
     figure(figPerturbation);
-    subplot('Position',reshape(subplotPanel(3,1,:),1,4));
+    subplot('Position',reshape(subplotPanel(3,col,:),1,4));
 
     idxFreq = find(stochasticWave.signal.freqHz ...
               < configVibration.frequencyRange(1,2));

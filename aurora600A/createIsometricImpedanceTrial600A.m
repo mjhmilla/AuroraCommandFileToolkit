@@ -41,6 +41,7 @@ for i=1:1:length(stochasticWaveSet)
             fprintf(fidLabel,'%s,%1.6f,%1.6f\n',...
                 stochasticWaveSet(i).type,startTime,endTime);            
             startTime = endTime + auroraConfig.minimumWaitTime;
+            
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
