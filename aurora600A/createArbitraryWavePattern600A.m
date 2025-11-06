@@ -27,7 +27,7 @@ assert(strcmp(auroraConfig.defaultFrequencyUnit,'Hz')==1,...
 assert(abs(frequencyHz-round(frequencyHz))==0,...
     'Error: the arbitrary waveform frequency should be a whole number.');
 
-bandwidthHz = max(config.frequencyRange);
+bandwidthHz = config.arbitraryWaveform.bandwidth;
 assert( abs(frequencyHz/bandwidthHz) > 2,...
         ['Error: sampling frequency should be at least',...
          ' 2x higher than the desired bandwidth']);
@@ -68,9 +68,11 @@ switch signalType
         signalVec = filtfilt(b,a,signalVecRaw);
 
         signalVec = signalVec./max(abs(signalVec));
-        signalVec = signalVec .* max(config.magnitudeRange);
+        signalVec = signalVec .* max(config.magnitude);
 
-
+        if((length(signalVecRaw)-npts)>0)
+            here=1;
+        end
         assert((length(signalVecRaw)-npts)==0,...
                 'Error: arbitrary signal length is incorrect');
         
@@ -89,7 +91,7 @@ switch signalType
         signalVec = filtfilt(b,a,signalVecRaw);
 
         signalVec = signalVec./max(abs(signalVec));
-        signalVec = signalVec .* max(config.magnitudeRange);
+        signalVec = signalVec .* max(config.magnitude);
 
         
     otherwise

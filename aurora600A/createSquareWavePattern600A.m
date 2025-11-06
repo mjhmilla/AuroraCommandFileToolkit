@@ -1,38 +1,112 @@
 function [timeVec,signalVec,controlFunctions,lineCount] =...
      createSquareWavePattern600A(config,...
-                                holdTimesVector,...
-                                velocityVector,...
-                                signOfFirstChange,...
                                 functionOption,...
-                                auroraConfig)
+                                auroraConfig,...
+                                makePreconditioningWave)
 
-%Get the parameters
+
+%%
+% Construct a random vector of hold times and velocities
+%%
+
+%%
+%  Create all of the random vectors needed to construct a 
+%  pseudo random signal using Length-Ramp and Length-Sine commands.
+%  The arbitrary waveform construction is in the function
+%  createArbitraryWavePatterns
+%%
+
+switch config.distribution
+    case 'uniform'
+        rng(1,'twister'); 
+        randomVecA = rand(config.points,1);
+        
+        rng(2,'twister'); 
+        randomVecB = rand(config.points,1);
+        
+    case 'normal'
+        mu = 0.5;
+        sigma = (1-mu)/1.5;
+
+        rng(1,'twister'); 
+        randomVecA = normrnd(mu,sigma,[config.points,1]);
+        randomVecA(randomVecA < 0)=0;
+        randomVecA(randomVecA>1)=1;
+
+        rng(2,'twister'); 
+        randomVecB = normrnd(mu,sigma,[config.points,1]);
+        randomVecB(randomVecB < 0)=0;
+        randomVecB(randomVecB>1)=1;
+                  
+    otherwise assert(0,'Error: unrecognized distribution');
+end
+
+
+
+if(length(config.lengthRamp.holdRange) == 2 ...
+        && abs(diff(config.lengthRamp.holdRange)) > 0)
+    holdTimesVector = ...
+       (1-randomVecA).*(config.lengthRamp.holdRange(1,1)) ...
+          +randomVecA.*(config.lengthRamp.holdRange(1,2)...
+                       -config.lengthRamp.holdRange(1,1));
+else
+    holdTimesVector = ...
+        ones(size(randomVecA)).*config.lengthRamp.holdRange(1,1);
+end
+
+if(length(config.lengthRamp.normSpeedRange) == 2 ...
+        && abs(diff(config.lengthRamp.normSpeedRange)) > 0 )
+    velocityVector = ...
+        (1-randomVecB).*(config.lengthRamp.normSpeedRange(1,1)) ...
+           +randomVecB.*(config.lengthRamp.normSpeedRange(1,2)...
+                        -config.lengthRamp.normSpeedRange(1,1));
+    
+else
+    velocityVector = ...
+        ones(size(randomVecA)).*config.lengthRamp.normSpeedRange(1,1);
+end
+
+%%
+% Make a constant perturbation, if desired
+%%
+
+if(makePreconditioningWave==1)
+    holdTimesVector = ones(config.points,1)...
+                       .*mean(config.lengthRamp.holdRange);
+    
+    velocityVector = ones(config.points,1)...
+                       .*mean(config.lengthRamp.normSpeedRange);
+end
+
+%%
+%Construct the square wave
+%%
 maxRampSpeed    = auroraConfig.maximumRampSpeedInDefaultUnits;
 
 
 switch auroraConfig.defaultTimeUnit
     case 's'
-        maxRampSpeedLPS = maxRampSpeed*config.normSpeedRange(1,2);
+        maxRampSpeedLPS = ...
+            maxRampSpeed*config.lengthRamp.normSpeedRange(1,2);
     case 'ms'
-        maxRampSpeedLPS = maxRampSpeed*1000*config.normSpeedRange(1,2);
+        maxRampSpeedLPS = ...
+            maxRampSpeed*1000*config.lengthRamp.normSpeedRange(1,2);
     otherwise
         assert(0,'Error: Unrecognized time unit');
 
 end
 
 duration        = config.duration;
-amplitude       = config.magnitudeRange(1,1)*0.5;
+amplitude       = config.magnitude*0.5;
 paddingDuration = config.paddingDuration;
 
-minTime = config.holdRange(1,1);
-maxTime = config.holdRange(1,2);
+minTime = config.lengthRamp.holdRange(1,1);
+maxTime = config.lengthRamp.holdRange(1,2);
 
 
 
-halfTime = (maxTime-minTime)*0.5;
 
-signOfChange=signOfFirstChange;
-
+signOfChange=1;
 
 scaleDurationTime=1;
 scaleHoldTime    =1;
@@ -187,8 +261,8 @@ assert(stepTime >= minStepTimeInS,...
        'Error: ramp duration is too small');
 
 i=i+1;
-timeVec(i,1)   = timeVec(i-1,1)+stepTime;
-signalVec(i,1) = signalVec(i-1,1)+lengthChange;        
+timeVec(i,1)   =   timeVec(i-1,1) + stepTime;
+signalVec(i,1) = signalVec(i-1,1) + lengthChange;        
 
 lineCount = lineCount+1;
 

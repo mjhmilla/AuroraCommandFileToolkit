@@ -6,7 +6,11 @@ function indexEnd = createImpedanceForceLengthExperiments600A_v00(...
                         projectFolders,...                                                                                                            
                         auroraConfig)
 
-[codeDir, codeLabelDir,dateId] = getTrialDirectories(projectFolders,'_impedance');
+assert(~isempty(seriesName),...
+    'Error: series name must have a meaningful keyword in it');
+
+[codeDir, codeLabelDir,dateId] = ...
+    getTrialDirectories(projectFolders,['_',seriesName,'_impedance']);
 
 fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
 
@@ -22,14 +26,13 @@ end
 %%
 % Check (some) of the inputs
 %%
-success=0;
+
 assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
        'Error: printed time values configured for ms only.');
 
 %%
 %Experiment configuration
 %%
-lengthRampOptions=getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
 
 scaleTime=1;
 switch auroraConfig.defaultTimeUnit

@@ -13,11 +13,18 @@ if(length(dStr)<2)
 end
 dateId = [yStr,mStr,dStr];
 
-codeDir         = fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A']);
-codeLabelDir    = fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A'],'segmentLabels');
+codeDir         =...
+    fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A']);
+codeLabelDir    = ...
+    fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A'],...
+    'segmentLabels');
+dataDir    = ...
+    fullfile(projectFolders.output_code,[dateId,appendIdName,'_600A'],...
+    'data');
 
 fileFolderList=dir(projectFolders.output_code);
 codeDirExists=0;
+
 for i=1:1:length(fileFolderList)
     if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,[dateId,appendIdName,'_600A']))
         codeDirExists=1;
@@ -25,17 +32,25 @@ for i=1:1:length(fileFolderList)
 end
 
 if(codeDirExists==1)
-    codeLabelDirExists=0;   
+    codeLabelDirExists=0;  
+    dataDirExists=0;
     fileFolderList=dir(codeDir);
     for i=1:1:length(fileFolderList)
         if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,'segmentLabels'))
             codeLabelDirExists=1;
         end
+        if(fileFolderList(i).isdir && strcmp(fileFolderList(i).name,'data'))
+            dataDirExists=1;
+        end
     end
     if(codeLabelDirExists==0)
         mkdir(codeLabelDir);
     end
+    if(dataDirExists==0)
+        mkdir(dataDir);
+    end
 else
     mkdir(codeDir);
-    mkdir(codeLabelDir);    
+    mkdir(codeLabelDir); 
+    mkdir(dataDir); 
 end

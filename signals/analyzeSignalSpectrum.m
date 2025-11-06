@@ -42,18 +42,6 @@ signal.p(:,1) = p1;
 signal.fw(:,1) = fw.*sampleFrequency;
 signal.fwHz(:,1) = (fw/(2*pi)).*sampleFrequency;
 
-% [cpsd_Gxy,cpsd_Fxy] = cpsd(xTimeDomain,yTimeDomain,[],[],[],sampleFrequency,'onesided');
-% [cpsd_Gxx,cpsd_Fxx] = cpsd(xTimeDomain,xTimeDomain,[],[],[],sampleFrequency,'onesided');
-% [cpsd_Gyy,cpsd_Fyy] = cpsd(yTimeDomain,yTimeDomain,[],[],[],sampleFrequency,'onesided');
-% [cpsd_Gyx,cpsd_Fyx] = cpsd(yTimeDomain,xTimeDomain,[],[],[],sampleFrequency,'onesided');
-% 
-% coherenceSq     = ( abs(cpsd_Gyx).*abs(cpsd_Gyx) ) ./ (cpsd_Gxx.*cpsd_Gyy) ;
-% freqHz          = cpsd_Fyx;
-% freqRadians     = freqHz.*(2*pi);
-% idxBW         = find(freqHz <= max(bandwidth+1));
-% 
-% gain  = abs(cpsd_Gyx./cpsd_Gxx);
-% phase = angle(cpsd_Gyx./cpsd_Gxx);
 
 
 %Take the signal derivative
@@ -65,6 +53,5 @@ if(abs(xdotS(1,1)) > 1e-2)
   ' but should be close to zero']);
 end
 
-xdotS(1,1) = 0.; %Muscle model currently can only be initialized
-                 %with a velocity that is < sqrt(eps)
+xdotS(1,1) = 0.; 
 signal.xdot(:,1) = xdotS;
