@@ -18,7 +18,7 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal   = 1;
+flag_generateRandomSignal   = 0;
 
 % Experiments to generate
 flag_generateRubberProtocol                 = 0;
@@ -28,9 +28,23 @@ flag_generateInjuryProtocol                 = 0;
 
 flag_generateArbitraryWaveImpedanceProtocol = 0; 
 
-flag_generateImpedanceProtocol_v00          = 1; %For length/sine
-flag_generateImpedanceProtocol_v01          = 0; %For larb
+flag_generateImpedanceForceLengthProtocol_Sine          = 0; %For length/sine
+flag_generateImpedanceForceLengthProtocol_Larb          = 1; %For larb
 
+settingsExperiment = [];
+
+flag_generateMetaDataForACollection = 1;
+
+if(flag_generateMetaDataForACollection==1)
+    settingsExperiment.clean = 1;
+    settingsExperiment.trialOrder = [13,14,11,12,3,4,7,8,5,6,9,10,1,2];
+    settingsExperiment.folderName = '20251121_impedance_larb_5';
+    settingsExperiment.date.y = 2025;
+    settingsExperiment.date.m = 11;
+    settingsExperiment.date.d = 21;
+    settingsExperiment.dataPathSha256 = ...
+        ['/home/mmillard/work/code/muscle/AuroraAnalysisToolkit/data/600A/20251121_impedance_larb_5/data'];
+end
 
 perturbationSettings.points =2^12;
 perturbationSettings.magnitude = 0.01;
@@ -49,7 +63,7 @@ perturbationSettings.waveType = 'sineWave';
 % Applies to the random Length-Ramp and Sine-Ramp waveforms.
 
 if(flag_generateArbitraryWaveImpedanceProtocol ...
-        || flag_generateImpedanceProtocol_v01)
+        || flag_generateImpedanceForceLengthProtocol_Larb)
     perturbationSettings.waveType = 'larb';
 end
 
@@ -379,7 +393,8 @@ stochasticWaves = ...
 %%
 % Generate the protocols
 %%
-if(flag_generateImpedanceProtocol_v01==1)
+
+if(flag_generateImpedanceForceLengthProtocol_Larb==1)
   
     % pilot to establish the decrease in force with each perturbation trial
     %
@@ -397,18 +412,30 @@ if(flag_generateImpedanceProtocol_v01==1)
     %%
     indexStart=1;
     writeProtocolHeader = 1;
-
-    indexEnd = createImpedanceForceLengthExperiments600A_v01(...
+ 
+    indexEnd = createImpedanceForceLengthExperiments600A_Larb(...
                     indexStart,...
                     'larb',...
                     expSettings.impedance,...
                     mergedStochasticWave,...
                     writeProtocolHeader,...
                     projectFolders,...                                                                                                            
-                    auroraConfig);  
+                    auroraConfig,...
+                    settingsExperiment);  
     
       
 end
+
+if(flag_generateImpedanceForceLengthProtocol_Sine==1)
+    indexEnd = createImpedanceForceLengthExperiments600A_Sine(...
+                    'sine',...
+                    '',...
+                    expSettings.impedance,...
+                    stochasticWaves,...
+                    projectFolders,...                                                                                                            
+                    auroraConfig);
+end
+
 
 if(flag_generateArbitraryWaveImpedanceProtocol==1)
     auroraConfigRubber = getDefaultAuroraConfiguration600A(...
@@ -460,15 +487,6 @@ if(flag_generateTRSS2017PerturbationProtocol ==1 )
                 auroraConfig);
 end
 
-if(flag_generateImpedanceProtocol_v00==1)
-    indexEnd = createImpedanceForceLengthExperiments600A_v00(...
-                    'sine',...
-                    '',...
-                    expSettings.impedance,...
-                    stochasticWaves,...
-                    projectFolders,...                                                                                                            
-                    auroraConfig);
-end
 
 if(flag_generateInjuryProtocol==1)
     success = createInjuryExperiments600A( ...

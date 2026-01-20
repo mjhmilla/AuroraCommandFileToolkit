@@ -124,9 +124,7 @@ for indexSeries = 1:1:nSeries
     
     [subplotPanel_3R1C,plotConfig_3R1C]=plotConfigGeneric(plotConfig);
     
-    perturbationPlotConfig.subplot=subplotPanel_3R1C;
-    perturbationPlotConfig.config = plotConfig_3R1C;
-    
+
     plotConfig.numberOfHorizontalPlotColumns    = 2;
     plotConfig.numberOfVerticalPlotRows         = 3;
     plotConfig.plotWidth                        = 5;
@@ -139,6 +137,8 @@ for indexSeries = 1:1:nSeries
     
     perturbationPlotConfig.subplot=subplotPanel_3R1C;
     perturbationPlotConfig.config = plotConfig_3R1C;
+    perturbationPlotConfig.column = 1;
+
     
 
     if(indexSeries==1)

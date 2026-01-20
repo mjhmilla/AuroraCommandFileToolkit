@@ -1,30 +1,32 @@
-function indexEnd = createImpedanceForceLengthExperiments600A_v01(...
+function indexEnd = createImpedanceForceLengthExperiments600A_Larb(...
                         indexStart,...
                         seriesName,...
                         settingsImpedance,...
                         stochasticWaveSet,...
                         writeProtocolHeader,...
                         projectFolders,...                                                                                                            
-                        auroraConfig)
+                        auroraConfig,...
+                        settingsExperiment)
 
 assert(~isempty(seriesName),...
     'Error: series name must have a meaningful keyword in it');
 
-[codeDir, codeLabelDir,dateId] = ...
-    getTrialDirectories(projectFolders,['_',seriesName,'_impedance']);
 
 
+[codeDir, codeProtocolDir, codeLabelDir,dateId] = ...
+    getTrialDirectories2026(projectFolders,['_',seriesName,'_impedance'],...
+                            settingsExperiment);
 
 fidProtocol = [];
 
 if(writeProtocolHeader==1)
-    fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'w');
+    fidProtocol = fopen(fullfile(codeProtocolDir,['protocol_',dateId,'.csv']),'w');
     
     fprintf(fidProtocol,'%s,%s,%s,%s,%s,%s,%s\n',...
         'Number','Type','Starting_Length_Lo',...
         'Take_Photo','Block','FileName','Comment');
 else
-    fidProtocol = fopen(fullfile(codeDir,['protocol_',dateId,'.csv']),'a');
+    fidProtocol = fopen(fullfile(codeProtocolDir,['protocol_',dateId,'.csv']),'a');
 end
 
 assert(length(stochasticWaveSet)==1,...
@@ -68,7 +70,8 @@ end
 %%
 % Block of isometric trials
 %%
-idx=indexStart;
+jsonProtocolTrialArray = cell(nIsometric*2,1);
+fileCount=indexStart;
 for i=1:1:nIsometric    
     for j=1:1:2
         blockName='';
@@ -84,18 +87,45 @@ for i=1:1:nIsometric
                 assert(0,'Error: j must be 1 or 2');
         end
 
-        idxStr = getTrialIndexString(idx);
+        if(~isempty(settingsExperiment))
+            idx = settingsExperiment.trialOrder(fileCount);
+            idxStr = getTrialIndexString(idx);        
+        else
+            idx=fileCount;
+            idxStr = getTrialIndexString(idx);
+        end
         
         startLength = isometric(i).length;
         takePhoto   = '';
         fname       = getTrialName(seriesName,idx,blockName,startLength,...
                         dateId,'.pro');
+        fnameOutput = getTrialName(seriesName,idx,blockName,startLength,...
+                        dateId,'.dat');
+        fnameMetaData = getTrialName(seriesName,idx,blockName,startLength,...
+                        dateId,'.json');
         fnameLabels = getTrialName(seriesName,idx,blockName,startLength,...
                         [dateId,'_labels'],'.csv');
         larbFileName = getTrialName(seriesName,idx,blockName,startLength,...
                         [dateId,'_larb'],'.dat');
         
-        
+        jsonProtocolTrialArray(idx) = {fnameMetaData};
+
+        jsonMetaData = struct('data',[],'protocol',[],...
+                              'segments',[],'experiment',[]);
+
+        jsonMetaData.data.file = {'data',fnameOutput};
+        if(~isempty(settingsExperiment))
+            measurementFolder=settingsExperiment.dataPathSha256;
+            [status,cmdout] =  system(['sha256sum ',fullfile(measurementFolder,fnameOutput)]);
+            i0 = strfind(cmdout,' ');        
+            i0=i0-1;
+            sha256Sum = cmdout;
+            sha256Sum = sha256Sum(1,1:i0);            
+            jsonMetaData.data.sha256 = sha256Sum;
+        else
+            jsonMetaData.data.sha256 = 'MANUALLY_UPDATE_AFTER_EXPERIMENT';
+        end
+        jsonMetaData.protocol.file = {'protocols',fname};
 
 
         fprintf(fidProtocol,'%s,%s,%1.2f,%s,%s,%s,%s\n',...
@@ -105,7 +135,7 @@ for i=1:1:nIsometric
         auroraConfigIso = auroraConfig;
         auroraConfigIso.bath.activationDuration = isometric(i).activationDuration;
     
-        fid = fopen(fullfile(codeDir, fname),'w');
+        fid = fopen(fullfile(codeProtocolDir,fname),'w');
         fidLabel = fopen(fullfile(codeLabelDir,fnameLabels),'w');
     
     
@@ -150,6 +180,56 @@ for i=1:1:nIsometric
         larbOptions = stochasticWaveSet.options;
         larbOptions(1).value=1;
     
+        segmentStartTime=startTime;
+        segmentCount =1;
+        numberOfSegments=0;
+        for idxMeta = 1:1:length(stochasticWaveSet.metadata.bandwidth)
+            if(stochasticWaveSet.metadata.bandwidth(idxMeta)>0)
+                numberOfSegments=numberOfSegments+1;
+            end
+        end
+        segmentMetaDataArray(numberOfSegments) = ...
+            struct('type','','duration',[0,0],'meta_data',[]);
+        for idxSeg=1:1:numberOfSegments
+            segmentMetaDataArray(idxSeg).duration = [0,0];
+            segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
+            segmentMetaDataArray(idxSeg).meta_data.bandwidth = [0,0];
+            segmentMetaDataArray(idxSeg).meta_data.amplitude = 0;
+            segmentMetaDataArray(idxSeg).meta_data.file ={};
+        end
+
+        idxSeg=1;
+        for idxMeta = 1:1:length(stochasticWaveSet.metadata.bandwidth)
+            segmentFrequency = stochasticWaveSet.metadata.frequencyHz(idxMeta);
+            segmentBandwidth=stochasticWaveSet.metadata.bandwidth(idxMeta);
+            segmentDuration = (stochasticWaveSet.metadata.points(idxMeta) ...
+                               /segmentFrequency)*scaleTime;
+            if(stochasticWaveSet.metadata.bandwidth(idxMeta)>0)
+                
+                t0 = segmentStartTime;                
+                t1 = t0 + segmentDuration;
+
+                segmentMetaDataArray(idxSeg).type = ...
+                    stochasticWaveSet.type;                
+                segmentMetaDataArray(idxSeg).duration = ...
+                    [t0,t1];
+                segmentMetaDataArray(idxSeg).meta_data.is_active =...
+                    isActive;
+                segmentMetaDataArray(idxSeg).meta_data.bandwidth = ...
+                    [0,segmentBandwidth];
+                segmentMetaDataArray(idxSeg).meta_data.amplitude = ...
+                    stochasticWaveSet.metadata.amplitude(idxMeta);
+                segmentMetaDataArray(idxSeg).meta_data.file =...
+                    {'wave',...
+                    larbFileName};
+
+                idxSeg=idxSeg+1;
+            end
+            segmentStartTime = segmentStartTime + segmentDuration;
+
+        end
+        jsonMetaData.segments = segmentMetaDataArray;        
+
         [endTime, lineCount] =  writeLarbBlock600A(...
                                   fid,...                                      
                                   startTime,...
@@ -205,11 +285,63 @@ for i=1:1:nIsometric
         assert(lineCount < auroraConfig.maximumNumberOfCommands,...
             'Error: maximumNumberOfCommandsExceeded');
         
-        idx = idx+1;    
+        fileCount = fileCount+1;   
+
+        trialTitle=sprintf('Impedance %1.2f Lo ',startLength);
+        if(isActive==1)
+            trialTitle = [trialTitle,'Active'];
+        else
+            trialTitle = [trialTitle,'Passive'];            
+        end
+
+        jsonMetaData.experiment.title = trialTitle;
+
+        jsonMetaDataEncoded = jsonencode(jsonMetaData);
+        fidJson = fopen(fullfile(codeDir,fnameMetaData),'w');
+        fprintf(fidJson,jsonMetaDataEncoded);        
+        fclose(fidJson);
+
         fclose(fid);
         fclose(fidLabel);    
     end
 end
 fclose(fidProtocol);
+
+
+protocolMetaData.trials = jsonProtocolTrialArray;
+
+protocolMetaData.experiment.date = 'YYYY/MM/DD';
+protocolMetaData.experiment.location = 'University of Stuttgart';
+protocolMetaData.experiment.experimenter='Sven Weidner';
+protocolMetaData.experiment.apparatus = 'Aurora 1400A';
+protocolMetaData.experiment.specimen = 'animal-muscle-name';
+protocolMetaData.experiment.temperature_C = nan;
+protocolMetaData.experiment.temperatureControl = nan;
+protocolMetaData.experiment.length_mm = nan;
+protocolMetaData.experiment.width_mm = nan;
+protocolMetaData.experiment.height_mm = nan;
+protocolMetaData.experiment.maximum_isometric_stress_kPa = nan;
+protocolMetaData.experiment.comment = nan;
+
+protocolMetaData.funding.agency = 'Deutsche Forschungsgemeinschaft';
+protocolMetaData.funding.number = '540349998';
+protocolMetaData.funding.authors = 'Matthew Millard, André Tomalka';
+protocolMetaData.funding.institution = 'Institute of Sport and Movement Science, University of Stuttgart, Stuttgart, Germany';
+
+protocolMetaData.ethics.board = 'Regierungspräsidium Stuttgart, Referat 35';
+protocolMetaData.ethics.number = 'RPS35-9185-99/411';
+protocolMetaData.ethics.dates = 'January 1, 2024 to December 31, 2028';
+
+jsonProtocolMetaData = jsonencode(protocolMetaData);
+
+if(~isempty(settingsExperiment))
+    fnameJsonProtocol = fullfile(codeDir,[settingsExperiment.folderName,'.json']);
+else
+    fnameJsonProtocol = fullfile(codeDir,...
+        [dateId,'_',seriesName,'_impedance','_600A.json']);
+end
+fidJsonProtocol = fopen(fnameJsonProtocol,'w');
+fprintf(fidJsonProtocol,jsonProtocolMetaData);
+fclose(fidJsonProtocol);
 
 indexEnd = idx;
