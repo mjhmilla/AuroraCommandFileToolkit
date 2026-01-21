@@ -2,14 +2,20 @@ function [codeDir, codeProtocolDir, codeLabelDir,dateId] = ...
     getTrialDirectories2026(projectFolders, appendIdName, ...
     settingsExperiment)
 
+[y,m,d] = datevec(date());
 if(~isempty(settingsExperiment))
-    y = settingsExperiment.date.y;
-    m = settingsExperiment.date.m;
-    d = settingsExperiment.date.d;
-
-else
-    [y,m,d] = datevec(date());
+    if(~isempty(settingsExperiment.date.y))
+        y = settingsExperiment.date.y;
+    end
+    if(~isempty(settingsExperiment.date.m))
+        m = settingsExperiment.date.m;
+    end
+    if(~isempty(settingsExperiment.date.d))
+        d = settingsExperiment.date.d;
+    end
 end
+
+
 
 yStr = int2str(y);
 mStr = int2str(m);

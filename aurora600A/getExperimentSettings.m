@@ -18,6 +18,21 @@ expSettings.rubber.perturbationMagnitude = 0.005;
 expSettings.rubber.rubberType = 'nitrile';
 
 %%
+% Detailed impedance-amplitude block
+%%
+
+expSettings.impedanceAmplitude.amplitudeNormLengths = [0.001,0.01,0.02,0.03,0.04,0.05];
+
+expSettings.impedanceAmplitude.isometricNormLengths = ...
+    ones(size(expSettings.impedanceAmplitude.amplitudeNormLengths));
+
+expSettings.impedanceAmplitude.isometricActivationDurationMultiple= ...
+    ones(size(expSettings.impedanceAmplitude.isometricNormLengths));
+
+expSettings.impedanceAmplitude.isometricActivationDurationMultiple(...
+    expSettings.impedanceAmplitude.isometricNormLengths < 0.8) = 2;
+
+%%
 % Detailed impedance block
 %%
 expSettings.impedance.isometricNormLengths  = [0.55,0.70,0.85,1,1.15,1.30,1.45];

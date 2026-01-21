@@ -29,21 +29,23 @@ flag_generateInjuryProtocol                 = 0;
 flag_generateArbitraryWaveImpedanceProtocol = 0; 
 
 flag_generateImpedanceForceLengthProtocol_Sine          = 0; %For length/sine
-flag_generateImpedanceForceLengthProtocol_Larb          = 1; %For larb
+flag_generateImpedanceForceLengthProtocol_Larb          = 0; %For larb
+flag_generateImpedanceAmplitudeProtocol_Larb            = 1;
+
 
 settingsExperiment = [];
 
-flag_generateMetaDataForACollection = 1;
+flag_generateMetaDataForACollection = 0;
 
 if(flag_generateMetaDataForACollection==1)
     settingsExperiment.clean = 1;
-    settingsExperiment.trialOrder = [13,14,11,12,3,4,7,8,5,6,9,10,1,2];
-    settingsExperiment.folderName = '20251121_impedance_larb_5';
-    settingsExperiment.date.y = 2025;
-    settingsExperiment.date.m = 11;
-    settingsExperiment.date.d = 21;
-    settingsExperiment.dataPathSha256 = ...
-        ['/home/mmillard/work/code/muscle/AuroraAnalysisToolkit/data/600A/20251121_impedance_larb_5/data'];
+    settingsExperiment.trialOrder = [1:12];
+    settingsExperiment.nameModification = '1';
+    settingsExperiment.folderName = '';
+    settingsExperiment.date.y = [];
+    settingsExperiment.date.m = [];
+    settingsExperiment.date.d = [];
+    settingsExperiment.dataPathSha256 = [];
 end
 
 perturbationSettings.points =2^12;
@@ -63,7 +65,8 @@ perturbationSettings.waveType = 'sineWave';
 % Applies to the random Length-Ramp and Sine-Ramp waveforms.
 
 if(flag_generateArbitraryWaveImpedanceProtocol ...
-        || flag_generateImpedanceForceLengthProtocol_Larb)
+        || flag_generateImpedanceForceLengthProtocol_Larb ...
+        || flag_generateImpedanceAmplitudeProtocol_Larb)
     perturbationSettings.waveType = 'larb';
 end
 
@@ -95,6 +98,9 @@ arbitraryWaveformManualSettings.paddingDuration= ...
     round(arbitraryWaveformManualSettings.points.*0.05) ...
     ./arbitraryWaveformManualSettings.frequencyHz;
 
+assert( arbitraryWaveformManualSettings.seed==6,...
+    'Error: changing the seed from 6 will generate different random waves');
+
 if(flag_generateArbitraryWaveImpedanceProtocol==1)
     arbitraryWaveformManualSettings.frequencyHz   = 1000;
 
@@ -110,6 +116,20 @@ if(flag_generateArbitraryWaveImpedanceProtocol==1)
         [1,1,1,1].*0.125;
 end
 
+if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
+    arbitraryWaveformManualSettings.frequencyHz   = 1000;
+
+    arbitraryWaveformManualSettings.points        = ...
+        [2^13,2^13];
+    arbitraryWaveformManualSettings.magnitude     = ...
+        [1,1];
+    arbitraryWaveformManualSettings.bandwidth     = ...
+        [35, 90];        
+    arbitraryWaveformManualSettings.canBeMerged = ...
+        [1,1];   
+    arbitraryWaveformManualSettings.paddingDuration= ...
+        [1,1].*0.125;
+end
 
 
 
@@ -393,6 +413,26 @@ stochasticWaves = ...
 %%
 % Generate the protocols
 %%
+if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
+    %%
+    % Merge the isometric waves
+    %%
+    mergedStochasticWave = mergeArbitraryWaveSegments(stochasticWaves,...
+                                    mergedArbitraryWaveformSettings);
+
+    indexStart=1;
+    writeProtocolHeader = 1;
+
+    indexEnd = createImpedanceAmplitudeExperiments600A_Larb(...
+                    indexStart,...
+                    'larb',...
+                    expSettings.impedanceAmplitude,...
+                    mergedStochasticWave,...
+                    writeProtocolHeader,...
+                    projectFolders,...                                                                                                            
+                    auroraConfig,...
+                    settingsExperiment);     
+end
 
 if(flag_generateImpedanceForceLengthProtocol_Larb==1)
   
