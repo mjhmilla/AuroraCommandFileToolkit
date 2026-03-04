@@ -24,12 +24,6 @@ duration        = config.duration;
 amplitude       = config.magnitudeRange(1,1) ;
 paddingDuration = config.paddingDuration;
 
-minTime = config.holdRange(1,1);
-maxTime = config.holdRange(1,2);
-
-
-
-halfTime = (maxTime-minTime)*0.5;
 
 signOfChange=signOfFirstChange;
 
@@ -85,7 +79,7 @@ lengthVecSum                 = lengthVecSum + lengthChange;
 i=i+1;
 
 
-lengthChange    = 0.5*signOfChange*amplitude;
+lengthChange    = 0.5*signOfChange*amplitude;%*amplitudeScaleVector(i-1,1);
 
 
 stepVel    = velocityVector(i-1,1)*maxRampSpeedLPS;
@@ -122,7 +116,7 @@ while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 
     i=i+1;
 
-    lengthChange    = signOfChange*amplitude;    
+    lengthChange    = signOfChange*amplitude;%*amplitudeScaleVector(i-1,1);    
     stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
     stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000; 
 
@@ -170,7 +164,8 @@ end
  
 
 
-lengthChange    = 0.5*signOfChange*amplitude;    
+%lengthChange    = 0.5*signOfChange*amplitude;
+lengthChange    = 0.5*signOfChange*amplitude;%*amplitudeScaleVector(i-1,1);    
 stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
 stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;    
 

@@ -1,9 +1,10 @@
-function config = getPerturbationConfiguration610A(magnitude,auroraConfig)
+function config = getPerturbationConfiguration610A(...
+                magnitude,bandwidth,auroraConfig)
 
 
-config.timeUnits = 's';
-config.frequencyUnits='Hz';
-config.lengthUnits = auroraConfig.defaultLengthUnit;
+config.timeUnits        = 's';
+config.frequencyUnits   ='Hz';
+config.lengthUnits      = auroraConfig.defaultLengthUnit;
 
 config.points           = 2^12;
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
@@ -14,7 +15,7 @@ config.magnitudeRange    = [1,1].*magnitude;
 
 %This gives the square and sine perturbations the same mean frequency
 %in the power spectrum
-config.frequencyRange    = [5, 39]; 
+config.frequencyRange    = bandwidth;%[5, 39]; 
 
 %To have a ramp speed between 0.1-1 LPS
 vmax = magnitude/auroraConfig.lengthStepResponseTime;
@@ -22,7 +23,7 @@ vmaxN = vmax / auroraConfig.maximumSpeedInDefaultUnits;
 
 config.normSpeedRange    = [0.1,1].*vmaxN;
 
-config.holdRange         = [(1/100),(1/11.4)];  
+config.holdRange         = [1/1000, 1/10];%^[(1/100),(1/11.4)];  
 config.waitTimeRange     = [2,2].*auroraConfig.lengthStepResponseTime;
 
 assert( min(config.waitTimeRange) > auroraConfig.lengthStepResponseTime,...

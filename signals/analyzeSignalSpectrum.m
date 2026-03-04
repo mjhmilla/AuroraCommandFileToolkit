@@ -48,10 +48,10 @@ signal.fwHz(:,1) = (fw/(2*pi)).*sampleFrequency;
 s = complex(0,1).*(signal.freq(:,1));
 xdotS = ifft(signal.y(:,1).*s,'symmetric'); 
 
-if(abs(xdotS(1,1)) > 1e-2)
-  disp(['Initial xdot is ',num2str(abs(xdotS(1,1))),...
-  ' but should be close to zero']);
-end
+% if(abs(xdotS(1,1)) > 1e-2)
+%   disp(['Initial xdot is ',num2str(abs(xdotS(1,1))),...
+%   ' but should be close to zero']);
+% end
 
 xdotS(1,1) = 0.; 
 signal.xdot(:,1) = xdotS;

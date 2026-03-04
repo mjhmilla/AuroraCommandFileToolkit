@@ -10,16 +10,16 @@ isValid = 1;
 msg = '';
 portType ='';
 
-if(length(portName) > 0)
-    if(isempty(strfind(portName,'Length'))==0)
+if(~isempty(portName))
+    if(~contains(portName,'Length')==0)
         portType ='length';
     end
     
-    if(isempty(strfind(portName,'Force'))==0)
+    if(~contains(portName,'Force')==0)
         portType ='force';
     end
     
-    if(isempty(strfind(portName,'Stimulator'))==0)
+    if(~contains(portName,'Stimulator')==0)
         portType ='stimulator';
     end
 end
