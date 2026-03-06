@@ -1,9 +1,9 @@
 function success = createActiveLengthRampImpedanceTrial610A(...
                     lengthRamp,...
-                    stochasticWaveSet,...                    
+                    stochasticWaveSet,...     
+                    indexProbeWave,...
                     trialFileFullPath,...
                     trialBlockLabelFullPath,...
-                    perturbationConfig,...
                     auroraConfig)
 
 assert(     size(lengthRamp.normLengths,1)==1 ...
@@ -191,14 +191,16 @@ waitTime =   (stimulationEndTime-endTimeBlock) ...
 % maximum allowable activation).
 %%
 
+
+i=indexProbeWave;
 probe(1).wait     = auroraConfig.timeToReachMaxActivation;
-probe(1).duration = perturbationConfig.probe.duration;
+probe(1).duration = stochasticWaveSet(i).config.probe.duration;
 
 probe(2).wait     = 0;
-probe(2).duration = perturbationConfig.probe.duration;
+probe(2).duration = stochasticWaveSet(i).config.probe.duration;
 
 probe(3).wait     = 1;
-probe(3).duration = perturbationConfig.probe.duration;
+probe(3).duration = stochasticWaveSet(i).config.probe.duration;
 
 
 probe(3).wait     = auroraConfig.stimulation.maxDuration ...
@@ -243,10 +245,10 @@ stimulationEndTime = programMetaData.controlFunction.endTime;
                                           auroraConfig);            
 assert(isValid==1,msg);
 
-
-sineWaveOptions(1).value = perturbationConfig.probe.frequencyHz;
-sineWaveOptions(2).value = perturbationConfig.probe.magnitude;
-sineWaveOptions(3).value = perturbationConfig.probe.cycles;
+i=indexProbeWave;
+sineWaveOptions(1).value = stochasticWaveSet(i).config.probe.frequencyHz;
+sineWaveOptions(2).value = stochasticWaveSet(i).config.probe.magnitude;
+sineWaveOptions(3).value = stochasticWaveSet(i).config.probe.cycles;
 
 
 waitTime  = probe(1).wait;

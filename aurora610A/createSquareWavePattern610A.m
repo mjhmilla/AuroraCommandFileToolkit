@@ -112,13 +112,17 @@ signOfChange=signOfChange*-1;
 
 flag_limitReached=0;
 
+samplingFrequencyHz = auroraConfig.analogToDigitalSampleRateHz;
+
 while timeVec(i,1) < (duration+paddingDuration) && flag_limitReached==0
 
     i=i+1;
 
     lengthChange    = signOfChange*amplitude;%*amplitudeScaleVector(i-1,1);    
     stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
-    stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000; 
+    stepTime        = ...
+      round(abs(lengthChange/stepVel)*samplingFrequencyHz,1)...
+            /samplingFrequencyHz; 
 
     if(stepTime < minStepTimeInS)
         stepTime = minStepTimeInS;
@@ -167,7 +171,9 @@ end
 %lengthChange    = 0.5*signOfChange*amplitude;
 lengthChange    = 0.5*signOfChange*amplitude;%*amplitudeScaleVector(i-1,1);    
 stepVel         = velocityVector(i-1,1)*maxRampSpeedLPS;
-stepTime        = round(abs(lengthChange/stepVel)*1000,1)/1000;    
+stepTime        = ...
+      round(abs(lengthChange/stepVel)*samplingFrequencyHz,1)...
+      /samplingFrequencyHz;    
 
 if(stepTime < minStepTimeInS)
     stepTime = minStepTimeInS;

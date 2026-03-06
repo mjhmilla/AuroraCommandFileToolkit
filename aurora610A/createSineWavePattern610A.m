@@ -58,6 +58,8 @@ j =j+1;
 
 nextTime=0;
 
+sampleFrequencyHz = auroraConfig.analogToDigitalSampleRateHz;
+samplePeriodS = (1/sampleFrequencyHz);
 
 while nextTime < endSineTime
 
@@ -67,10 +69,13 @@ while nextTime < endSineTime
         signalVecDense =[signalVecDense; zeros(size(signalVecDense))];        
     end
 
-    frequency   = frequencyVector(j-1,1);
     amplitude   = 0.5*amplitudeVector(j-1,1);
     waitTime    = waitTimeVector(j-1,1);      
-    duration = 1/frequency;
+
+    frequencyInput = frequencyVector(j-1,1);    
+    durationInput  = 1/frequencyInput;
+    duration       = round(durationInput*sampleFrequencyHz)/sampleFrequencyHz;
+    frequency      = 1/duration;
     
     %%
     % Generate the command vector

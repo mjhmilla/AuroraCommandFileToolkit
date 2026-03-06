@@ -1,12 +1,14 @@
 function config = getPerturbationConfiguration610A(...
-                magnitude,bandwidth,auroraConfig)
+                magnitude,bandwidth,points,...
+                fitPerturbationPowerSpectrum,auroraConfig)
 
 
 config.timeUnits        = 's';
 config.frequencyUnits   ='Hz';
 config.lengthUnits      = auroraConfig.defaultLengthUnit;
 
-config.points           = 2^12;
+config.fitPerturbationPowerSpectrum=fitPerturbationPowerSpectrum;
+config.points           = points;
 config.frequencyHz      = auroraConfig.analogToDigitalSampleRateHz;
 
 
@@ -38,7 +40,7 @@ if(strcmp(auroraConfig.defaultTimeUnit,'ms'))
 end
 
 
-config.paddingDuration  = 0.25;
+config.paddingDuration  = 0.1;
 
 config.duration    = ...
        ((config.points-2*config.paddingDuration*config.frequencyHz) ...
