@@ -12,6 +12,9 @@ function programMetaData  = ...
 
 %initialWaitTimeInS = waitTimeInS;
 %initialSmallestNextWaitTime = programMetaData.smallestNextWaitTime;
+if(~(waitTimeInS >= programMetaData.smallestNextWaitTime))
+  here=1;
+end
 
 assert(waitTimeInS >= programMetaData.smallestNextWaitTime, ...
        ['Error: waitTimeInS is not larger than',...

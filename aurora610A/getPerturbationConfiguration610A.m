@@ -25,8 +25,9 @@ vmaxN = vmax / auroraConfig.maximumSpeedInDefaultUnits;
 
 config.normSpeedRange    = [0.1,1].*vmaxN;
 
-config.holdRange         = [1/1000, 1/10];%^[(1/100),(1/11.4)];  
+
 config.waitTimeRange     = [2,2].*auroraConfig.lengthStepResponseTime;
+config.holdRange         = [1/100, 1/10];%^[(1/100),(1/11.4)];  
 
 assert( min(config.waitTimeRange) > auroraConfig.lengthStepResponseTime,...
        ['Error: min(config.waitTimeRange) > ',...

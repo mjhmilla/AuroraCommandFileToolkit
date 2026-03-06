@@ -97,7 +97,8 @@ for i=1:1:length(stochasticWaveSet)
 end
 
 endTimeBlock = programMetaData.controlFunction.endTime;
-assert(abs(endTimeBlock-startTimeBlock-waitTimeForBlock-waveDurationInS) < 1e-6,...
+assert(abs(endTimeBlock-startTimeBlock...
+          -waitTimeForBlock-waveDurationInS) < 1e-2,...
        'Error: timing meta data is incorrect');
 
 

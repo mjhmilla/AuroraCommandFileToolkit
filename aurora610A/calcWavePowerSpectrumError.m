@@ -12,11 +12,22 @@ numberOfStochasticWaveCommands] = fcnWave(arg);
 spectrum = analyzeSignalSpectrum(timeVec, signalVec,configVibration);
 
 npts=length(arg);
+
 freqSampleHz = [0:(1/(npts-1)):1]' ...
                 .* diff(configVibration.frequencyRange) ...
                    +  min(configVibration.frequencyRange);
+freqSampleZeroHz = [(1/(npts)):(1/(npts)):1]' ...
+                .* max(configVibration.frequencyRange) ...
+                   +  max(configVibration.frequencyRange);
 
-pwrSampleHz = interp1(spectrum.fwHz,spectrum.pw,freqSampleHz);
+pwrSampleHz = ...
+  interp1(spectrum.fwHz,spectrum.pw,freqSampleHz);
+
+pwrSampleZeroHz = ...
+  interp1(spectrum.fwHz,spectrum.pw,freqSampleZeroHz);
+
 pwrSampleHz = pwrSampleHz./max(pwrSampleHz);
+pwrSampleZeroHz = pwrSampleZeroHz./max(pwrSampleHz);
 
-spectrumError = (pwrSampleHz-1)./objScale;
+spectrumError = [(pwrSampleHz-1)./objScale;...
+                  pwrSampleZeroHz./objScale];

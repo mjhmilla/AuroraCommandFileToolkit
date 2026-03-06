@@ -19,7 +19,7 @@ assert(length(waitTimeVector)==length(lengthVector) ...
 flag_addControlFunctionMetaData = 0;
 
 blockStartTime      = programMetaData.nextStartTime ...
-                    + waitTimeForBlock;
+                     + waitTimeForBlock;
                     
 blockLineCountStart = programMetaData.lineCount;
 
@@ -32,10 +32,11 @@ for i=1:1:length(waitTimeVector)
     waitTime = waitTimeVector(i,1);
 
     if(i==1)
-        waitTime = waitTime + waitTimeForBlock;
+      waitTime=waitTime+waitTimeForBlock;
     end
-
-    
+    if(~(waitTime >= programMetaData.smallestNextWaitTime))
+      here=1;
+    end    
 
     programMetaData ...
         = writeControlFunction610A(...

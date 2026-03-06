@@ -35,10 +35,11 @@ measuredMuscleParams.lceOptMM   =5;%6.66;
 measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
 
 flag_generateRandomSignal         = 1;
-flag_fitPerturbationPowerSpectrum = 0;
+flag_fitPerturbationPowerSpectrum = 1;
 
-normPerturbationLength            = 0.005;
-perturbationBandwidth             = [5, 90];
+normPerturbationLength            = 1;%0.005;
+perturbationBandwidth             = [5, 90]; %Only 2/3 of the upper bandwidth
+                                             %will be realized
 stochasticWaveScalesToTest        = [1];
 
 
