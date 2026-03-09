@@ -28,8 +28,18 @@ auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 %  This is the rate Aurora's A/D converter will sample signals
 
 
-auroraConfig.lengthStepResponseTime = 0.002;  
-% Set to 2 x the length-step reponse time of the 305B and 305B-LR
+auroraConfig.lengthStepResponseTime = 0.002*2;  
+%
+% From the manual:
+%   INSTRUCTION MANUAL
+%   Models
+%   300B, 300B-LR, 305B, 305B-LR,
+%   309B, 310B, 310B-LR
+%   Dual-Mode Lever Arm Systems
+%
+% We have the 305B-LR which has a step response time (1%-99%) of 2 ms.
+% I'm doubling that value here just to be safe
+%
 
 auroraConfig.maximumLengthChangeInMM = 10;
 auroraConfig.scaleLengthUnitsToMM = 1;
