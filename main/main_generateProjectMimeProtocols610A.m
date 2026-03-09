@@ -23,26 +23,28 @@ addpath(projectFolders.signals);
 %%
 muscleName = 'EDL'; %'EDL', or 'SOL';
 
-pointsSet       = [2^10;2^11];
-sampleFrequency = 1000;
+perturbationDuration = 2;
+
+sampleFrequency = 4000;
+
+pointsPower = round(log2(sampleFrequency*perturbationDuration));
+pointsSet       = 2^(pointsPower);
 unitSystem      = 'mm_mN_s_Hz'; %Alternative: 'mm_mN_s_Hz'
 
 assert(strcmp(unitSystem,'Ref_s_Hz')==0, ...
    ['Error: Cannot use Ref_s_Hz because this unit system does not work',...
     ' properly on the 1200A']);
 
-measuredMuscleParams.lceOptMM   =5;%6.66;
-measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
-
 flag_generateRandomSignal         = 1;
 flag_fitPerturbationPowerSpectrum = 1;
 
-normPerturbationLength            = 1;%0.005;
-perturbationBandwidth             = [5, 90]; %Only 2/3 of the upper bandwidth
+normPerturbationLength            = 0.01;
+perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
                                              %will be realized
 stochasticWaveScalesToTest        = [1];
 
-
+measuredMuscleParams.lceOptMM   = 5;      %6.66;
+measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
 
 %1. Square + Sine waves with perturbation
 %2. Sine wave only
@@ -136,6 +138,24 @@ end
 %%
 % Plot Configuration
 %%
+
+[y,m,d] = datevec(date());
+
+yStr = int2str(y);
+mStr = int2str(m);
+dStr = int2str(d);
+if(length(mStr)<2)
+    mStr = ['0',mStr];
+end
+if(length(dStr)<2)
+    dStr = ['0',dStr];
+end
+dateId = [yStr,mStr,dStr];
+
+plotDir         = fullfile(projectFolders.output_plots,[dateId,'_610A']); 
+if(~exist(plotDir,'dir'))
+  mkdir(plotDir);
+end
 
 plotConfig.numberOfHorizontalPlotColumns    = 2;
 plotConfig.numberOfVerticalPlotRows         = 1;
@@ -244,10 +264,10 @@ if(flag_generateRandomSignal==1)
                 verbose);
 
       saveas(figSquarePerturbation,...
-             fullfile(projectFolders.output_plots,...
+             fullfile(plotDir,...
              sprintf('fig_randomSquareWave_%i',idxP)),'pdf');
       savefig(figSquarePerturbation,...
-              fullfile(projectFolders.output_plots,...
+              fullfile(plotDir,...
               sprintf('fig_randomSquareWave_%i.fig',idxP)));  
 
       clf(figSquarePerturbation);
@@ -307,10 +327,10 @@ if(flag_generateRandomSignal==1)
                                                   verbose);
 
       saveas(figSinePerturbation,...
-             fullfile(projectFolders.output_plots,...
+             fullfile(plotDir,...
                       sprintf('fig_randomSineWave_%i',idxP)),'pdf');
       savefig(figSinePerturbation,...
-              fullfile(projectFolders.output_plots,...
+              fullfile(plotDir,...
                        sprintf('fig_randomSineWave_%i.fig',idxP)));   
 
       clf(figSinePerturbation);
@@ -323,7 +343,8 @@ if(flag_generateRandomSignal==1)
         'sinePreconditioningWave.mat'),...
         'sinePreconditioningWave','-mat');    
 
-    save(fullfile(projectFolders.output_structs,'configStochasticWave.mat'),...
+    save(fullfile(projectFolders.output_structs,...
+                  'configStochasticWave.mat'),...
          'configStochasticWave','-mat');        
     
     
