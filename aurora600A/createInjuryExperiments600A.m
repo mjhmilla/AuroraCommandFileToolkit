@@ -77,9 +77,11 @@ if(flag_useLengthRampInjury==1)
     trialType = 'injuryLengthSSC';
     startLength=settingsLengthRampInjury.normLengths(1,1);
     fname       = ...
-        getTrialName('',idxStart,trialType,startLength,dateId,'.pro');
+        getTrialName('',idxStart,trialType,startLength,...
+                        auroraConfig.defaultLengthUnit, dateId,'.pro');
     fnameLabels = ...
-        getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
+        getTrialName('',idxStart,trialType,startLength,...
+                        auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     auroraConfigInjury=auroraConfig;
     maxLengthInjurySSC=max([max(stretchShortenRamp.lengths+0.1),...
@@ -136,8 +138,10 @@ if(flag_useForceRampInjury==1)
     trialType = 'injuryForceSSC';
     startLength=settingsLengthRampInjury.normLengths(1,1);
 
-    fname       = getTrialName('',idxStart,trialType,startLength,dateId,'.pro');
-    fnameLabels = getTrialName('',idxStart,trialType,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName('',idxStart,trialType,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.pro');
+    fnameLabels = getTrialName('',idxStart,trialType,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     success = createForceRampTrial600A(...

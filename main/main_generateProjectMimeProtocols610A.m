@@ -21,11 +21,30 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
+flag_normalizationProtocol    =0;
+flag_injuryProtocol           =0;
+flag_characterizationProtocol =0;
+flag_passiveProtocol          =1;
+
+
 muscleName = 'EDL'; %'EDL', or 'SOL';
 
-perturbationDuration = 2;
+measuredMuscleParams.lceOptMM   = 5;      %6.66;
+measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
 
+flag_generateRandomSignal         = 0;
+flag_fitPerturbationPowerSpectrum = 1;
+stochasticWaveScalesToTest        = [1];
+stochasticWaveSetType             = 6;
+
+
+normPerturbationLength            = 0.1;
+perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
+                                             %will be realized
+perturbationDuration = 2;
 sampleFrequency = 4000;
+
+
 
 pointsPower = round(log2(sampleFrequency*perturbationDuration));
 pointsSet       = 2^(pointsPower);
@@ -35,21 +54,6 @@ assert(strcmp(unitSystem,'Ref_s_Hz')==0, ...
    ['Error: Cannot use Ref_s_Hz because this unit system does not work',...
     ' properly on the 1200A']);
 
-flag_generateRandomSignal         = 1;
-flag_fitPerturbationPowerSpectrum = 1;
-
-normPerturbationLength            = 0.01;
-perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
-                                             %will be realized
-stochasticWaveScalesToTest        = [1];
-
-measuredMuscleParams.lceOptMM   = 5;      %6.66;
-measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
-
-%1. Square + Sine waves with perturbation
-%2. Sine wave only
-%3. Square wave only
-stochasticWaveSetType       = 4;
 
 
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
@@ -210,219 +214,114 @@ auroraConfig = getDefaultAuroraConfiguration610A(...
 %%
 % System identification perturbation signal configuration
 %%
+waveConfig(3) = struct('name','','commandFunctionName','');
+
+waveConfig(1).name = 'Step';
+waveConfig(1).commandFunctionName = 'Step';
+
+waveConfig(2).name = 'Ramp';
+waveConfig(2).commandFunctionName = 'Ramp';
+
+waveConfig(3).name = 'Sine';
+waveConfig(3).commandFunctionName = 'Sine Wave';
+
+
 if(flag_generateRandomSignal==1)
+    figPerturbation=figure;
+    for idxWave = 1:1:length(waveConfig)
 
-    %%
-    % Step
-    %%
-    verbose=1;
-    figStepPerturbation=figure;
+      waveName = waveConfig(idxWave).name;      
+      waveNameLC = lower(waveName);
 
-    perturbationPlotConfig.subplot=subplotPanel_3R1C;
-    perturbationPlotConfig.config = plotConfig_3R1C;    
+      commandFunctionName = waveConfig(idxWave).commandFunctionName;      
+      
+      verbose=1;
 
-    stepPreconditioningWave(length(perturbation)) ...
-      = struct('signal',[],'config',[],'controlFunctions',[]);
-
-    stepStochasticWave(length(perturbation)) ...
-      = struct('signal',[],'config',[], 'controlFunctions',[]);
+  
+      perturbationPlotConfig.subplot= subplotPanel_3R1C;
+      perturbationPlotConfig.config = plotConfig_3R1C;    
+  
+      preconditioningWave(length(perturbation)) ...
+        = struct('signal',[],'config',[],'controlFunctions',[]);
+  
+      stochasticWave(length(perturbation)) ...
+        = struct('signal',[],'config',[], 'controlFunctions',[]);
+      
+      for idxP = 1:1:length(perturbation)
+        preconditioningWave(idxP) = ...
+          struct('signal',[],'config',[],'controlFunctions',[]);
+        stochasticWave(idxP)      =...
+          struct('signal',[],'config',[], 'controlFunctions',[]);
+      end
+  
+      for idxP = 1:1:length(perturbation)
+        assert(strcmp(perturbation(idxP).unit,...
+                      auroraConfig.defaultLengthUnit),...
+            ['Error: perturbation unit and the defaultLengthUnit must',...
+             'match']);
     
-    for idxP = 1:1:length(perturbation)
-      stepPreconditioningWave(idxP) = ...
-        struct('signal',[],'config',[],'controlFunctions',[]);
-      stepStochasticWave(idxP)      =...
-        struct('signal',[],'config',[], 'controlFunctions',[]);
-    end
-
-    for idxP = 1:1:length(perturbation)
-      assert(strcmp(perturbation(idxP).unit,auroraConfig.defaultLengthUnit),...
-          ['Error: perturbation unit and the defaultLengthUnit must',...
-           'match']);
-  
-      configStochasticWave = getPerturbationConfiguration610A(...
-                               perturbation(idxP).magnitude,...
-                               perturbation(idxP).bandwidth,...
-                               perturbation(idxP).points,...
-                               flag_fitPerturbationPowerSpectrum,...
-                               auroraConfig);
-  
-      lengthStepOption = ...
-          getCommandFunctionOptions610A('Step','Length Out',auroraConfig);
-  
-      [stepPreconditioningWave(idxP), ...
-       stepStochasticWave(idxP), ...    
-       figStepPerturbation] = ...
-        createPerturbationWave610A(...
-                'Step',...
-                lengthStepOption,...
-                configStochasticWave,...
-                auroraConfig, ...
-                figStepPerturbation,...
-                perturbationPlotConfig,...
-                verbose);
-
-      saveas(figStepPerturbation,...
-             fullfile(plotDir,...
-             sprintf('fig_randomStepWave_%i',idxP)),'pdf');
-      savefig(figStepPerturbation,...
-              fullfile(plotDir,...
-              sprintf('fig_randomStepWave_%i.fig',idxP)));  
-
-      clf(figStepPerturbation);
+        configStochasticWave = getPerturbationConfiguration610A(...
+                                 perturbation(idxP).magnitude,...
+                                 perturbation(idxP).bandwidth,...
+                                 perturbation(idxP).points,...
+                                 flag_fitPerturbationPowerSpectrum,...
+                                 auroraConfig);
     
-    end
-    save(fullfile(projectFolders.output_structs,...
-         'stepStochasticWave.mat'),...
-         'stepStochasticWave','-mat');        
-    save(fullfile(projectFolders.output_structs,...
-         'stepPreconditioningWave.mat'),...
-         'stepPreconditioningWave','-mat');   
+        commandFunctionOption = getCommandFunctionOptions610A(...
+                          commandFunctionName,'Length Out',auroraConfig);
     
-    %%
-    % Ramp
-    %%
-    verbose=1;
-    figSquarePerturbation=figure;
-
-    perturbationPlotConfig.subplot=subplotPanel_3R1C;
-    perturbationPlotConfig.config = plotConfig_3R1C;    
-
-    squarePreconditioningWave(length(perturbation)) ...
-      = struct('signal',[],'config',[],'controlFunctions',[]);
-
-    squareStochasticWave(length(perturbation)) ...
-      = struct('signal',[],'config',[], 'controlFunctions',[]);
-    
-    for idxP = 1:1:length(perturbation)
-      squarePreconditioningWave(idxP) = ...
-        struct('signal',[],'config',[],'controlFunctions',[]);
-      squareStochasticWave(idxP)      =...
-        struct('signal',[],'config',[], 'controlFunctions',[]);
-    end
-
-    for idxP = 1:1:length(perturbation)
-      assert(strcmp(perturbation(idxP).unit,auroraConfig.defaultLengthUnit),...
-          ['Error: perturbation unit and the defaultLengthUnit must',...
-           'match']);
+        [preconditioningWave(idxP), ...
+         stochasticWave(idxP), ...    
+         figPerturbation] = ...
+          createPerturbationWave610A(...
+                  commandFunctionName,...
+                  commandFunctionOption,...
+                  configStochasticWave,...
+                  auroraConfig, ...
+                  figPerturbation,...
+                  perturbationPlotConfig,...
+                  verbose);
   
-      configStochasticWave = getPerturbationConfiguration610A(...
-                               perturbation(idxP).magnitude,...
-                               perturbation(idxP).bandwidth,...
-                               perturbation(idxP).points,...
-                               flag_fitPerturbationPowerSpectrum,...
-                               auroraConfig);
+        saveas(figPerturbation,...
+               fullfile(plotDir,...
+               sprintf('fig_random%sWave_%i',waveName,idxP)),'pdf');
+        savefig(figPerturbation,...
+                fullfile(plotDir,...
+                sprintf('fig_random%sWave_%i.fig',waveName,idxP)));  
   
-      lengthRampOption = ...
-          getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
-  
-      [squarePreconditioningWave(idxP), ...
-       squareStochasticWave(idxP), ...    
-       figSquarePerturbation] = ...
-        createPerturbationWave610A(...
-                'Ramp',...
-                lengthRampOption,...
-                configStochasticWave,...
-                auroraConfig, ...
-                figSquarePerturbation,...
-                perturbationPlotConfig,...
-                verbose);
+        clf(figPerturbation);
+      
+      end
+      
+      stochasticWaveNewName=sprintf('%sStochasticWave',waveNameLC);
+      assignin('base',stochasticWaveNewName,stochasticWave);
 
-      saveas(figSquarePerturbation,...
-             fullfile(plotDir,...
-             sprintf('fig_randomSquareWave_%i',idxP)),'pdf');
-      savefig(figSquarePerturbation,...
-              fullfile(plotDir,...
-              sprintf('fig_randomSquareWave_%i.fig',idxP)));  
-
-      clf(figSquarePerturbation);
-    
-    end
-    save(fullfile(projectFolders.output_structs,...
-         'squareStochasticWave.mat'),...
-         'squareStochasticWave','-mat');        
-    save(fullfile(projectFolders.output_structs,...
-         'squarePreconditioningWave.mat'),...
-         'squarePreconditioningWave','-mat');    
-    
-
-    %%
-    % Sine
-    %%
-
-    verbose=1;
-    figSinePerturbation=figure;
-
-    perturbationPlotConfig.subplot=subplotPanel_3R1C;
-    perturbationPlotConfig.config = plotConfig_3R1C;
-
-    sinePreconditioningWave(length(perturbation)) ...
-      = struct('signal',[],'config',[],'controlFunctions',[]);
-
-    sineStochasticWave(length(perturbation)) ...
-      = struct('signal',[],'config',[], 'controlFunctions',[]);
-    
-    for idxP = 1:1:length(perturbation)
-      sinePreconditioningWave(idxP) = ...
-        struct('signal',[],'config',[],'controlFunctions',[]);
-      sineStochasticWave(idxP)      =...
-        struct('signal',[],'config',[], 'controlFunctions',[]);
-    end
+      preconditioningWaveNewName=sprintf('%sPreconditioningWave',waveNameLC);
+      assignin('base',preconditioningWaveNewName,preconditioningWave);
 
 
-    for idxP=1:1:length(perturbation)
-      lengthSineOption = ...
-          getCommandFunctionOptions610A('Sine Wave','Length Out',auroraConfig);
-  
-      configStochasticWave = getPerturbationConfiguration610A(...
-                               perturbation(idxP).magnitude,...
-                               perturbation(idxP).bandwidth,...
-                               perturbation(idxP).points,...
-                               flag_fitPerturbationPowerSpectrum,...
-                               auroraConfig);
-  
-      [sinePreconditioningWave(idxP), ...
-       sineStochasticWave(idxP), ...     
-       figSinePerturbation] = createPerturbationWave610A('Sine Wave',...
-                                                  lengthSineOption,...
-                                                  configStochasticWave,...
-                                                  auroraConfig, ...
-                                                  figSinePerturbation,...
-                                                  perturbationPlotConfig,...
-                                                  verbose);
-
-      saveas(figSinePerturbation,...
-             fullfile(plotDir,...
-                      sprintf('fig_randomSineWave_%i',idxP)),'pdf');
-      savefig(figSinePerturbation,...
-              fullfile(plotDir,...
-                       sprintf('fig_randomSineWave_%i.fig',idxP)));   
-
-      clf(figSinePerturbation);
+      save(fullfile(projectFolders.output_structs,...
+           [stochasticWaveNewName,'.mat']),...
+           stochasticWaveNewName,'-mat');        
+      save(fullfile(projectFolders.output_structs,...
+           [preconditioningWaveNewName,'.mat']),...
+           preconditioningWaveNewName,'-mat');         
 
     end
-    save(fullfile(projectFolders.output_structs,...
-        'sineStochasticWave.mat'),...
-        'sineStochasticWave','-mat');        
-    save(fullfile(projectFolders.output_structs,...
-        'sinePreconditioningWave.mat'),...
-        'sinePreconditioningWave','-mat');    
-
-    save(fullfile(projectFolders.output_structs,...
-                  'configStochasticWave.mat'),...
-         'configStochasticWave','-mat');        
-    
-    
-
 
 else
 
-    load(fullfile(projectFolders.output_structs,'squareStochasticWave.mat'));
-    load(fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat'));
+  for idxWave = 1:1:length(waveConfig)
+    waveName = waveConfig(idxWave).name;
+    waveNameLC = lower(waveName);
 
-    load(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'));
-    load(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'));
+    load(fullfile(projectFolders.output_structs,...
+      sprintf('%sStochasticWave.mat',waveNameLC)));
+    load(fullfile(projectFolders.output_structs,...
+      sprintf('%sPreconditioningWave.mat',waveNameLC)));
+    
+  end
 
-    load(fullfile(projectFolders.output_structs,'configStochasticWave.mat'));
 end
 
 
@@ -433,14 +332,22 @@ end
 
 switch stochasticWaveSetType
     case 1
-        waveSet = {'squarePreconditioningWave','squareStochasticWave',...
+        waveSet = {'rampPreconditioningWave','rampStochasticWave',...
                    'sinePreconditioningWave','sineStochasticWave'};        
     case 2
         waveSet = {'sineStochasticWave'};  
     case 3
-        waveSet = {'squareStochasticWave'};      
+        waveSet = {'rampStochasticWave'};      
     case 4
-        waveSet = {'squareStochasticWave','sineStochasticWave'};    
+        waveSet = {'rampStochasticWave','sineStochasticWave'};  
+    case 5
+        waveSet = {'stepStochasticWave',...
+                   'sinePreconditioningWave',...
+                   'sineStochasticWave'};          
+    case 6
+        waveSet = {'stepStochasticWave',...
+                   'stepStochasticWave',...
+                   'sineStochasticWave'};                  
     otherwise
         assert(0,'Error: stochasticWaveSetType incorrectly set');
 end
@@ -453,12 +360,18 @@ disp('Including stochastic waves:');
 numberOfWaves=0;
 for i=1:1:length(waveSet)
     switch waveSet{i}
-        case 'squarePreconditioningWave'
+        case 'stepPreconditioningWave'
             numberOfWaves = numberOfWaves  ...
-              + length(squarePreconditioningWave);  
-        case 'squareStochasticWave'
+              + length(stepPreconditioningWave);  
+        case 'stepStochasticWave'
             numberOfWaves = numberOfWaves  ...
-              + length(squareStochasticWave);  
+              + length(stepStochasticWave);        
+        case 'rampPreconditioningWave'
+            numberOfWaves = numberOfWaves  ...
+              + length(rampPreconditioningWave);  
+        case 'rampStochasticWave'
+            numberOfWaves = numberOfWaves  ...
+              + length(rampStochasticWave);  
         case 'sinePreconditioningWave'
             numberOfWaves = numberOfWaves  ...
               + length(sinePreconditioningWave);           
@@ -480,11 +393,17 @@ for i=1:1:length(waveSet)
     typeName = '';
     fprintf('\t%s\n',waveSet{i});
     switch waveSet{i}
-        case 'squarePreconditioningWave'
-            wave = squarePreconditioningWave;  
+        case 'stepPreconditioningWave'
+            wave = stepPreconditioningWave;  
+            typeName = 'Preconditioning-Length-Step';          
+        case 'stepStochasticWave'
+            wave = stepStochasticWave;
+            typeName = 'Stochastic-Length-Step';
+        case 'rampPreconditioningWave'
+            wave = rampPreconditioningWave;  
             typeName = 'Preconditioning-Length-Ramp';          
-        case 'squareStochasticWave'
-            wave = squareStochasticWave;
+        case 'rampStochasticWave'
+            wave = rampStochasticWave;
             typeName = 'Stochastic-Length-Ramp';
         case 'sinePreconditioningWave'
             wave = sinePreconditioningWave;
@@ -517,28 +436,103 @@ end
 
 
 %%
-% Generate the normalization trials
+% Generate the protocols
 %%
-success = constructNormalizationExperiments610A(...
-                        stochasticWaveScalesToTest,...
-                        stochasticWaves,...                  
-                        auroraConfigNormalization,...
-                        expConfig,...
-                        projectFolders);
+if(flag_passiveProtocol==1)
+  %%
+  % Block of passive trials
+  %%
+  passiveLengths = [0:0.5:4]';
 
-%%
-% Generate the injury experiment protocol files
-%%
+  codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
+  if(~exist(plotDir,'dir'))
+    mkdir(plotDir);
+  end
 
+  passiveDir         = fullfile(codeDir,'passive'); 
+  if(~exist(passiveDir,'dir'))
+    mkdir(passiveDir);
+  end
 
-success = constructInjuryExperiments610A(...        
-                  stochasticWaves,...             
-                  auroraConfig,...
-                  expConfig,...
-                  projectFolders);
+  passiveDataDir         = fullfile(passiveDir,'data'); 
+  if(~exist(passiveDataDir,'dir'))
+    mkdir(passiveDataDir);
+  end
 
-success = constructCharacterizationExperiments610A(...        
-                  stochasticWaves,...           
-                  auroraConfig,...
-                  expConfig,...
-                  projectFolders);
+  passiveProtocolDir         = fullfile(passiveDir,'protocols'); 
+  if(~exist(passiveProtocolDir,'dir'))
+    mkdir(passiveProtocolDir);
+  end
+  
+  passiveLabelDir         = fullfile(passiveDir,'segmentLabels'); 
+  if(~exist(passiveLabelDir,'dir'))
+    mkdir(passiveLabelDir);
+  end
+
+  seriesName = 'passive';
+  idxP=0;
+  for i=1:1:length(passiveLengths)
+
+    type = '';
+    for j=1:1:length(stochasticWaves)
+      if(j>1)
+        type = [type,'_'];
+      end
+      type = [type,replace(stochasticWaves(j).controlFunction,' ','_')];
+    end
+
+    type = ['impedance_',type];
+
+    
+    lengthRamp.lengths  = passiveLengths(i);
+    lengthRamp.options = getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
+
+    idxP=idxP+1;
+    idxStr = getTrialIndexString(idxP);
+    
+    endLength = passiveLengths(i);
+    blockName   = 'PassiveImpedanceLength';
+    fnameNoExt  = getTrialName(seriesName,idxP,type,endLength,...
+                    auroraConfig.defaultLengthUnit, dateId,'');
+    
+    folderConfig.rootFolderPath = passiveDir;
+    folderConfig.dataFolderName = 'data';
+    folderConfig.protocolFolderName = 'protocols';
+    folderConfig.blockLabelsFolderName = 'segmentLabels';
+
+                     
+    success = createSinglePassiveLengthRampImpedanceTrial610A(...
+                    lengthRamp,...
+                    stochasticWaves,...
+                    fnameNoExt,...                    
+                    folderConfig,...
+                    auroraConfig);
+        
+  end
+
+end
+
+if(flag_normalizationProtocol==1)
+  success = constructNormalizationExperiments610A(...
+                          stochasticWaveScalesToTest,...
+                          stochasticWaves,...                  
+                          auroraConfigNormalization,...
+                          expConfig,...
+                          projectFolders);
+end
+
+if(flag_injuryProtocol==1)
+  success = constructInjuryExperiments610A(...        
+                    stochasticWaves,...             
+                    auroraConfig,...
+                    expConfig,...
+                    projectFolders);
+end
+
+if(flag_characterizationProtocol==1)
+  success = constructCharacterizationExperiments610A(...        
+                    stochasticWaves,...           
+                    auroraConfig,...
+                    expConfig,...
+                    projectFolders);
+end

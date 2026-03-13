@@ -45,11 +45,10 @@ nextStartTime   = nan;
 switch controlFunctionName
     case 'Step'
 
-        smallestNextWaitTime  = auroraConfig.lengthStepResponseTime;        
+        smallestNextWaitTime  = 0;        
         commandDuration       = auroraConfig.lengthStepResponseTime;
 
-        nextStartTime   = startTime + waitTimeInS ...
-                        + commandDuration + smallestNextWaitTime;
+        nextStartTime   = startTime + waitTimeInS;
 
     case 'Ramp'
         
@@ -268,6 +267,9 @@ if(isempty(controlFunctionOptions)==0)
                 end
 
                 lengthChange = controlFunctionOptions(i).value;
+                if(lengthChange > auroraConfig.maximumLengthChangeInDefaultUnits)
+                  here=1;
+                end
                 assert(lengthChange <= auroraConfig.maximumLengthChangeInDefaultUnits,...
                  ['Error: desired length change exceeds the maximum value of', ...
                   sprintf('%1.1f',auroraConfig.maximumLengthChangeInDefaultUnits),...

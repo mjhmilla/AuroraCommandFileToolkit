@@ -329,8 +329,10 @@ idxStr = getTrialIndexString(idx);
 startLength = activeLengtheningInjury(1).normLengths(1,1)+1;
 typeOfTrial = 'injury';
 blockName   = 'Injury';
-fname       = getTrialName(seriesName,idx,typeOfTrial,startLength,dateId,'.dpf');
-fnameLabels = getTrialName(seriesName,idx,typeOfTrial,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialName(seriesName,idx,typeOfTrial,startLength,...
+                auroraConfig.defaultLengthUnit,dateId,'.dpf');
+fnameLabels = getTrialName(seriesName,idx,typeOfTrial,startLength,...
+                auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
     idxStr,typeOfTrial,startLength, blockName,fname,'');

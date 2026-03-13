@@ -4,6 +4,7 @@ function [timeVec,signalVec,controlFunctions,lineCount] = ...
                                 frequencyHzRangeInput,...
                                 amplitudeInput,...
                                 waitTimeInput,...
+                                randomNumberGeneratorConfig,...
                                 functionOption,...
                                 auroraConfig)
 
@@ -19,16 +20,20 @@ signalVecDense = zeros(n,1);
 numWaves=2;
 duration = 0;
 freqDistPower=2/3;
+scaleBandwidth=2.5;
 while(duration < config.duration)
   numWaves=numWaves+1;
+  if(length(frequencyHzRangeInput)>1)
+    normFreq = (([1:1:numWaves]').^freqDistPower) ;
+    normFreq = normFreq./max(normFreq);
   
-  normFreq = (([1:1:numWaves]').^freqDistPower) ;
-  normFreq = normFreq./max(normFreq);
-
-  randomFrequencyVec = normFreq.*(...
-                    2*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
-                   +frequencyHzRangeInput(1,1);
-
+    randomFrequencyVec = ...
+      normFreq.*(...
+        scaleBandwidth*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
+       +frequencyHzRangeInput(1,1);
+  else
+    randomFrequencyVec = ones(numWaves,1).*frequencyHzRangeInput(1,1);
+  end
   randomPeriodVec = 1./randomFrequencyVec;
   randomPeriodVec = ...
     round(randomPeriodVec*auroraConfig.analogToDigitalSampleRateHz)...
@@ -42,9 +47,15 @@ numWaves=numWaves-1;
 normFreq = (([1:1:numWaves]').^freqDistPower) ;
 normFreq = normFreq./max(normFreq);
 
-randomFrequencyVec = normFreq.*(...
-                 2*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
-                 +frequencyHzRangeInput(1,1);
+if(length(frequencyHzRangeInput)>1)
+  randomFrequencyVec = ...
+    normFreq.*(...
+      scaleBandwidth*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
+      +frequencyHzRangeInput(1,1);
+
+else
+    randomFrequencyVec = ones(numWaves,1).*frequencyHzRangeInput(1,1);
+end
 
 randomPeriodVec = 1./randomFrequencyVec;
 randomPeriodVec = ...
@@ -58,7 +69,7 @@ duration = sum(1./randomFrequencyVec) + waitTimeInput.*length(randomFrequencyVec
 % Scramble the frequency vector
 %%
 
-rng(3,'twister');
+rng(randomNumberGeneratorConfig.seed,randomNumberGeneratorConfig.type);
 randomFrequencyVec = randomFrequencyVec(randperm(length(randomFrequencyVec)));
 
 n=length(randomFrequencyVec)+2;

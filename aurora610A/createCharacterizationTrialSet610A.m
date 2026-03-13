@@ -37,8 +37,10 @@ for i=1:1:length(stochasticWaveSet)
   type        = ['isometric_impedance_',...
                     replace(stochasticWaveSet(i).controlFunction,' ','_')];
   blockName   = 'Pre-injury';
-  fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
-  fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+  fname       = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit, dateId,'.dpf');
+  fnameLabels = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
   
   
   fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -66,8 +68,10 @@ for i=1:1:length(passiveLengthRampConfig)
     type        = ['passiveLengthening_impedance_',...
                    replace(stochasticWaveSet(j).controlFunction,' ','_')];
     blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
-    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -98,8 +102,10 @@ for i=1:1:length(isometricConfig)
                    replace(stochasticWaveSet(j).controlFunction,' ','_')];
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
-    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...
@@ -136,8 +142,10 @@ for i=1:1:length(activeLengthRampConfig)
             replace(stochasticWaveSet(j).controlFunction,' ','_')];
     takePhoto   = '';
     blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,type,startLength,dateId,'.dpf');
-    fnameLabels = getTrialName(seriesName,idx,type,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.dpf');
+    fnameLabels = getTrialName(seriesName,idx,type,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s\n',...

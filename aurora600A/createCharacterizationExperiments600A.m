@@ -193,8 +193,10 @@ startLength = 1;
 typeName        = 'isometric';
 takePhoto   = 'Yes';
 %blockName   = 'Pre-injury';
-fname       = getTrialName(seriesName,idx,typeName,startLength,dateId,'.pro');
-fnameLabels = getTrialName(seriesName,idx,typeName,startLength,[dateId,'_labels'],'.csv');
+fname       = getTrialName(seriesName,idx,typeName,startLength,...
+                auroraConfig.defaultLengthUnit,dateId,'.pro');
+fnameLabels = getTrialName(seriesName,idx,typeName,startLength,...
+                auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
 
 
 fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -219,8 +221,10 @@ for i=1:1:nPassive
     typeName        = 'passiveLengthening';
     takePhoto   = '';
     %blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,typeName,startLength,dateId,'.pro');
-    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -250,8 +254,10 @@ for i=1:1:nIsometric
     typeName        = 'isometric';
     takePhoto   = '';
     %blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,typeName,startLength,dateId,'.pro');
-    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...
@@ -280,8 +286,10 @@ for i=1:1:nActiveRamp
 
     takePhoto   = '';
     %blockName   = 'Pre-injury';
-    fname       = getTrialName(seriesName,idx,typeName,startLength,dateId,'.pro');
-    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,[dateId,'_labels'],'.csv');
+    fname       = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,dateId,'.pro');
+    fnameLabels = getTrialName(seriesName,idx,typeName,startLength,...
+                    auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
     
     
     fprintf(fidProtocol,'%s,%s,%1.1f,%s,%s,%s,%s\n',...

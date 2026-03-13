@@ -98,15 +98,15 @@ for i=1:1:nIsometric
         startLength = isometric(i).length;
         takePhoto   = '';
         fname       = getTrialName(seriesName,idx,blockName,startLength,...
-                        dateId,'.pro');
+                        auroraConfig.defaultLengthUnit,dateId,'.pro');
         fnameOutput = getTrialName(seriesName,idx,blockName,startLength,...
-                        dateId,'.dat');
+                        auroraConfig.defaultLengthUnit,dateId,'.dat');
         fnameMetaData = getTrialName(seriesName,idx,blockName,startLength,...
-                        dateId,'.json');
+                        auroraConfig.defaultLengthUnit,dateId,'.json');
         fnameLabels = getTrialName(seriesName,idx,blockName,startLength,...
-                        [dateId,'_labels'],'.csv');
+                        auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
         larbFileName = getTrialName(seriesName,idx,blockName,startLength,...
-                        [dateId,'_larb'],'.dat');
+                        auroraConfig.defaultLengthUnit,[dateId,'_larb'],'.dat');
         
         jsonProtocolTrialArray(idx) = {fnameMetaData};
 
@@ -190,11 +190,18 @@ for i=1:1:nIsometric
         end
         segmentMetaDataArray(numberOfSegments) = ...
             struct('type','','duration',[0,0],'meta_data',[]);
+
+        timeFieldName = ['time_',auroraConfig.defaultTimeUnit];
+        bandwidthFieldName = ['bandwidth_',auroraConfig.defaultFrequencyUnit];
+        amplitudeFieldName = ['amplitude_',auroraConfig.defaultLengthUnit];        
+        
         for idxSeg=1:1:numberOfSegments
-            segmentMetaDataArray(idxSeg).duration = [0,0];
+
+
+            segmentMetaDataArray(idxSeg).(timeFieldName) = [0,0];
             segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
-            segmentMetaDataArray(idxSeg).meta_data.bandwidth = [0,0];
-            segmentMetaDataArray(idxSeg).meta_data.amplitude = 0;
+            segmentMetaDataArray(idxSeg).meta_data.(bandwidthFieldName) = [0,0];
+            segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName) = 0;
             segmentMetaDataArray(idxSeg).meta_data.file ={};
         end
 
@@ -211,13 +218,13 @@ for i=1:1:nIsometric
 
                 segmentMetaDataArray(idxSeg).type = ...
                     stochasticWaveSet.type;                
-                segmentMetaDataArray(idxSeg).duration = ...
+                segmentMetaDataArray(idxSeg).(timeFieldName) = ...
                     [t0,t1];
                 segmentMetaDataArray(idxSeg).meta_data.is_active =...
                     isActive;
-                segmentMetaDataArray(idxSeg).meta_data.bandwidth = ...
+                segmentMetaDataArray(idxSeg).meta_data.(bandwidthFieldName) = ...
                     [0,segmentBandwidth];
-                segmentMetaDataArray(idxSeg).meta_data.amplitude = ...
+                segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName) = ...
                     stochasticWaveSet.metadata.amplitude(idxMeta);
                 segmentMetaDataArray(idxSeg).meta_data.file =...
                     {'wave',...
@@ -324,7 +331,7 @@ protocolMetaData.experiment.maximum_isometric_stress_kPa = nan;
 protocolMetaData.experiment.comment = nan;
 
 protocolMetaData.funding.agency = 'Deutsche Forschungsgemeinschaft';
-protocolMetaData.funding.number = '540349998';
+protocolMetaData.funding.number = {'540349998','405834662'};
 protocolMetaData.funding.authors = 'Matthew Millard, André Tomalka';
 protocolMetaData.funding.institution = 'Institute of Sport and Movement Science, University of Stuttgart, Stuttgart, Germany';
 

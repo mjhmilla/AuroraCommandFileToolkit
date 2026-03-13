@@ -1,5 +1,5 @@
 function trialName = getTrialName(seriesName, trialNumber, trialType,...
-                                  startingLength, nameId, extensionStr)
+                                  startingLength, lengthUnit, nameId, extensionStr)
 
 trialNumberStr = num2str(trialNumber);
 if(length(trialNumberStr)<2)
@@ -7,17 +7,22 @@ if(length(trialNumberStr)<2)
 end
 
 if(isempty(startingLength)==0)
-    lengthStr = int2str(round(startingLength,2)*100);
+    lengthStr = '';
     if(startingLength < 1)
+        lengthStr = int2str(round(startingLength,2)*100);      
         lengthStr = ['0',lengthStr];
+    else
+        lengthStr = sprintf('%1.2f',startingLength);
+        idxDp = strfind(lengthStr,'.');
+        lengthStr(idxDp)='_';
     end
 
     if(isempty(seriesName))
         trialName = [trialNumberStr,'_',trialType,...
-                          '_',lengthStr,'Lo_',nameId,extensionStr];
+                          '_',lengthStr,lengthUnit,'_',nameId,extensionStr];
     else
         trialName = [seriesName,'_',trialNumberStr,'_',trialType,...
-                          '_',lengthStr,'Lo_',nameId,extensionStr];
+                          '_',lengthStr,lengthUnit,'_',nameId,extensionStr];
     end
 
 else
