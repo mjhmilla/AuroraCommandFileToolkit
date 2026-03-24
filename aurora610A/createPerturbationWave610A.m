@@ -316,6 +316,7 @@ fprintf('\t%i\tNumber of perturbation commands\n',...
 stochasticWave.config = configVibration;
 stochasticWave.controlFunctions = stochasticFunctions;
 
+
 %%
 % Get the conditioning vibration vector
 %

@@ -1,5 +1,6 @@
 function success = createSinglePassiveLengthRampImpedanceTrial610A(...                    
-                    lengthRamp,...
+                    lengthRampConfig,...
+                    lengthSineOptions,...
                     stochasticWaveSet,...
                     trialFileNameNoExt,...
                     folderConfig,...
@@ -38,39 +39,59 @@ jsonMetaData.protocol.sha256 = "";
 waitTime                    = 1;
 flag_printMetaDataToFile    = 1;
 
-numberOfSegments = length(lengthRamp.lengths) ...
+
+
+numberOfSegments = length(lengthRampConfig.lengths) ...
+                  + 1 ...
                   +length(stochasticWaveSet);
 
-segmentMetaDataArray(numberOfSegments) = ...
-    struct('type','','duration',[0,0],'meta_data',[]);
+assert(strcmp(lengthRampConfig.options(1).unit,auroraConfig.defaultLengthUnit),...
+       ['Error: the default length units and the',...
+        ' length ramp units should match']);
 
 
 timeFieldName = ['time_',auroraConfig.defaultTimeUnit];
+cyclesFieldName ='cycles';
+frequencyFieldName = ['frequency_',auroraConfig.defaultFrequencyUnit];
 bandwidthFieldName = ['bandwidth_',auroraConfig.defaultFrequencyUnit];
-amplitudeFieldName = ['amplitude_',auroraConfig.defaultLengthUnit];        
+amplitudeFieldName = ['amplitude_',auroraConfig.defaultLengthUnit]; 
+lengthFieldName    = ['length_',auroraConfig.defaultLengthUnit];
 isActive = 0;
 
-for idxSeg=1:1:length(lengthRamp.lengths)
+segmentMetaDataArray(numberOfSegments) = ...
+    struct('type','',timeFieldName,[0,0],'meta_data',[]);
+
+for idxSeg=1:1:length(lengthRampConfig.lengths)
     segmentMetaDataArray(idxSeg).(timeFieldName) = [0,0];
     segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
     segmentMetaDataArray(idxSeg).meta_data.channel='';
-    segmentMetaDataArray(idxSeg).meta_data.value=[];
-    segmentMetaDataArray(idxSeg).meta_data.unit=[];
+    segmentMetaDataArray(idxSeg).meta_data.(lengthFieldName)=[];
+    segmentMetaDataArray(idxSeg).meta_data.(timeFieldName)=[];
 end
 
-for idxSeg=(length(lengthRamp.lengths)+1):1:numberOfSegments
+idxSeg = length(lengthRampConfig.lengths)+1;
+segmentMetaDataArray(idxSeg).(timeFieldName) = [0,0];
+segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
+segmentMetaDataArray(idxSeg).meta_data.channel='';
+segmentMetaDataArray(idxSeg).meta_data.(frequencyFieldName)=[];
+segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName)=[];
+segmentMetaDataArray(idxSeg).meta_data.(cyclesFieldName)=[];
+
+idxSegNext=idxSeg+1;
+
+for idxSeg=idxSegNext:1:(numberOfSegments)
     segmentMetaDataArray(idxSeg).(timeFieldName) = [0,0];
     segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
     segmentMetaDataArray(idxSeg).meta_data.(bandwidthFieldName) = [0,0];
     segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName) = 0;
-    segmentMetaDataArray(idxSeg).meta_data.file ={};
 end
 
 idxSeg = 0;
-for i=1:1:length(lengthRamp.lengths)
 
-  lengthChangeOptions             = lengthRamp.options;
-  lengthChangeOptions(1).value    = lengthRamp.lengths(i);
+for i=1:1:length(lengthRampConfig.lengths)
+
+  lengthChangeOptions             = lengthRampConfig.options;
+  lengthChangeOptions(1).value    = lengthRampConfig.lengths(i);
   lengthChangeOptions(2).value    = auroraConfig.prePostPositioningDuration;
 
   programMetaData ...
@@ -85,27 +106,77 @@ for i=1:1:length(lengthRamp.lengths)
 
   idxSeg=idxSeg+1;
 
-  lengthFieldName = ['length_','x'];
-
   segmentMetaDataArray(idxSeg).type = ...
       'Ramp';                
   segmentMetaDataArray(idxSeg).(timeFieldName) = ...
       [programMetaData.controlFunction.startTime,...
-       programMetaData.controlFunction.endTime];
-  segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
-  segmentMetaDataArray(idxSeg).meta_data.channel = lengthChangeOptions(1).port;
-  segmentMetaDataArray(idxSeg).meta_data.value = lengthRamp.lengths(i);
-  segmentMetaDataArray(idxSeg).meta_data.unit = lengthChangeOptions(1).unit;
+       programMetaData.controlFunction.endTime];  
+  segmentMetaDataArray(idxSeg).meta_data.is_active          ...
+    = isActive;
+  segmentMetaDataArray(idxSeg).meta_data.channel            ...
+    = lengthChangeOptions(1).port;
+  segmentMetaDataArray(idxSeg).meta_data.(lengthFieldName)  ...
+    =lengthRampConfig.lengths(i);
+  segmentMetaDataArray(idxSeg).meta_data.(timeFieldName)    ...
+    =lengthChangeOptions(2).value;
   
 end
 
-
-assert(0,'You are here!');
-
 %%
-%Perturb Passive Muscle
+% Apply a sine wave to (more quickly) bring the passive forces 
+% to equilibrium
 %%
 
+
+sineCycles = lengthSineOptions(3).value;
+sineTime   = sineCycles/lengthSineOptions(1).value;
+
+sineTimeRounded   = ...
+  round(sineTime*auroraConfig.analogToDigitalSampleRateHz)...
+  /auroraConfig.analogToDigitalSampleRateHz;
+
+assert(abs(sineTime-sineTimeRounded) < eps*10,...
+       ['Error: choose another sine wave frequency or sampling frequency',...
+         ' this combination will not yield the correct number of cycles']);
+
+
+%
+% Write the meta data
+%
+idxSeg=idxSeg+1;
+
+waitTimeForBlock = auroraConfig.passive.recoveryTime;
+
+segmentMetaDataArray(idxSeg).(timeFieldName) =  ...
+  [programMetaData.nextStartTime+waitTimeForBlock,...
+   programMetaData.nextStartTime+waitTimeForBlock+sineTime]; 
+
+segmentMetaDataArray(idxSeg).type = ['Sine Wave'];
+segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
+
+segmentMetaDataArray(idxSeg).meta_data.channel            ...
+    = lengthSineOptions(1).port;
+segmentMetaDataArray(idxSeg).meta_data.(frequencyFieldName) = ...
+  lengthSineOptions(1).value;
+segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName) = ...
+  lengthSineOptions(2).value;    
+segmentMetaDataArray(idxSeg).meta_data.(cyclesFieldName) = ...
+  lengthSineOptions(3).value;    
+
+programMetaData ...
+        = writeControlFunction610A(...
+                fid,...
+                auroraConfig.passive.recoveryTime,...
+                'Sine Wave',...
+                lengthSineOptions,...
+                auroraConfig,...                
+                programMetaData,...
+                flag_printMetaDataToFile);  
+
+
+%%
+% Perturb Passive Muscle
+%%
 
 startTimeBlock              = programMetaData.nextStartTime;
 waitTimeForBlock            = auroraConfig.passive.recoveryTime;
@@ -122,11 +193,50 @@ end
 
 
 for i=1:1:length(stochasticWaveSet)
+
+    assert(strcmp(stochasticWaveSet(i).config.lengthUnits,...
+                  auroraConfig.defaultLengthUnit),...
+           ['Error: the default length units and the',...
+            ' stochastic wave length units should match']);
+
+    assert(strcmp(stochasticWaveSet(i).config.frequencyUnits,...
+                  auroraConfig.defaultFrequencyUnit),...
+           ['Error: the default frequency units and the',...
+            ' stochastic wave frequency units should match']);
+
+    assert(strcmp(stochasticWaveSet(i).config.timeUnits,...
+                  auroraConfig.defaultTimeUnit),...
+           ['Error: the default time units and the',...
+            ' stochastic wave time units should match']);
+
+    %
+    % Write the meta data
+    %
+    idxSeg=idxSeg+1;
+    
+    singleWaveDuration = (stochasticWaveSet(i).config.points...
+                         /stochasticWaveSet(i).config.frequencyHz);
+
+    segmentMetaDataArray(idxSeg).(timeFieldName) =  ...
+      [programMetaData.nextStartTime+waitTimeForBlock,...
+       programMetaData.nextStartTime+waitTimeForBlock+singleWaveDuration]; 
+
+    segmentMetaDataArray(idxSeg).type = [stochasticWaveSet(i).controlFunction,'-Stochastic'];
+    segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
+    segmentMetaDataArray(idxSeg).meta_data.(bandwidthFieldName) = ...
+      stochasticWaveSet(i).config.frequencyRange;
+    segmentMetaDataArray(idxSeg).meta_data.(amplitudeFieldName) = ...
+      max(stochasticWaveSet(i).config.magnitudeRange);    
+
+    %
+    % Write the wave
+    %
+    
     switch stochasticWaveSet(i).controlFunction
         case 'Step'
 
             stepLengths = stochasticWaveSet(i).optionValues(:,1) ...
-                         +lengthRamp.lengths(end);
+                         +lengthRampConfig.lengths(end);
 
             programMetaData = ...
                 writeLengthStepBlock610A(...
@@ -170,7 +280,18 @@ for i=1:1:length(stochasticWaveSet)
         otherwise
             assert(0,'Error: Unrecognized controlFunction in the stochasticWaveSet');
     end
+
+
+
+
 end
+
+jsonMetaData.segments = segmentMetaDataArray;
+jsonMetaData.experiment.title = ...
+  sprintf('Passive Impedance %1.1f %s',...
+          lengthRampConfig.lengths(end), ...
+          auroraConfig.defaultLengthUnit);
+
 
 endTimeBlock = programMetaData.controlFunction.endTime;
 assert(abs(endTimeBlock-startTimeBlock...
@@ -191,6 +312,12 @@ success = 1;
 assert(programMetaData.lineCount < auroraConfig.maximumNumberOfCommands,...
     'Error: maximumNumberOfCommandsExceeded');
 
+
+jsonMetaDataEncoded = jsonencode(jsonMetaData);
+fidJson = fopen(fullfile(folderConfig.rootFolderPath,...
+                         [trialFileNameNoExt,'.json']),'w');
+fprintf(fidJson,jsonMetaDataEncoded);
+fclose(fidJson);
 
 fclose(fid);
 fclose(programMetaData.labelFileHandle);

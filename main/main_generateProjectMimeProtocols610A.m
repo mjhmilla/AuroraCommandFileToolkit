@@ -24,7 +24,10 @@ addpath(projectFolders.signals);
 flag_normalizationProtocol    =0;
 flag_injuryProtocol           =0;
 flag_characterizationProtocol =0;
+flag_degradationProtocol      =0;
 flag_passiveProtocol          =1;
+
+dateIdOverride = '20260326';
 
 
 muscleName = 'EDL'; %'EDL', or 'SOL';
@@ -156,10 +159,15 @@ if(length(dStr)<2)
 end
 dateId = [yStr,mStr,dStr];
 
+if(~isempty(dateIdOverride))
+  dateId = dateIdOverride;
+end
+
 plotDir         = fullfile(projectFolders.output_plots,[dateId,'_610A']); 
 if(~exist(plotDir,'dir'))
   mkdir(plotDir);
 end
+
 
 plotConfig.numberOfHorizontalPlotColumns    = 2;
 plotConfig.numberOfVerticalPlotRows         = 1;
@@ -346,7 +354,6 @@ switch stochasticWaveSetType
                    'sineStochasticWave'};          
     case 6
         waveSet = {'stepStochasticWave',...
-                   'stepStochasticWave',...
                    'sineStochasticWave'};                  
     otherwise
         assert(0,'Error: stochasticWaveSetType incorrectly set');
@@ -438,78 +445,19 @@ end
 %%
 % Generate the protocols
 %%
-if(flag_passiveProtocol==1)
-  %%
-  % Block of passive trials
-  %%
-  passiveLengths = [0:0.5:4]';
-
-  codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
-  if(~exist(plotDir,'dir'))
-    mkdir(plotDir);
-  end
-
-  passiveDir         = fullfile(codeDir,'passive'); 
-  if(~exist(passiveDir,'dir'))
-    mkdir(passiveDir);
-  end
-
-  passiveDataDir         = fullfile(passiveDir,'data'); 
-  if(~exist(passiveDataDir,'dir'))
-    mkdir(passiveDataDir);
-  end
-
-  passiveProtocolDir         = fullfile(passiveDir,'protocols'); 
-  if(~exist(passiveProtocolDir,'dir'))
-    mkdir(passiveProtocolDir);
-  end
+if(flag_passiveProtocol==1)  
+  passiveExpConfig.lengths = [0:0.5:4]';
+  passiveExpConfig.sineWave.frequency = 100;
+  passiveExpConfig.sineWave.amplitude = 0.25;
+  passiveExpConfig.sineWave.cycles    = ...
+    passiveExpConfig.sineWave.frequency*5;
   
-  passiveLabelDir         = fullfile(passiveDir,'segmentLabels'); 
-  if(~exist(passiveLabelDir,'dir'))
-    mkdir(passiveLabelDir);
-  end
-
-  seriesName = 'passive';
-  idxP=0;
-  for i=1:1:length(passiveLengths)
-
-    type = '';
-    for j=1:1:length(stochasticWaves)
-      if(j>1)
-        type = [type,'_'];
-      end
-      type = [type,replace(stochasticWaves(j).controlFunction,' ','_')];
-    end
-
-    type = ['impedance_',type];
-
-    
-    lengthRamp.lengths  = passiveLengths(i);
-    lengthRamp.options = getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
-
-    idxP=idxP+1;
-    idxStr = getTrialIndexString(idxP);
-    
-    endLength = passiveLengths(i);
-    blockName   = 'PassiveImpedanceLength';
-    fnameNoExt  = getTrialName(seriesName,idxP,type,endLength,...
-                    auroraConfig.defaultLengthUnit, dateId,'');
-    
-    folderConfig.rootFolderPath = passiveDir;
-    folderConfig.dataFolderName = 'data';
-    folderConfig.protocolFolderName = 'protocols';
-    folderConfig.blockLabelsFolderName = 'segmentLabels';
-
-                     
-    success = createSinglePassiveLengthRampImpedanceTrial610A(...
-                    lengthRamp,...
-                    stochasticWaves,...
-                    fnameNoExt,...                    
-                    folderConfig,...
-                    auroraConfig);
-        
-  end
-
+  success = constructPassiveRampImpedanceExperiments610A(...
+                          dateId,...
+                          stochasticWaves,...             
+                          auroraConfig,...
+                          passiveExpConfig,...
+                          projectFolders);
 end
 
 if(flag_normalizationProtocol==1)

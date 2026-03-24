@@ -12,9 +12,7 @@ if(isempty(startingLength)==0)
         lengthStr = int2str(round(startingLength,2)*100);      
         lengthStr = ['0',lengthStr];
     else
-        lengthStr = sprintf('%1.2f',startingLength);
-        idxDp = strfind(lengthStr,'.');
-        lengthStr(idxDp)='_';
+        lengthStr = sprintf('%i',round(startingLength*100));
     end
 
     if(isempty(seriesName))
