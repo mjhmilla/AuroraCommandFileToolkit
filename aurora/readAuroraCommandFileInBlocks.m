@@ -1,0 +1,1 @@
+function auroraCommandBlocks = readAuroraCommandFileInBlocks(fileName)
