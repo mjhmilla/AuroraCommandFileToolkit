@@ -218,7 +218,7 @@ programMetaData.lineCount                   = programMetaData.lineCount + 1;
 waitTimeStr = sprintf('%1.6f',waitTimeInS);
 
 
-if(length(controlFunctionOptions) > 0)
+if(~isempty(controlFunctionOptions))
     commandLine = sprintf(  '%s\t%s\t%s\t',...
                             waitTimeStr,...
                             controlFunctionName,...
@@ -245,7 +245,7 @@ if(isempty(controlFunctionOptions)==0)
                 unitStr = controlFunctionOptions(i).unit;  
                 switch unitStr
                     case 'ms'
-                        valueStr = sprintf('%1.1f',controlFunctionOptions(i).value);
+                        valueStr = sprintf('%1.2f',controlFunctionOptions(i).value);
                     case 's'
                         valueStr = sprintf('%1.6f',controlFunctionOptions(i).value);                    
                     otherwise 

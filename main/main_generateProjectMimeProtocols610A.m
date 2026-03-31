@@ -21,36 +21,35 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
+dateIdOverride                  = '20260326';
+muscleName                      = 'EDL'; %'EDL', or 'SOL';
+measuredMuscleParams.lceOptMM   = 10;
+measuredMuscleParams.vceMaxMMPS = 12;
+
 flag_normalizationProtocol    =0;
 flag_injuryProtocol           =0;
 flag_characterizationProtocol =0;
-flag_degradationProtocol      =0;
-flag_passiveProtocol          =1;
 
-dateIdOverride = '20260326';
+flag_plateauSearchProtocol    =1;
+flag_degradationProtocol      =1;
+flag_rampImpededanceProtocol  =1;
 
-
-muscleName = 'EDL'; %'EDL', or 'SOL';
-
-measuredMuscleParams.lceOptMM   = 5;      %6.66;
-measuredMuscleParams.vceMaxMMPS = 11.1250;%91.1250;%S243*0.5*0.75;
 
 flag_generateRandomSignal         = 0;
 flag_fitPerturbationPowerSpectrum = 1;
 stochasticWaveScalesToTest        = [1];
 stochasticWaveSetType             = 6;
 
-
 normPerturbationLength            = 0.1;
 perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
                                              %will be realized
-perturbationDuration = 2;
+perturbationDuration = [1,2];
 sampleFrequency = 4000;
 
 
 
-pointsPower = round(log2(sampleFrequency*perturbationDuration));
-pointsSet       = 2^(pointsPower);
+pointsPower = round(log2(sampleFrequency.*perturbationDuration));
+pointsSet       = 2.^(pointsPower);
 unitSystem      = 'mm_mN_s_Hz'; %Alternative: 'mm_mN_s_Hz'
 
 assert(strcmp(unitSystem,'Ref_s_Hz')==0, ...
@@ -131,12 +130,12 @@ for i=1:1:length(pointsSet)
           perturbation(i).magnitude = normPerturbationLength*lceOptMM;
           perturbation(i).bandwidth = perturbationBandwidth;
           perturbation(i).unit      = 'mm';
-          perturbation(i).points    = pointsSet(i,1);
+          perturbation(i).points    = pointsSet(i);
       case 'Ref_s_Hz'
           perturbation(i).magnitude = normPerturbationLength;
           perturbation(i).bandwidth = perturbationBandwidth;
           perturbation(i).unit      = 'Ref';
-          perturbation(i).points    = pointsSet(i,1);
+          perturbation(i).points    = pointsSet(i);
     otherwise
           assert(0,'Error: unrecognized unit settings');
   end     
@@ -443,22 +442,169 @@ end
 
 
 %%
+% Generate the experiment folder structure
+%%
+
+dataFolderName        = 'data';
+protocolFolderName    = 'protocols';
+blockLabelsFolderName = 'segmentLabels';
+
+codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
+if(~exist(codeDir,'dir'))
+  mkdir(codeDir);
+end
+
+dataDir         = fullfile(codeDir,dataFolderName); 
+if(~exist(dataDir,'dir'))
+  mkdir(dataDir);
+end
+
+protocolDir     = fullfile(codeDir,protocolFolderName); 
+if(~exist(protocolDir,'dir'))
+  mkdir(protocolDir);
+end
+
+labelDir = fullfile(codeDir,blockLabelsFolderName); 
+if(~exist(labelDir,'dir'))
+  mkdir(labelDir);
+end
+
+expFolders.rootFolderPath         = codeDir;
+expFolders.dataFolderName         = dataFolderName;
+expFolders.protocolFolderName     = protocolFolderName;
+expFolders.blockLabelsFolderName  = blockLabelsFolderName;
+
+%%
 % Generate the protocols
 %%
-if(flag_passiveProtocol==1)  
-  passiveExpConfig.lengths = [0:0.5:4]';
-  passiveExpConfig.sineWave.frequency = 100;
-  passiveExpConfig.sineWave.amplitude = 0.25;
-  passiveExpConfig.sineWave.cycles    = ...
-    passiveExpConfig.sineWave.frequency*5;
+trialId = 1;
+
+if(flag_plateauSearchProtocol==1)  
+  plateauConfig.ramp.waitTime       = 1;
+  plateauConfig.ramp.lengths        = [-2:1:2]';
+  plateauConfig.ramp.duration       = 1;
   
-  success = constructPassiveRampImpedanceExperiments610A(...
+  plateauConfig.sineWave.waitTime   = 1;
+  plateauConfig.sineWave.frequency  = 20;
+  plateauConfig.sineWave.amplitude  = 0.25;
+  plateauConfig.sineWave.cycles     = ...
+    plateauConfig.sineWave.frequency*5;
+
+  plateauConfig.twitch.waitTime     = 1;
+  plateauConfig.twitch.initialDelayS = 0;
+  plateauConfig.twitch.pulseWidthMS  = 0.25;
+
+  plateauConfig.stopWaitTime =1;
+
+  trialId = createPlateauSearchTrail610A(...
+                        dateId,...
+                        trialId,...
+                        auroraConfig,...
+                        plateauConfig,...
+                        expFolders,...
+                        projectFolders);  
+  
+end
+
+if(flag_degradationProtocol==1)
+  degradationConfig.waitTime=1;
+  degradationConfig.tetanus.initialDelay   = 0;
+  degradationConfig.tetanus.pulseFrequency = 70;
+  degradationConfig.tetanus.pulseWidth     = 5;
+  degradationConfig.tetanus.duration       = 1;
+  degradationConfig.tetanus.sampleFrequency= 4000;
+
+  degradationConfig.sineWave.waitTime   = 0;
+  degradationConfig.sineWave.frequency  = 1;
+  degradationConfig.sineWave.amplitude  = 0.25;
+  degradationConfig.sineWave.cycles     = ...
+  degradationConfig.sineWave.frequency*25;
+  degradationConfig.sineWave.sampleFrequency = 100;
+
+  degradationConfig.muscleName  =muscleName;
+  degradationConfig.unitSystem  ='mm_mN_s_Hz';
+  degradationConfig.lceOptMM    =lceOptMM;
+  degradationConfig.vceMaxLPS   =vceMaxLPS;
+  
+
+  trialId = constructDegradationExperiment610A(...
+                        dateId,...
+                        trialId,...
+                        degradationConfig,...
+                        expFolders,...
+                        projectFolders);   
+
+end
+
+if(flag_rampImpededanceProtocol==1)  
+
+  trialId=1;
+  
+  rampImpConfig.isStochasticWaveActive = [1,0,1,0];
+
+  rampImpConfig.ramp.waitTime = 1;
+  rampImpConfig.ramp.length = [0:1:3]';  
+  rampImpConfig.ramp.duration = 1;
+
+  rampImpConfig.sineWave.waitTime  = 10;
+  rampImpConfig.sineWave.frequency = 20;
+  rampImpConfig.sineWave.amplitude = 0.25;
+  rampImpConfig.sineWave.cycles    = ...
+  rampImpConfig.sineWave.frequency*5;
+
+  rampImpConfig.tetanus.waitTime       = 1;
+  rampImpConfig.tetanus.initialDelay   = 0;
+  rampImpConfig.tetanus.pulseFrequency = 70;
+  rampImpConfig.tetanus.pulseWidth     = 5;
+  rampImpConfig.tetanus.duration       = nan;
+  rampImpConfig.tetanus.durationExtension = 0.5;
+
+  rampImpConfig.stochasticWaves.waitTime=5;
+  rampImpConfig.stochasticWaves.timeToReachMaxActivation=0.25;
+  rampImpConfig.stop.waitTime = 5;
+
+  assert(length(stochasticWaves)==length(rampImpConfig.isStochasticWaveActive),...
+         ['Error: number of stochasticWaves and isStochasticWaveActive',...
+          ' are incompatible.']);
+
+  seriesId = 'temperature_00';
+  trialId = 1;
+  trialId = constructRampImpedanceExperiments610A(...
+                          seriesId,...
                           dateId,...
+                          trialId,...
                           stochasticWaves,...             
                           auroraConfig,...
-                          passiveExpConfig,...
+                          rampImpConfig,...
+                          expFolders,...
+                          projectFolders);
+
+  seriesId = 'temperature_01';
+  trialId = 1;
+  trialId = constructRampImpedanceExperiments610A(...
+                          seriesId,...
+                          dateId,...
+                          trialId,...
+                          stochasticWaves,...             
+                          auroraConfig,...
+                          rampImpConfig,...
+                          expFolders,...
+                          projectFolders);
+
+  seriesId = 'temperature_02';
+  trialId = 1;
+  trialId = constructRampImpedanceExperiments610A(...
+                          seriesId,...
+                          dateId,...
+                          trialId,...
+                          stochasticWaves,...             
+                          auroraConfig,...
+                          rampImpConfig,...
+                          expFolders,...
                           projectFolders);
 end
+
+
 
 if(flag_normalizationProtocol==1)
   success = constructNormalizationExperiments610A(...

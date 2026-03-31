@@ -55,6 +55,7 @@ switch unitSystem
         auroraConfig.defaultLengthUnit      = 'mm';
         auroraConfig.defaultForceUnit       = 'mN';
         auroraConfig.defaultTimeUnit        = 's';
+        auroraConfig.defaultPulseWidthTimeUnit = 'ms';
         auroraConfig.defaultFrequencyUnit   = 'Hz';
 
         auroraConfig.approximateSampleLengthInDefaultUnits = ...
@@ -74,6 +75,7 @@ switch unitSystem
         auroraConfig.defaultLengthUnit      = 'Ref';
         auroraConfig.defaultForceUnit       = 'Ref';
         auroraConfig.defaultTimeUnit        = 's';
+        auroraConfig.defaultPulseWidthTimeUnit = 'ms';
         auroraConfig.defaultFrequencyUnit   = 'Hz';
 
         auroraConfig.approximateSampleLengthInDefaultUnits = 1;
@@ -115,7 +117,7 @@ auroraConfig.activationPaddingTime       = 0.25;
 switch muscleName
     case 'EDL'
         auroraConfig.stimulation.frequencyHz =80;
-        auroraConfig.timeToReachMaxActivation= 0.5;
+        auroraConfig.timeToReachMaxActivation= 0.25;        
         auroraConfig.stimulation.maxDuration =5;
 
     case 'SOL'

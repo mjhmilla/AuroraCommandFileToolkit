@@ -1,0 +1,30 @@
+function metaDataFieldNames = getMetaDataFieldNames610A(auroraConfig)
+
+metaDataFieldNames.time   = ...
+  ['time_',auroraConfig.defaultTimeUnit];
+
+metaDataFieldNames.cycles ='cycles';
+
+metaDataFieldNames.frequency = ...
+  ['frequency_',auroraConfig.defaultFrequencyUnit];
+
+metaDataFieldNames.bandwidth = ...
+  ['bandwidth_',auroraConfig.defaultFrequencyUnit];
+
+metaDataFieldNames.amplitude = ...
+  ['amplitude_',auroraConfig.defaultLengthUnit]; 
+
+metaDataFieldNames.length    = ...
+  ['length_',auroraConfig.defaultLengthUnit];
+
+metaDataFieldNames.initialDelay = ...
+  ['initial_delay_',auroraConfig.defaultTimeUnit];
+
+metaDataFieldNames.pulseFrequency   = ...
+  ['pulse_frequency_',auroraConfig.defaultFrequencyUnit];
+
+metaDataFieldNames.pulseWidth   = ...
+  ['pulse_width_',auroraConfig.defaultPulseWidthTimeUnit];
+
+metaDataFieldNames.duration = ...
+  ['duration_',auroraConfig.defaultTimeUnit];
