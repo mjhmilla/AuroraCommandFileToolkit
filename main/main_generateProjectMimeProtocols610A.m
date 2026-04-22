@@ -52,6 +52,7 @@ sampleFrequency = 4000;
 settingsImpedance.createMultiTemperatureProtocol = 0;
 settingsImpedance.amplitude_mm                   = 0.1;
 settingsImpedance.addRampAtStart                 = 0;
+settingsImpedance.waveAmplitudeStudy             = 1;
 %
 %
 %
@@ -569,7 +570,7 @@ if(flag_rampImpededanceProtocol==1)
   end
 
   rampImpConfig.ramp.waitTime = 1;
-  rampImpConfig.ramp.length = [0,0,0];  
+  rampImpConfig.ramp.length = [0];  
   rampImpConfig.ramp.duration = 1;
 
 
@@ -596,12 +597,41 @@ if(flag_rampImpededanceProtocol==1)
 
   rampImpConfig.stochasticWaves.waitTime                 = 5;
   rampImpConfig.stochasticWaves.timeToReachMaxActivation = 0.25;
-  rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.25;
-  rampImpConfig.stochasticWaves.overrideActiveAmplitude  = ...
-    rampImpConfig.stochasticWaves.overridePassiveAmplitude*0.25;
-  rampImpConfig.stochasticWaves.scalePassiveAmplitude    = 0.25;
-  rampImpConfig.stochasticWaves.scaleActiveAmplitude     = ...
-    0.25*rampImpConfig.stochasticWaves.scalePassiveAmplitude;  
+
+  switch muscleName
+    case 'EDL'
+      rampImpConfig.stochasticWaves.amplitudeSet             = [1];
+      rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.25;
+      rampImpConfig.stochasticWaves.overrideActiveAmplitude  = ...
+        rampImpConfig.stochasticWaves.overridePassiveAmplitude*0.25;
+      rampImpConfig.stochasticWaves.scalePassiveAmplitude    = [];
+      rampImpConfig.stochasticWaves.scaleActiveAmplitude     = [];  
+      
+    case 'SOL'
+      rampImpConfig.stochasticWaves.amplitudeSet             = [1];
+      rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.25;
+      rampImpConfig.stochasticWaves.overrideActiveAmplitude  = ...
+        rampImpConfig.stochasticWaves.overridePassiveAmplitude*0.25;
+      rampImpConfig.stochasticWaves.scalePassiveAmplitude    = [];
+      rampImpConfig.stochasticWaves.scaleActiveAmplitude     = [];  
+      
+    case 'CAL'
+      rampImpConfig.stochasticWaves.amplitudeSet             = [1];
+      rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.5;
+      rampImpConfig.stochasticWaves.overrideActiveAmplitude  = [];
+      rampImpConfig.stochasticWaves.scalePassiveAmplitude    = [];
+      rampImpConfig.stochasticWaves.scaleActiveAmplitude     = [];  
+      
+    otherwise
+      assert(0,'Error: unrecognized muscle name');
+  end
+
+  if(settingsImpedance.waveAmplitudeStudy==1)
+    rampImpConfig.stochasticWaves.amplitudeSet = [1,0.5,0.25,0.125,0.0625];
+  end
+
+
+
   rampImpConfig.stop.waitTime                            = 5;
 
   assert(length(stochasticWaves)==length(rampImpConfig.isStochasticWaveActive),...

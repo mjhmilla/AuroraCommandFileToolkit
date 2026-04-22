@@ -77,30 +77,70 @@ function trialId = constructRampImpedanceExperiments610A(...
 %       end
 %       type = [type,replace(stochasticWaves(j).controlFunction,' ','_')];
 %     end
+    if(isempty(expConfig.stochasticWaves.amplitudeSet))
+      type = ['ramp_impedance'];
+  
+  
+      idxP=idxP+1;
+      idxStr = getTrialIndexString(idxP);
+      
+      endLength   = expConfig.ramp.length(i);
+  
+      blockName   = 'RampImpedanceLength';
+  
+      fnameNoExt  = getTrialName(seriesId,idxP,type,endLength,...
+                      auroraConfig.defaultLengthUnit, dateId,'');
+  
+      expTrialConfig = expConfig;
+  
+      expTrialConfig.ramp.length = expConfig.ramp.length(i);      
+      
+      success = createRampImpedanceTrial610A(...                    
+                      fnameNoExt,...  
+                      stochasticWaves,...
+                      auroraConfig,...
+                      expTrialConfig,...                
+                      expFolders);
+    else
 
-    type = ['ramp_impedance'];
+      ampScaleFields = {'overridePassiveAmplitude',...
+                        'overrideActiveAmplitude',...
+                        'scalePassiveAmplitude',...
+                        'scaleActiveAmplitude'};     
 
-
-    idxP=idxP+1;
-    idxStr = getTrialIndexString(idxP);
+      for j=1:1:length(expConfig.stochasticWaves.amplitudeSet)
+        idxP=idxP+1;
+        idxStr = getTrialIndexString(idxP);
+        
+        endLength   = expConfig.ramp.length(i);
+        ampScale    = expConfig.stochasticWaves.amplitudeSet(j);
     
-    endLength   = expConfig.ramp.length(i);
+        ampStr = sprintf('%1.2f',ampScale*100);
+        k = strfind(ampStr,'.');
+        ampStr(k)='p';
+        type = sprintf('%s_%s_amp','ramp_impedance',ampStr);
 
-    blockName   = 'RampImpedanceLength';
-
-    fnameNoExt  = getTrialName(seriesId,idxP,type,endLength,...
-                    auroraConfig.defaultLengthUnit, dateId,'');
-
-    expTrialConfig = expConfig;
-
-    expTrialConfig.ramp.length = expConfig.ramp.length(i);      
+        fnameNoExt  = getTrialName(seriesId,idxP,type,endLength,...
+                        auroraConfig.defaultLengthUnit, dateId,'');
     
-    success = createRampImpedanceTrial610A(...                    
-                    fnameNoExt,...  
-                    stochasticWaves,...
-                    auroraConfig,...
-                    expTrialConfig,...                
-                    expFolders);
+        expTrialConfig = expConfig;
+        
+        for k=1:1:length(ampScaleFields)
+          expTrialConfig.stochasticWaves.(ampScaleFields{k}) = ...
+            expConfig.stochasticWaves.(ampScaleFields{k})*ampScale;
+        end
+
+        expTrialConfig.ramp.length = expConfig.ramp.length(i);      
+        
+        success = createRampImpedanceTrial610A(...                    
+                        fnameNoExt,...  
+                        stochasticWaves,...
+                        auroraConfig,...
+                        expTrialConfig,...                
+                        expFolders);
+        
+      end
+    end
   end
 
   trialId = idxP;
