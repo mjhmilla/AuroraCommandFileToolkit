@@ -242,6 +242,7 @@ for i=1:1:length(stochasticWaveSet)
     waveWaitTime  = expConfig.stochasticWaves.waitTime;
 
     if(expConfig.isStochasticWaveActive(i)==1)
+      
       stimulusTetanusOptions = getCommandFunctionOptions610A(...
                             'Stimulus-Tetanus','Stimulator',auroraConfig);
 
@@ -332,8 +333,23 @@ for i=1:1:length(stochasticWaveSet)
     endTime   = startTime+singleWaveDuration;
 
     scaleAmp = 1;
-    if(isActive==1)
-      scaleAmp = 0.25;
+    switch isActive
+      case 0
+        if(~isempty(expConfig.stochasticWaves.overridePassiveAmplitude))
+          scaleAmp =expConfig.stochasticWaves.overridePassiveAmplitude ...
+                         /max(stochasticWaveSet(i).config.magnitudeRange);
+        else
+          scaleAmp = expConfig.stochasticWaves.scalePassiveAmplitude;
+        end
+      case 1
+        if(~isempty(expConfig.stochasticWaves.overrideActiveAmplitude))
+          scaleAmp =expConfig.stochasticWaves.overrideActiveAmplitude ...
+                         /max(stochasticWaveSet(i).config.magnitudeRange);          
+        else
+          scaleAmp = expConfig.stochasticWaves.scaleActiveAmplitude;
+        end
+      otherwise
+        assert(0,'Error: isActive should be 0 or 1');
     end
 
     segmentMetaDataArray(idxSeg).(mdfn.time) = [startTime,endTime]; 

@@ -21,8 +21,8 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
-dateIdOverride                  = '20260326';
-muscleName                      = 'EDL'; %'EDL', or 'SOL';
+dateIdOverride                  = [];%'20260326';
+muscleName                      = 'CAL'; %'EDL', or 'SOL';
 measuredMuscleParams.lceOptMM   = 10;
 measuredMuscleParams.vceMaxMMPS = 12;
 
@@ -30,8 +30,8 @@ flag_normalizationProtocol    =0;
 flag_injuryProtocol           =0;
 flag_characterizationProtocol =0;
 
-flag_plateauSearchProtocol    =1;
-flag_degradationProtocol      =1;
+flag_plateauSearchProtocol    =0;
+flag_degradationProtocol      =0;
 flag_rampImpededanceProtocol  =1;
 
 
@@ -40,14 +40,21 @@ flag_fitPerturbationPowerSpectrum = 1;
 stochasticWaveScalesToTest        = [1];
 stochasticWaveSetType             = 6;
 
-normPerturbationLength            = 0.1;
+normPerturbationLength            = 0.01;
 perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
                                              %will be realized
 perturbationDuration = [1,2];
 sampleFrequency = 4000;
 
-
-
+%
+% Protocol specific settings
+%
+settingsImpedance.createMultiTemperatureProtocol = 0;
+settingsImpedance.amplitude_mm                   = 0.1;
+settingsImpedance.addRampAtStart                 = 0;
+%
+%
+%
 pointsPower = round(log2(sampleFrequency.*perturbationDuration));
 pointsSet       = 2.^(pointsPower);
 unitSystem      = 'mm_mN_s_Hz'; %Alternative: 'mm_mN_s_Hz'
@@ -90,6 +97,13 @@ switch muscleName
         muscleParams.alphaOpt  = deg2rad(4);
         muscleParams.ltSlkMM   = 9.5;         %mm
         muscleParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
+    case 'CAL'
+        muscleParams.fisoN     = 1;     %225g 
+        muscleParams.lceOptMM  = 10.0;  %mm 
+        muscleParams.vceMaxLPS = 100; %Lo/s  
+        muscleParams.alphaOpt  = 0;
+        muscleParams.ltSlkMM   = muscleParams.lceOptMM;         %mm
+        muscleParams.etIso     = 0.0;       
     otherwise
         assert(0,'Error: Invalid muscle name');
 end
@@ -138,7 +152,10 @@ for i=1:1:length(pointsSet)
           perturbation(i).points    = pointsSet(i);
     otherwise
           assert(0,'Error: unrecognized unit settings');
-  end     
+  end  
+  if(perturbation(i).magnitude > 0.25)
+    disp(['Warning: Perturbation magnitude > 0.25mm, expect low coherence']);
+  end
 end
 
 %%
@@ -539,16 +556,34 @@ end
 if(flag_rampImpededanceProtocol==1)  
 
   trialId=1;
-  
-  rampImpConfig.isStochasticWaveActive = [1,0,1,0];
+
+  switch muscleName
+    case 'EDL'
+      rampImpConfig.isStochasticWaveActive = [1,0,1,0];
+    case 'SOL'
+      rampImpConfig.isStochasticWaveActive = [1,0,1,0];
+    case 'CAL'
+      rampImpConfig.isStochasticWaveActive = [0,0,0,0];
+    otherwise
+      assert(0,'Error: unrecognized muscle name');
+  end
 
   rampImpConfig.ramp.waitTime = 1;
-  rampImpConfig.ramp.length = [0:1:3]';  
+  rampImpConfig.ramp.length = [0,0,0];  
   rampImpConfig.ramp.duration = 1;
 
+
+  if(settingsImpedance.addRampAtStart==1)
+    rampImpConfig.ramp.waitTime = 1;
+    rampImpConfig.ramp.length = [0:1:3]';  
+    rampImpConfig.ramp.duration = 1;
+  end
+
+  %This sine wave brings the passive force more quickly to a static
+  %value
   rampImpConfig.sineWave.waitTime  = 10;
   rampImpConfig.sineWave.frequency = 20;
-  rampImpConfig.sineWave.amplitude = 0.25;
+  rampImpConfig.sineWave.amplitude = 1;
   rampImpConfig.sineWave.cycles    = ...
   rampImpConfig.sineWave.frequency*5;
 
@@ -559,49 +594,71 @@ if(flag_rampImpededanceProtocol==1)
   rampImpConfig.tetanus.duration       = nan;
   rampImpConfig.tetanus.durationExtension = 0.5;
 
-  rampImpConfig.stochasticWaves.waitTime=5;
-  rampImpConfig.stochasticWaves.timeToReachMaxActivation=0.25;
-  rampImpConfig.stop.waitTime = 5;
+  rampImpConfig.stochasticWaves.waitTime                 = 5;
+  rampImpConfig.stochasticWaves.timeToReachMaxActivation = 0.25;
+  rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.25;
+  rampImpConfig.stochasticWaves.overrideActiveAmplitude  = ...
+    rampImpConfig.stochasticWaves.overridePassiveAmplitude*0.25;
+  rampImpConfig.stochasticWaves.scalePassiveAmplitude    = 0.25;
+  rampImpConfig.stochasticWaves.scaleActiveAmplitude     = ...
+    0.25*rampImpConfig.stochasticWaves.scalePassiveAmplitude;  
+  rampImpConfig.stop.waitTime                            = 5;
 
   assert(length(stochasticWaves)==length(rampImpConfig.isStochasticWaveActive),...
          ['Error: number of stochasticWaves and isStochasticWaveActive',...
           ' are incompatible.']);
 
-  seriesId = 'temperature_00';
-  trialId = 1;
-  trialId = constructRampImpedanceExperiments610A(...
-                          seriesId,...
-                          dateId,...
-                          trialId,...
-                          stochasticWaves,...             
-                          auroraConfig,...
-                          rampImpConfig,...
-                          expFolders,...
-                          projectFolders);
+  if(settingsImpedance.createMultiTemperatureProtocol==1)
 
-  seriesId = 'temperature_01';
-  trialId = 1;
-  trialId = constructRampImpedanceExperiments610A(...
-                          seriesId,...
-                          dateId,...
-                          trialId,...
-                          stochasticWaves,...             
-                          auroraConfig,...
-                          rampImpConfig,...
-                          expFolders,...
-                          projectFolders);
+    seriesId = 'temperature_00';
+    trialId = 1;
+    trialId = constructRampImpedanceExperiments610A(...
+                            seriesId,...
+                            dateId,...
+                            trialId,...
+                            stochasticWaves,...             
+                            auroraConfig,...
+                            rampImpConfig,...
+                            expFolders,...
+                            projectFolders);
+  
+    seriesId = 'temperature_01';
+    trialId = 1;
+    trialId = constructRampImpedanceExperiments610A(...
+                            seriesId,...
+                            dateId,...
+                            trialId,...
+                            stochasticWaves,...             
+                            auroraConfig,...
+                            rampImpConfig,...
+                            expFolders,...
+                            projectFolders);
+  
+    seriesId = 'temperature_02';
+    trialId = 1;
+    trialId = constructRampImpedanceExperiments610A(...
+                            seriesId,...
+                            dateId,...
+                            trialId,...
+                            stochasticWaves,...             
+                            auroraConfig,...
+                            rampImpConfig,...
+                            expFolders,...
+                            projectFolders);
+  else
+    seriesId = ['impedance_',muscleName];
+    trialId = 1;
+    trialId = constructRampImpedanceExperiments610A(...
+                            seriesId,...
+                            dateId,...
+                            trialId,...
+                            stochasticWaves,...             
+                            auroraConfig,...
+                            rampImpConfig,...
+                            expFolders,...
+                            projectFolders);    
 
-  seriesId = 'temperature_02';
-  trialId = 1;
-  trialId = constructRampImpedanceExperiments610A(...
-                          seriesId,...
-                          dateId,...
-                          trialId,...
-                          stochasticWaves,...             
-                          auroraConfig,...
-                          rampImpConfig,...
-                          expFolders,...
-                          projectFolders);
+  end
 end
 
 

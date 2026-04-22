@@ -126,7 +126,9 @@ switch muscleName
         auroraConfig.stimulation.maxDuration  = 7;
 
     otherwise
-        assert(0, 'Error: unrecognized muscle');
+        auroraConfig.stimulation.frequencyHz  = [];
+        auroraConfig.timeToReachMaxActivation = [];
+        auroraConfig.stimulation.maxDuration  = [];        
 end
 auroraConfig.stimulation.pulseWidthMs=5;
 auroraConfig.stimulation.minDuration =1;
