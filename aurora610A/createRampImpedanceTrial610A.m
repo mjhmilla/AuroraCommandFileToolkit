@@ -100,8 +100,6 @@ idxSeg = 0;
 lengthRampOptions = ...
   getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
-
-
 for i=1:1:length(expConfig.ramp.length)
 
   lengthRampOptions(1).value    = expConfig.ramp.length(i);

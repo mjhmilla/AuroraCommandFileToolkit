@@ -32,8 +32,9 @@ flag_characterizationProtocol =0;
 
 flag_plateauSearchProtocol    =0;
 flag_degradationProtocol      =0;
-flag_rampImpededanceProtocol  =1;
+flag_rampImpededanceProtocol  =0;
 
+flag_impedanceCalibrationProtocol = 1;
 
 flag_generateRandomSignal         = 0;
 flag_fitPerturbationPowerSpectrum = 1;
@@ -49,12 +50,30 @@ sampleFrequency = 4000;
 %
 % Protocol specific settings
 %
+settingsImpedanceCalibration.amplitudeMM = 1; %peak-to-peak 
+settingsImpedanceCalibration.amplitudeN  = 0.1;
+settingsImpedanceCalibration.frequencyHz  = 10.^[0:0.1:2];
+
+settingsImpedanceCalibration.perturbation.bandwidthHz  = ...
+    [1,25];
+settingsImpedanceCalibration.perturbation.points = ...
+    2.^round(log2(sampleFrequency.*4));
+settingsImpedanceCalibration.perturbation.amplitudeMM = ...
+    settingsImpedanceCalibration.amplitudeMM;
+
+settingsImpedanceCalibration.waitTime    = 0.5;
+
 settingsImpedance.createMultiTemperatureProtocol = 0;
 settingsImpedance.amplitude_mm                   = 0.1;
 settingsImpedance.addRampAtStart                 = 0;
 settingsImpedance.waveAmplitudeStudy             = 1;
+
+if(strcmp(muscleName,'CAL'))
+  settingsImpedance.amplitude_mm=2;
+end
+
 %
-%
+% Perturbation wave settings
 %
 pointsPower = round(log2(sampleFrequency.*perturbationDuration));
 pointsSet       = 2.^(pointsPower);
@@ -554,6 +573,16 @@ if(flag_degradationProtocol==1)
 
 end
 
+if(flag_impedanceCalibrationProtocol==1)
+  success= createCalibrationImpedanceTrial610A(...                    
+                    dateId,...                      
+                    auroraConfig,...
+                    settingsImpedanceCalibration,...                    
+                    expFolders,...
+                    plotConfig);
+end
+
+
 if(flag_rampImpededanceProtocol==1)  
 
   trialId=1;
@@ -616,8 +645,9 @@ if(flag_rampImpededanceProtocol==1)
       rampImpConfig.stochasticWaves.scaleActiveAmplitude     = [];  
       
     case 'CAL'
+      rampImpConfig.sineWave.waitTime                        = 1;
       rampImpConfig.stochasticWaves.amplitudeSet             = [1];
-      rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.5;
+      rampImpConfig.stochasticWaves.overridePassiveAmplitude = settingsImpedance.amplitude_mm;
       rampImpConfig.stochasticWaves.overrideActiveAmplitude  = [];
       rampImpConfig.stochasticWaves.scalePassiveAmplitude    = [];
       rampImpConfig.stochasticWaves.scaleActiveAmplitude     = [];  
@@ -629,8 +659,6 @@ if(flag_rampImpededanceProtocol==1)
   if(settingsImpedance.waveAmplitudeStudy==1)
     rampImpConfig.stochasticWaves.amplitudeSet = [1,0.5,0.25,0.125,0.0625];
   end
-
-
 
   rampImpConfig.stop.waitTime                            = 5;
 

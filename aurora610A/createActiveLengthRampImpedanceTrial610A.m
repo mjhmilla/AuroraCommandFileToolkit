@@ -19,7 +19,6 @@ assert(     size(lengthRamp.lengths,1)==1 ...
 
 fid = fopen(trialFileFullPath,'w');
 
-
 programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFullPath);
 programMetaData = writePreamble610A(fid,auroraConfig,programMetaData);
 
