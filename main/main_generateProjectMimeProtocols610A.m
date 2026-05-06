@@ -52,10 +52,12 @@ sampleFrequency = 4000;
 %
 settingsImpedanceCalibration.amplitudeMM = 1; %peak-to-peak 
 settingsImpedanceCalibration.amplitudeN  = 0.1;
-settingsImpedanceCalibration.frequencyHz  = 10.^[0:0.1:2];
+
+freqSample = [sqrt(2/50):0.1:1]';
+settingsImpedanceCalibration.frequencyHz = (freqSample.^2)*50;
 
 settingsImpedanceCalibration.perturbation.bandwidthHz  = ...
-    [1,25];
+    [1,35];
 settingsImpedanceCalibration.perturbation.points = ...
     2.^round(log2(sampleFrequency.*4));
 settingsImpedanceCalibration.perturbation.amplitudeMM = ...

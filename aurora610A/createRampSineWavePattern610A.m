@@ -1,5 +1,5 @@
 function [timeVec,signalVec,controlFunctions,lineCount] = ...
-            createStepSineWavePattern610A(...
+            createRampSineWavePattern610A(...
                                 fcnMeanValue,...
                                 config,...
                                 frequencyHzRangeInput,...
@@ -98,8 +98,10 @@ n=(length(randomFrequencyVec)*2+1)+2;
 
 %Vectors to generate the Aurora commands
 waitVecOutput      = zeros(n,1);
-timeVecOutput      = zeros(n,1);
+rampVecTimeOutput  = zeros(n,1);
 lengthVecOutput    = zeros(n,1);
+timeVecOutput      = zeros(n,1);
+
 
 timeVecSum   = 0;
 
@@ -127,10 +129,11 @@ signalVecDense(i,1)  =fcnMeanValue(timeVecDense(i,1));
 i = i+1;
 
 j = 1;
-waitVecOutput(j,1)      = config.paddingDuration...
-                          -minPeriodTime;
-timeVecOutput(j,1)      = timeVecSum + waitVecOutput(j,1);
-timeVecSum              = timeVecSum + waitVecOutput(j,1);
+waitVecOutput(j,1)      = 0.5*(config.paddingDuration-minPeriodTime);
+rampVecTimeOutput(j,1)  = 0.5*(config.paddingDuration-minPeriodTime);
+
+timeVecOutput(j,1)      = timeVecSum + waitVecOutput(j,1)+rampVecTimeOutput(j,1);
+timeVecSum              = timeVecSum + waitVecOutput(j,1)+rampVecTimeOutput(j,1);
 lengthVecOutput(j,1)    = fcnMeanValue(timeVecSum);
 
 j = j+1;
@@ -158,14 +161,19 @@ while k < length(randomFrequencyVec)
     frequencyInput = randomFrequencyVec(k,1);    
     durationInput  = 1/frequencyInput;
 
-    waitTime       = round(0.5*durationInput*sampleFrequencyHz) ...
+
+    rampTime       = round(0.25*durationInput*sampleFrequencyHz) ...
+                          /sampleFrequencyHz;
+    waitTime       = round(0.25*durationInput*sampleFrequencyHz) ...
                           /sampleFrequencyHz;
 
+
+    if(rampTime < auroraConfig.lengthStepResponseTime)
+      rampTime = auroraConfig.lengthStepResponseTime;
+    end
     if(waitTime < auroraConfig.lengthStepResponseTime)
       waitTime = auroraConfig.lengthStepResponseTime;
-    end
-
-    
+    end    
     
     amplitude = amplitudeInput(1,1);
     if(length(amplitudeInput)>1)
@@ -175,33 +183,38 @@ while k < length(randomFrequencyVec)
     %%
     % Generate the command vector
     %%
-    if(k==1)
-      prevWaitTime = minPeriodTime;      
-    else
-      prevWaitTime = waitVecOutput(j-1,1);      
-    end 
+    %if(k==1)
+    %  prevWaitTime = minPeriodTime;      
+    %else
+    %  prevWaitTime = waitVecOutput(j-1,1);      
+    %end 
 %     if(prevWaitTime < auroraConfig.lengthStepResponseTime)
 %       prevWaitTime = auroraConfig.lengthStepResponseTime;
 %     end    
 
     
-    waitVecOutput(j,1)        = prevWaitTime;
-    timeVecOutput(j,1)        = timeVecSum + waitVecOutput(j,1);    
-    timeVecSum                = timeVecSum + waitVecOutput(j,1);
+    waitVecOutput(j,1)        = waitTime;
+    rampVecTimeOutput(j,1)    = rampTime;
+
+    timeVecOutput(j,1)        = timeVecSum+waitVecOutput(j,1)+rampVecTimeOutput(j,1);    
+    timeVecSum                = timeVecSum+waitVecOutput(j,1)+rampVecTimeOutput(j,1);
     meanLengthInput           = fcnMeanValue(timeVecSum);   
+
     if(isnan(meanLengthInput))
       here=1;
     end
     assert(~isnan(meanLengthInput));
     lengthVecOutput(j,1)      = 0.5*amplitude + meanLengthInput;
     
-
     j=j+1;  
     
     waitVecOutput(j,1)        = waitTime;
-    timeVecOutput(j,1)        = timeVecSum + waitVecOutput(j,1);
-    timeVecSum                = timeVecSum + waitVecOutput(j,1);    
-    meanLengthInput           = fcnMeanValue(timeVecSum);
+    rampVecTimeOutput(j,1)    = rampTime;
+
+    timeVecOutput(j,1)        = timeVecSum+waitVecOutput(j,1)+rampVecTimeOutput(j,1);    
+    timeVecSum                = timeVecSum+waitVecOutput(j,1)+rampVecTimeOutput(j,1);
+    meanLengthInput           = fcnMeanValue(timeVecSum);   
+
     assert(~isnan(meanLengthInput));    
     if(k==length(randomFrequencyVec))
       lengthVecOutput(j,1)      = meanLengthInput;
@@ -217,31 +230,31 @@ while k < length(randomFrequencyVec)
     %%
     assert(i <= length(signalVecDense));
 
-    timeVecDense(i,1)   = timeVecDense(i-2,1) + waitVecOutput(j-2,1);
+    timeVecDense(i,1)   = timeVecDense(i-1,1) + waitVecOutput(j-2,1);
 
-    if(k==1)
-      timeVecDense(i,1)   = timeVecDense(i-1,1) + waitVecOutput(j-2,1);
-    end
+%     if(k==1)
+%       timeVecDense(i,1)   = timeVecDense(i-1,1) + waitVecOutput(j-2,1);
+%     end
 
     signalVecDense(i,1) = lengthVecOutput(j-3,1);    
     i=i+1;
 
-    timeVecDense(i,1)   = timeVecDense(i-1,1) + auroraConfig.lengthStepResponseTime;
+    timeVecDense(i,1)   = timeVecDense(i-1,1) + rampVecTimeOutput(j-2,1);
     signalVecDense(i,1) = lengthVecOutput(j-2,1);    
     i=i+1;
 
-    timeVecDense(i,1)   = timeVecDense(i-2,1) + waitVecOutput(j-1,1);
+    timeVecDense(i,1)   = timeVecDense(i-1,1) + waitVecOutput(j-1,1);
     signalVecDense(i,1) = lengthVecOutput(j-2,1);    
     i=i+1;
 
-    timeVecDense(i,1)   = timeVecDense(i-1,1) + auroraConfig.lengthStepResponseTime;
+    timeVecDense(i,1)   = timeVecDense(i-1,1) + rampVecTimeOutput(j-1,1);
     signalVecDense(i,1) = lengthVecOutput(j-1,1);    
     i=i+1;
 
-    if(abs(timeVecDense(i-2,1)-timeVecSum)>1e-6)
+    if(abs(timeVecDense(i-1,1)-timeVecSum)>1e-6)
       here=1;
     end
-    assert( abs(timeVecDense(i-2,1)-timeVecSum)<1e-6);
+    assert( abs(timeVecDense(i-1,1)-timeVecSum)<1e-6);
 
         
 end
@@ -274,21 +287,24 @@ signalVec = interp1(timeVecDense,signalVecDense,timeVec);
 paddingTime = endTime - timeVecSum;
 
 %padding interval
-waitVecOutput(j,1)        = paddingTime;
-timeVecSum          = timeVecSum + waitVecOutput(j,1);
+waitVecOutput(j,1)    = round(paddingTime*0.5*sampleFrequencyHz)/sampleFrequencyHz;
+rampVecTimeOutput(j,1)= round(paddingTime*0.5*sampleFrequencyHz)/sampleFrequencyHz;
+timeVecSum          = timeVecSum + waitVecOutput(j,1)+rampVecTimeOutput(j,1);
+
+lengthVecOutput(j,1)  = lengthVecOutput(j-1,1);
 
 %trim
 waitVecOutput        = waitVecOutput(1:j,1);
 lengthVecOutput      = lengthVecOutput(1:j,1);
-
+rampVecTimeOutput    = rampVecTimeOutput(1:j,1);
 
 assert(functionOption(1).isRelative==0,...
        'Error: Step length option must have isRelative=0 for the 610A');
 
 controlFunctions = struct('controlFunction','','waitDuration',[],'optionValues',[],'options',[]);
-controlFunctions.controlFunction = 'Step';
+controlFunctions.controlFunction = 'Ramp';
 controlFunctions.waitDuration  = waitVecOutput;
-controlFunctions.optionValues  = [lengthVecOutput];
+controlFunctions.optionValues  = [lengthVecOutput,rampVecTimeOutput];
 controlFunctions.options       = functionOption;
 
 lineCount = j;

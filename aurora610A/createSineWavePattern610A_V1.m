@@ -3,6 +3,7 @@ function [timeVec,signalVec,controlFunctions,lineCount] = ...
                                 config,...
                                 frequencyHzRangeInput,...
                                 amplitudeInput,...
+                                frequencyMapInput,...
                                 waitTimeInput,...
                                 randomNumberGeneratorConfig,...
                                 functionOption,...
@@ -16,16 +17,27 @@ m = 100; %number of points in each sine wave
 timeVecDense   = zeros(n,1);
 signalVecDense = zeros(n,1);
 
-
 numWaves=2;
 duration = 0;
 freqDistPower=2/3;
-scaleBandwidth=2.5;
+scaleBandwidth=1.25;
 while(duration < config.duration)
   numWaves=numWaves+1;
   if(length(frequencyHzRangeInput)>1)
-    normFreq = (([1:1:numWaves]').^freqDistPower) ;
-    normFreq = normFreq./max(normFreq);
+    if(isempty(frequencyMapInput))
+      normFreq = (([1:1:numWaves]').^freqDistPower) ;
+      normFreq = normFreq./max(normFreq);
+    else
+      normWave = [1:1:numWaves]'./numWaves;      
+      freqMapX = [1:1:(length(frequencyMapInput))]' ...
+                    ./(length(frequencyMapInput));
+      freqMapX = [0;freqMapX];
+
+      freqMapY = cumsum([0;frequencyMapInput]);
+      freqMapY = freqMapY./max(freqMapY);
+
+      normFreq = interp1(freqMapX,freqMapY,normWave);      
+    end
   
     randomFrequencyVec = ...
       normFreq.*(...
@@ -44,15 +56,28 @@ while(duration < config.duration)
 end
 
 numWaves=numWaves-1;
-normFreq = (([1:1:numWaves]').^freqDistPower) ;
-normFreq = normFreq./max(normFreq);
+
 
 if(length(frequencyHzRangeInput)>1)
-  randomFrequencyVec = ...
-    normFreq.*(...
-      scaleBandwidth*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
-      +frequencyHzRangeInput(1,1);
+    if(isempty(frequencyMapInput))
+      normFreq = (([1:1:numWaves]').^freqDistPower) ;
+      normFreq = normFreq./max(normFreq);
+    else
+      normWave = [1:1:numWaves]'./numWaves;      
+      freqMapX = [1:1:length(frequencyMapInput)]' ...
+                    ./length(frequencyMapInput);
+      freqMapX = [0;freqMapX];
 
+      freqMapY = cumsum(frequencyMapInput);
+      freqMapY = freqMapY./max(freqMapY);
+      freqMapY = [0;freqMapY];
+
+      normFreq = interp1(freqMapX,freqMapY,normWave);      
+    end
+    randomFrequencyVec = ...
+      normFreq.*(...
+        scaleBandwidth*frequencyHzRangeInput(1,2)-frequencyHzRangeInput(1,1))...
+        +frequencyHzRangeInput(1,1);
 else
     randomFrequencyVec = ones(numWaves,1).*frequencyHzRangeInput(1,1);
 end
@@ -182,7 +207,7 @@ signalVecDense = signalVecDense(1:i,1);
 % perturbation signal
 %%
 timeVec = [0:(1/(config.points-1)):1]' * endTime;
-signalVec = interp1(timeVecDense,signalVecDense,timeVec);
+signalVec = interp1(timeVecDense,signalVecDense,timeVec,'linear');
 
 %%
 % Add the padding time command and then form the command structure
