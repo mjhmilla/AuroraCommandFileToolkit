@@ -201,7 +201,7 @@ if(flag_generateSingleWaveCalibration==1)
                   if(k>1)
                     startTime = programMetaData.controlFunction.endTime;
                   else
-                    startTime=programMetaData.startTime;                              
+                    startTime=programMetaData.startTime;
                   end    
 
                   startTime = round(startTime,4);            
@@ -210,7 +210,11 @@ if(flag_generateSingleWaveCalibration==1)
                                +waitTime2+rampTime2...
                                +waitTime3+rampTime3);  
 
-                  segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                  startBlockTime=startTime+expConfig.waitTime;
+                  endBlockTime  = startBlockTime+period;
+
+                  segmentMetaDataArray(k).(mdfn.time) = ...
+                    [startBlockTime,endBlockTime]; 
                   
                   segmentMetaDataArray(k).type = ['Ramp Wave'];
                   segmentMetaDataArray(k).meta_data.is_active = 0;
@@ -283,11 +287,6 @@ if(flag_generateSingleWaveCalibration==1)
                     rampTime1 = period8;
                     %waitTime1 = waitTime1 + expConfig.waitTime; 
                   end
-
-                  if(idxWave == waveCount(idxWaveCount) ...
-                       && waveCount(idxWaveCount) > 1)
-                    rampTime2 = period8;
-                  end
                   
                   if(period8 > programMetaData.smallestNextWaitTime)
 
@@ -303,7 +302,7 @@ if(flag_generateSingleWaveCalibration==1)
                     if( idxWave>1 )
                       startTime = programMetaData.controlFunction.endTime;
                     else
-                      startTime=programMetaData.nextStartTime;
+                      startTime=programMetaData.nextStartTime;                      
                       waitTime1=expConfig.waitTime;
                     end    
 
@@ -315,7 +314,12 @@ if(flag_generateSingleWaveCalibration==1)
                     % Set the meta data
                     %
                     if(idxWave==1)
-                      segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                      startBlockTime = programMetaData.nextStartTime...
+                                      +expConfig.waitTime;
+                      endBlockTime = startBlockTime ...
+                        + (period)*waveCount(idxWaveCount);
+                      segmentMetaDataArray(k).(mdfn.time) ...
+                        = [startBlockTime,endBlockTime]; 
                       
                       segmentMetaDataArray(k).type = ['Ramp Wave'];
                       segmentMetaDataArray(k).meta_data.is_active = 0;
@@ -359,6 +363,28 @@ if(flag_generateSingleWaveCalibration==1)
                                     auroraConfig,...                
                                     programMetaData,...
                                     flag_printMetaDataToFile);  
+
+                    if(idxWave == waveCount(idxWaveCount))
+                      options3 = options;                    
+                      options3(1).value = 0;
+                      options3(2).value = period8;   
+                      
+                      waitTime3=waitTime2;
+                      endTime = endTime+waitTime3+options3(2).value;
+
+                      programMetaData ...
+                              = writeControlFunction610A(...
+                                      fid,...
+                                      waitTime3,...
+                                      'Ramp',...
+                                      options3,...
+                                      auroraConfig,...                
+                                      programMetaData,...
+                                      flag_printMetaDataToFile);  
+
+
+                    end
+                    
 
                     endTimeError = endTime - programMetaData.controlFunction.endTime;
                     if(abs(endTimeError/endTime)>5e-3)
@@ -412,7 +438,9 @@ if(flag_generateSingleWaveCalibration==1)
                   %
                   % Set the meta data
                   %
-                  segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                  startBlockTime = startTime+expConfig.waitTime;
+                  endBlockTime   = startBlockTime+period;
+                  segmentMetaDataArray(k).(mdfn.time) = [startBlockTime,endBlockTime]; 
                   
                   segmentMetaDataArray(k).type = ['Step Wave'];
                   segmentMetaDataArray(k).meta_data.is_active = 0;
@@ -490,9 +518,11 @@ if(flag_generateSingleWaveCalibration==1)
 
                     options1 = options;
                     options2 = options;
-      
+                    
                     options1(1).value = 0.5*ampl;                  
                     options2(1).value = -0.5*ampl;
+
+
 
 
                     if( idxWave > 1 )
@@ -510,7 +540,11 @@ if(flag_generateSingleWaveCalibration==1)
                     % Set the meta data
                     %
                     if(idxWave==1)
-                      segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                      startBlockTime = startTime+expConfig.waitTime;
+                      endBlockTime = startBlockTime ...
+                        + (period)*waveCount(idxWaveCount);
+                      segmentMetaDataArray(k).(mdfn.time) ...
+                        = [startBlockTime,endBlockTime]; 
                       
                       segmentMetaDataArray(k).type = ['Step Wave'];
                       segmentMetaDataArray(k).meta_data.is_active = 0;
@@ -556,6 +590,24 @@ if(flag_generateSingleWaveCalibration==1)
                                     programMetaData,...
                                     flag_printMetaDataToFile);  
 
+                    if(idxWave == waveCount(idxWaveCount))
+                      options3 = options;                    
+                      options3(1).value = 0;
+                      waitTime3=waitTime2;
+                      endTime = endTime+waitTime3;
+
+                      programMetaData ...
+                              = writeControlFunction610A(...
+                                      fid,...
+                                      waitTime3,...
+                                      'Step',...
+                                      options3,...
+                                      auroraConfig,...                
+                                      programMetaData,...
+                                      flag_printMetaDataToFile);  
+
+                    end
+
                     endTimeError = endTime - programMetaData.controlFunction.endTime;
                     assert(abs(endTimeError/endTime)<5e-3,...
                         'Error: end time differs from the meta data'); 
@@ -587,7 +639,14 @@ if(flag_generateSingleWaveCalibration==1)
             'Error: maximumNumberOfCommandsExceeded');
         
 
-        jsonMetaData.segments = segmentMetaDataArray;  
+        maxSegEntries=0;
+        for idxSegEntry = 1:1:length(segmentMetaDataArray)
+          if(~isempty(segmentMetaDataArray(idxSegEntry).type))
+            maxSegEntries=idxSegEntry;
+          end
+        end
+
+        jsonMetaData.segments = segmentMetaDataArray(1:maxSegEntries);  
         jsonMetaData.experiment.title = ...
           sprintf('%s %s %1.1f-1.1f Hz',...
                   waveType{idxWaveType},...
