@@ -20,17 +20,11 @@ if(flag_generateSingleWaveCalibration==1)
   portType = {'Length Out'};
   waveCount = [1,10];
   
-  for idxWave=1:1:length(waveType)
+  for idxWaveType=1:1:length(waveType)
   
     for idxPort=1:1:length(portType)
       for idxWaveCount=1:1:length(waveCount)
     
-        if(waveCount(idxWaveCount)>1 ...
-            && (strcmp(waveType{idxWave},'Ramp') ...
-                || strcmp(waveType{idxWave},'Step')) )
-          break;
-        end
-
         idxTrial=idxTrial+1;
     
         idxStr = num2str(idxTrial);
@@ -38,7 +32,7 @@ if(flag_generateSingleWaveCalibration==1)
           idxStr =['0',idxStr];
         end
     
-        waveTypeName = strrep(waveType{idxWave},' ','');
+        waveTypeName = strrep(waveType{idxWaveType},' ','');
         portTypeName = strrep(portType{idxPort},' ','');
     
         trialFileNameNoExt = ...
@@ -86,7 +80,7 @@ if(flag_generateSingleWaveCalibration==1)
           % write the commands
           %
           [options,isValid,msg]= getCommandFunctionOptions610A(...
-                                  waveType{idxWave},...
+                                  waveType{idxWaveType},...
                                   portType{idxPort},...
                                   auroraConfig);  
           ampl = 0;
@@ -99,7 +93,7 @@ if(flag_generateSingleWaveCalibration==1)
               assert(0,'Error: invalid port name');
           end
     
-          switch waveType{idxWave}
+          switch waveType{idxWaveType}
             %
             % Sine Wave
             %
@@ -173,26 +167,23 @@ if(flag_generateSingleWaveCalibration==1)
             %              
             case 'Ramp'
               
-              if(waveCount(idxWaveCount)==1)
-                assert(waveCount(idxWaveCount)==1,...
-                       'Error: Ramp Wave only implemented for 1 wave');
-  
-                period = round((1/expConfig.frequencyHz(k))...
-                                *auroraConfig.analogToDigitalSampleRateHz)...
-                          /auroraConfig.analogToDigitalSampleRateHz;
-                frequencyHz = 1/period;
-  
-  
-                rampTime1  = round(period*0.125,4);
-                waitTime2  = round(period*0.25,4);               
-                rampTime3  = round(period*0.25,4);
-                waitTime4  = round(period*0.25,4);
-                rampTime5  = round(period*0.125,4);
-  
-                period = rampTime1+waitTime2+rampTime3+waitTime4+rampTime5;
-  
-                if(waitTime2 > programMetaData.smallestNextWaitTime)
-  
+              period8 = roundTimeToNearestSampleTime(...
+                          0.125/expConfig.frequencyHz(k),...
+                          auroraConfig);
+              period4 = period8*2;
+              
+              period = period4*4;
+
+              frequencyHz = 1/period;
+
+              if(waveCount(idxWaveCount) == 1)
+                  waitTime1  = expConfig.waitTime;
+                  rampTime1  = period8;
+                  waitTime2  = period4;             
+                  rampTime2  = period4;
+                  waitTime3  = period4;             
+                  rampTime3  = period8;                
+
                   options1 = options;
                   options2 = options;
                   options3 = options;
@@ -201,26 +192,24 @@ if(flag_generateSingleWaveCalibration==1)
                   options1(2).value = rampTime1;
                   
                   options2(1).value = -0.5*ampl;
-                  options2(2).value = rampTime3;
-                  
+                  options2(2).value = rampTime2; 
+
                   options3(1).value = 0;
-                  options3(2).value = rampTime5;
-                  
+                  options3(2).value = rampTime3;   
+
+
                   if(k>1)
-                    startTime = programMetaData.controlFunction.endTime ...
-                                + expConfig.waitTime;
+                    startTime = programMetaData.controlFunction.endTime;
                   else
-                    startTime=programMetaData.startTime ...
-                              + expConfig.waitTime;
-                  end
-    
-                  startTime = round(startTime,4);    
-        
-                  endTime   = startTime + period;
-        
-                  %
-                  % Set the meta data
-                  %
+                    startTime=programMetaData.startTime;                              
+                  end    
+
+                  startTime = round(startTime,4);            
+                  endTime   = startTime ...
+                              +(waitTime1+rampTime1...
+                               +waitTime2+rampTime2...
+                               +waitTime3+rampTime3);  
+
                   segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
                   
                   segmentMetaDataArray(k).type = ['Ramp Wave'];
@@ -241,14 +230,15 @@ if(flag_generateSingleWaveCalibration==1)
                   end
     
                   segmentMetaDataArray(k).meta_data.(mdfn.cycles) ...
-                    = 1;    
-        
+                    = waveCount(idxWaveCount);       
+
+
                   flag_printMetaDataToFile=1;
         
                   programMetaData ...
                           = writeControlFunction610A(...
                                   fid,...
-                                  expConfig.waitTime,...
+                                  waitTime1,...
                                   'Ramp',...
                                   options1,...
                                   auroraConfig,...                
@@ -264,66 +254,161 @@ if(flag_generateSingleWaveCalibration==1)
                                   auroraConfig,...                
                                   programMetaData,...
                                   flag_printMetaDataToFile);  
-    
+
                   programMetaData ...
                           = writeControlFunction610A(...
                                   fid,...
-                                  waitTime4,...
+                                  waitTime3,...
                                   'Ramp',...
                                   options3,...
                                   auroraConfig,...                
                                   programMetaData,...
-                                  flag_printMetaDataToFile);                
-                  
+                                  flag_printMetaDataToFile);                            
+
                   endTimeError = endTime - programMetaData.controlFunction.endTime;
                   assert(abs(endTimeError/endTime)<5e-3,...
-                      'Error: end time differs from the meta data'); 
+                      'Error: end time differs from the meta data');                                              
+
+              end
+
+              if(waveCount(idxWaveCount) > 1)
+                for idxWave =1:1:waveCount(idxWaveCount)
+
+                  waitTime1  = period4;
+                  rampTime1  = period4;
+                  waitTime2  = period4;             
+                  rampTime2  = period4;
+                  
+                  if(idxWave ==1)
+                    rampTime1 = period8;
+                    %waitTime1 = waitTime1 + expConfig.waitTime; 
+                  end
+
+                  if(idxWave == waveCount(idxWaveCount) ...
+                       && waveCount(idxWaveCount) > 1)
+                    rampTime2 = period8;
+                  end
+                  
+                  if(period8 > programMetaData.smallestNextWaitTime)
+
+                    options1 = options;
+                    options2 = options;
+      
+                    options1(1).value = 0.5*ampl;
+                    options1(2).value = rampTime1;
+                    
+                    options2(1).value = -0.5*ampl;
+                    options2(2).value = rampTime2;   
+
+                    if( idxWave>1 )
+                      startTime = programMetaData.controlFunction.endTime;
+                    else
+                      startTime=programMetaData.nextStartTime;
+                      waitTime1=expConfig.waitTime;
+                    end    
+
+                    startTime = round(startTime,4);            
+                    endTime   = startTime ...
+                               + (waitTime1+rampTime1+waitTime2+rampTime2);                  
+
+                    %
+                    % Set the meta data
+                    %
+                    if(idxWave==1)
+                      segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                      
+                      segmentMetaDataArray(k).type = ['Ramp Wave'];
+                      segmentMetaDataArray(k).meta_data.is_active = 0;
+                      
+                      segmentMetaDataArray(k).meta_data.channel ...
+                        = options(1).port;
+                      segmentMetaDataArray(k).meta_data.(mdfn.frequency) ...
+                        = frequencyHz;
+                      switch idxPort
+                        case 1
+                          segmentMetaDataArray(k).meta_data.(mdfn.amplitude) ...
+                            = ampl;    
+                        case 2
+                          assert(0,'Error: not yet implemented');
+                        otherwise
+                          assert(0,'Error: Unrecognized port');
+                      end
+        
+                      segmentMetaDataArray(k).meta_data.(mdfn.cycles) ...
+                        = waveCount(idxWaveCount);    
+                    end
+
+                    flag_printMetaDataToFile=1;
+          
+                    programMetaData ...
+                            = writeControlFunction610A(...
+                                    fid,...
+                                    waitTime1,...
+                                    'Ramp',...
+                                    options1,...
+                                    auroraConfig,...                
+                                    programMetaData,...
+                                    flag_printMetaDataToFile);  
+      
+                    programMetaData ...
+                            = writeControlFunction610A(...
+                                    fid,...
+                                    waitTime2,...
+                                    'Ramp',...
+                                    options2,...
+                                    auroraConfig,...                
+                                    programMetaData,...
+                                    flag_printMetaDataToFile);  
+
+                    endTimeError = endTime - programMetaData.controlFunction.endTime;
+                    if(abs(endTimeError/endTime)>5e-3)
+                      here=1;
+                    end
+                    assert(abs(endTimeError/endTime)<5e-3,...
+                        'Error: end time differs from the meta data'); 
+                  end                  
                 end
               end
+       
+
 
             %
             % Step 
             %                            
             case 'Step'
+
+              period2 = roundTimeToNearestSampleTime(...
+                          (0.5/expConfig.frequencyHz(k)),...
+                          auroraConfig);
+              
+              period = period2*2;
+
+              frequencyHz = 1/period;
+              
               if(waveCount(idxWaveCount)==1)
-  
-                assert(waveCount(idxWaveCount)==1,...
-                       'Error: Ramp Wave only implemented for 1 wave');
-  
-                period = round((1/expConfig.frequencyHz(k))...
-                                *auroraConfig.analogToDigitalSampleRateHz)...
-                          /auroraConfig.analogToDigitalSampleRateHz;
-                frequencyHz = 1/period;
-                
-  
-                waitTime1  = round(period*0.5*auroraConfig.analogToDigitalSampleRateHz)...
-                                /auroraConfig.analogToDigitalSampleRateHz;               
-                waitTime2  = round(period*0.5*auroraConfig.analogToDigitalSampleRateHz)...
-                                /auroraConfig.analogToDigitalSampleRateHz;               
-                
-                
-                if(waitTime2 > programMetaData.smallestNextWaitTime)
-  
+                waitTime1  = expConfig.waitTime;
+                waitTime2  = period2;        
+                waitTime3  = period2;
+
+                if(period2 > programMetaData.smallestNextWaitTime)
                   options1 = options;
                   options2 = options;
                   options3 = options;
     
-                  options1(1).value = 0.5*ampl;                
-                  options2(1).value = -0.5*ampl;                
+                  options1(1).value = 0.5*ampl;                  
+                  options2(1).value = -0.5*ampl;
                   options3(1).value = 0;
-                  
+
                   if(k>1)
-                    startTime = programMetaData.controlFunction.endTime ...
-                                + expConfig.waitTime;
+                    startTime = programMetaData.controlFunction.endTime;
                   else
-                    startTime=programMetaData.startTime ...
-                              + expConfig.waitTime;
-                  end
-    
-                  startTime = round(startTime,4);    
-        
-                  endTime   = startTime + period;
-        
+                    startTime=programMetaData.startTime;
+                  end    
+
+                  startTime = round(startTime,4);            
+                  endTime   = startTime  ...
+                               + (waitTime1+waitTime2+waitTime3); 
+
                   %
                   % Set the meta data
                   %
@@ -347,14 +432,13 @@ if(flag_generateSingleWaveCalibration==1)
                   end
     
                   segmentMetaDataArray(k).meta_data.(mdfn.cycles) ...
-                    = 1;    
-        
-                  flag_printMetaDataToFile=1;
-        
+                    = waveCount(idxWaveCount);    
+                                      flag_printMetaDataToFile=1;
+      
                   programMetaData ...
                           = writeControlFunction610A(...
                                   fid,...
-                                  expConfig.waitTime,...
+                                  waitTime1,...
                                   'Step',...
                                   options1,...
                                   auroraConfig,...                
@@ -364,29 +448,118 @@ if(flag_generateSingleWaveCalibration==1)
                   programMetaData ...
                           = writeControlFunction610A(...
                                   fid,...
-                                  waitTime1,...
+                                  waitTime2,...
                                   'Step',...
                                   options2,...
                                   auroraConfig,...                
                                   programMetaData,...
                                   flag_printMetaDataToFile);  
-    
+
                   programMetaData ...
                           = writeControlFunction610A(...
                                   fid,...
-                                  waitTime2,...
+                                  waitTime3,...
                                   'Step',...
                                   options3,...
                                   auroraConfig,...                
                                   programMetaData,...
-                                  flag_printMetaDataToFile);                
-                  
+                                  flag_printMetaDataToFile);  
+
                   endTimeError = endTime - programMetaData.controlFunction.endTime;
-                  if(abs(endTimeError/endTime)>5e-3)
-                    here=1;
-                  end
                   assert(abs(endTimeError/endTime)<5e-3,...
                       'Error: end time differs from the meta data'); 
+             
+
+                end
+
+
+
+              end
+
+              if(waveCount(idxWaveCount)>1)
+                for idxWave =1:1:waveCount(idxWaveCount)
+
+                  waitTime1  = period2;
+                  waitTime2  = period2;             
+                  
+                  %if(idxWave ==1)
+                  %  waitTime1 = waitTime1 + expConfig.waitTime; 
+                  %end            
+
+                  if(period2 > programMetaData.smallestNextWaitTime)
+
+                    options1 = options;
+                    options2 = options;
+      
+                    options1(1).value = 0.5*ampl;                  
+                    options2(1).value = -0.5*ampl;
+
+
+                    if( idxWave > 1 )
+                      startTime = programMetaData.controlFunction.endTime;
+                    else
+                      startTime=programMetaData.nextStartTime;
+                      waitTime1= expConfig.waitTime;
+                    end    
+
+                    startTime = round(startTime,4);            
+                    endTime   = startTime  ...
+                                 + (waitTime1+waitTime2);                  
+
+                    %
+                    % Set the meta data
+                    %
+                    if(idxWave==1)
+                      segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
+                      
+                      segmentMetaDataArray(k).type = ['Step Wave'];
+                      segmentMetaDataArray(k).meta_data.is_active = 0;
+                      
+                      segmentMetaDataArray(k).meta_data.channel ...
+                        = options(1).port;
+                      segmentMetaDataArray(k).meta_data.(mdfn.frequency) ...
+                        = expConfig.frequencyHz(k);
+                      switch idxPort
+                        case 1
+                          segmentMetaDataArray(k).meta_data.(mdfn.amplitude) ...
+                            = ampl;    
+                        case 2
+                          assert(0,'Error: not yet implemented');
+                        otherwise
+                          assert(0,'Error: Unrecognized port');
+                      end
+      
+                      segmentMetaDataArray(k).meta_data.(mdfn.cycles) ...
+                        = waveCount(idxWaveCount);    
+                    end
+
+                    flag_printMetaDataToFile=1;
+          
+                    programMetaData ...
+                            = writeControlFunction610A(...
+                                    fid,...
+                                    waitTime1,...
+                                    'Step',...
+                                    options1,...
+                                    auroraConfig,...                
+                                    programMetaData,...
+                                    flag_printMetaDataToFile);  
+      
+                    
+                    programMetaData ...
+                            = writeControlFunction610A(...
+                                    fid,...
+                                    waitTime2,...
+                                    'Step',...
+                                    options2,...
+                                    auroraConfig,...                
+                                    programMetaData,...
+                                    flag_printMetaDataToFile);  
+
+                    endTimeError = endTime - programMetaData.controlFunction.endTime;
+                    assert(abs(endTimeError/endTime)<5e-3,...
+                        'Error: end time differs from the meta data'); 
+                  end                  
                 end
               end
 
@@ -417,7 +590,7 @@ if(flag_generateSingleWaveCalibration==1)
         jsonMetaData.segments = segmentMetaDataArray;  
         jsonMetaData.experiment.title = ...
           sprintf('%s %s %1.1f-1.1f Hz',...
-                  waveType{idxWave},...
+                  waveType{idxWaveType},...
                   portType{idxPort},...
                   expConfig.frequencyHz(1),...
                   expConfig.frequencyHz(end));
@@ -453,7 +626,7 @@ if(flag_generateStochasticWaveCalibration==1)
   waveType = {'Sine Wave','Ramp','Step'};
   portType = {'Length Out'};
 
-  for idxWave=1:1:length(waveType)
+  for idxWaveType=1:1:length(waveType)
     for idxPort=1:1:length(portType)
 
       idxTrial=idxTrial+1;
@@ -461,7 +634,7 @@ if(flag_generateStochasticWaveCalibration==1)
       % Create trials that test an entire bandwidth in one perturbation
       %
       flag_fitPerturbationPowerSpectrum = 1;
-      commandFunctionName = waveType{idxWave};
+      commandFunctionName = waveType{idxWaveType};
       
       configStochasticWave = getPerturbationConfiguration610A(...
                                expConfig.perturbation.amplitudeMM,...
@@ -507,11 +680,11 @@ if(flag_generateStochasticWaveCalibration==1)
         idxTrialStr = ['0',idxTrialStr];
       end
       
-      waveTypeName = strrep(waveType{idxWave},' ','');
+      waveTypeName = strrep(waveType{idxWaveType},' ','');
       portTypeName = strrep(portType{idxPort},' ','');
     
       [options,isValid,msg]= getCommandFunctionOptions610A(...
-                              waveType{idxWave},...
+                              waveType{idxWaveType},...
                               portType{idxPort},...
                               auroraConfig);    
     
@@ -558,7 +731,7 @@ if(flag_generateStochasticWaveCalibration==1)
       waitTimeForBlock=1;
       flag_printMetaDataToFile = 1;
     
-      switch waveType{idxWave}
+      switch waveType{idxWaveType}
         case 'Step'
 
             programMetaData = ...
@@ -570,7 +743,7 @@ if(flag_generateStochasticWaveCalibration==1)
                     stochasticWave.controlFunctions.options,...
                     auroraConfig,...
                     programMetaData,...
-                    [waveType{idxWave},'-Stochastic'],...
+                    [waveType{idxWaveType},'-Stochastic'],...
                     flag_printMetaDataToFile);  
 
         case 'Ramp'            
@@ -586,7 +759,7 @@ if(flag_generateStochasticWaveCalibration==1)
                     stochasticWave.controlFunctions.options,...
                     auroraConfig,...
                     programMetaData,...
-                    [waveType{idxWave},'-Stochastic'],...
+                    [waveType{idxWaveType},'-Stochastic'],...
                     flag_printMetaDataToFile); 
 
         case 'Sine Wave'
@@ -601,7 +774,7 @@ if(flag_generateStochasticWaveCalibration==1)
                   stochasticWave.controlFunctions.options,...
                   auroraConfig,...
                   programMetaData,...
-                  [waveType{idxWave},'-Stochastic'],...
+                  [waveType{idxWaveType},'-Stochastic'],...
                   flag_printMetaDataToFile); 
 
 
@@ -613,7 +786,7 @@ if(flag_generateStochasticWaveCalibration==1)
       startTime = waitTimeForBlock;
       endTime   = programMetaData.controlFunction.endTime;
       
-      segmentMetaDataArray(k).type = [waveType{idxWave},'-Stochastic'];
+      segmentMetaDataArray(k).type = [waveType{idxWaveType},'-Stochastic'];
       segmentMetaDataArray(k).(mdfn.time) = [startTime,endTime]; 
     
       segmentMetaDataArray(k).meta_data.is_active = 0;

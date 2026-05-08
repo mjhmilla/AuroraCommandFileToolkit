@@ -50,11 +50,11 @@ sampleFrequency = 4000;
 %
 % Protocol specific settings
 %
-settingsImpedanceCalibration.amplitudeMM = 1; %peak-to-peak 
+settingsImpedanceCalibration.amplitudeMM = 4; %peak-to-peak 
 settingsImpedanceCalibration.amplitudeN  = 0.1;
 
-freqSample = [sqrt(2/50):0.1:1]';
-settingsImpedanceCalibration.frequencyHz = (freqSample.^2)*50;
+freqSample = [sqrt(2/100):0.1:1]';
+settingsImpedanceCalibration.frequencyHz = (freqSample.^2)*75;
 
 settingsImpedanceCalibration.perturbation.bandwidthHz  = ...
     [1,35];

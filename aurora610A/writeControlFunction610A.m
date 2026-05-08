@@ -46,9 +46,15 @@ switch controlFunctionName
     case 'Step'
 
         smallestNextWaitTime  = 0;        
-        commandDuration       = auroraConfig.lengthStepResponseTime;
+        commandDuration       = 0;
 
-        nextStartTime   = startTime + waitTimeInS;
+        if(waitTimeInS > auroraConfig.lengthStepResponseTime)
+          nextStartTime   = startTime + waitTimeInS;
+        else
+          nextStartTime   = startTime + waitTimeInS ...
+                          + auroraConfig.lengthStepResponseTime;        
+        end
+        
 
     case 'Ramp'
         
