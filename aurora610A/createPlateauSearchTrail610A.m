@@ -1,6 +1,7 @@
 function trialId = createPlateauSearchTrail610A(...
                       dateId,...
                       trialId,...
+                      sequenceId,...
                       auroraConfig,...
                       expConfig,...   
                       expFolders,...
@@ -11,43 +12,43 @@ success = 0;
 %%
 % Set up the folders
 %%
+sequenceIdStr = '';
+assert(~isempty(sequenceId),'Error: sequenceId cannot be empty');
 
-if(isempty(expFolders))
-
-  plateauFolderName     = 'plateau';
-  dataFolderName        = 'data';
-  protocolFolderName    = 'protocols';
-  blockLabelsFolderName = 'segmentLabels';
-
-  codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
-  if(~exist(codeDir,'dir'))
-    mkdir(codeDir);
+if(~isempty(sequenceId))
+  sequenceIdStr = num2str(sequenceId);
+  if(length(sequenceIdStr)<2)
+    sequenceIdStr = ['0',sequenceIdStr];
   end
 
-  plateauDir         = fullfile(codeDir,plateauFolderName); 
-  if(~exist(plateauDir,'dir'))
-    mkdir(plateauDir);
-  end
-  
-  plateauDataDir         = fullfile(plateauDir,dataFolderName); 
-  if(~exist(plateauDataDir,'dir'))
-    mkdir(plateauDataDir);
-  end
-  
-  plateauProtocolDir         = fullfile(plateauDir,protocolFolderName); 
-  if(~exist(plateauProtocolDir,'dir'))
-    mkdir(plateauProtocolDir);
-  end
-  
-  plateauLabelDir         = fullfile(plateauDir,blockLabelsFolderName); 
-  if(~exist(plateauLabelDir,'dir'))
-    mkdir(plateauLabelDir);
-  end
-  
-  expFolders.rootFolderPath         = plateauDir;
-  expFolders.dataFolderName         = dataFolderName;
-  expFolders.protocolFolderName     = 'protocols';
-  expFolders.blockLabelsFolderName  = 'segmentLabels';
+
+%   plateauFolderName         = [sequenceIdStr,'_plateau'];
+% 
+% 
+% 
+%   plateauDataDir         = fullfile(expFolders.dataFolderName,plateauFolderName); 
+%   plateauProtocolDir     = fullfile(expFolders.protocolFolderName,plateauFolderName); 
+%   plateauLabelDir        = fullfile(expFolders.blockLabelsFolderName,plateauFolderName); 
+%   plateauMetaDataDir     = fullfile(expFolders.sequenceMetaData,plateauFolderName); 
+% 
+%   expFolders.dataFolderName         = plateauDataDir;
+%   expFolders.protocolFolderName     = plateauProtocolDir;
+%   expFolders.blockLabelsFolderName  = plateauLabelDir;
+%   expFolders.sequenceMetaData       = plateauMetaDataDir;
+% 
+%   if(~exist(fullfile(expFolders.rootFolderPath,plateauDataDir),'dir'))
+%     mkdir(fullfile(expFolders.rootFolderPath,plateauDataDir));
+%   end  
+%   if(~exist(fullfile(expFolders.rootFolderPath,plateauProtocolDir),'dir'))
+%     mkdir(fullfile(expFolders.rootFolderPath,plateauProtocolDir));
+%   end  
+%   if(~exist(fullfile(expFolders.rootFolderPath,plateauLabelDir),'dir'))
+%     mkdir(fullfile(expFolders.rootFolderPath,plateauLabelDir));
+%   end
+%   if(~exist(fullfile(expFolders.rootFolderPath,plateauMetaDataDir),'dir'))
+%     mkdir(fullfile(expFolders.rootFolderPath,plateauMetaDataDir));
+%   end
+
 end
 
 %%
@@ -72,10 +73,10 @@ end
 
 type = ['plateau_search_',lengthRangeStr{1},'_',lengthRangeStr{2}];
 
-seriesName = '';
-idxP=0;
-if(~isempty(trialId))
-  idxP=trialId;
+seriesName = sequenceIdStr;
+idxP = trialId;
+if(~isempty(sequenceIdStr))
+  idxP = 0;
 end
 
 trialFileNameNoExt  = getTrialName(seriesName,idxP,type,[],...
@@ -213,7 +214,7 @@ for idxL = 1:1:length(expConfig.ramp.lengths)
   segmentMetaDataArray(idxSeg).meta_data.channel            ...
     = lengthRampOptions(1).port;
   segmentMetaDataArray(idxSeg).meta_data.(lengthFieldName)  ...
-    =lengthRampOptions(2).value;
+    =lengthRampOptions(1).value;
   segmentMetaDataArray(idxSeg).meta_data.(timeFieldName)    ...
     =lengthRampOptions(2).value;
 
@@ -338,7 +339,7 @@ segmentMetaDataArray(idxSeg).meta_data.is_active          ...
 segmentMetaDataArray(idxSeg).meta_data.channel            ...
   = lengthRampOptions(1).port;
 segmentMetaDataArray(idxSeg).meta_data.(lengthFieldName)  ...
-  =lengthRampOptions(2).value;
+  =lengthRampOptions(1).value;
 segmentMetaDataArray(idxSeg).meta_data.(timeFieldName)    ...
   =lengthRampOptions(2).value;
 
@@ -378,6 +379,7 @@ jsonMetaData.experiment.title = ...
           expConfig.ramp.lengths(1), ...
           expConfig.ramp.lengths(end),...
           auroraConfig.defaultLengthUnit);
+jsonMetaData.experiment.manually_measured_temperature_C = expConfig.temperature;
 jsonMetaData.experiment.tags = {'twitch-plateau-search'};
 
 jsonMetaDataEncoded = jsonencode(jsonMetaData);

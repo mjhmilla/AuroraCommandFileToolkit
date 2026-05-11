@@ -8,11 +8,20 @@ end
 
 if(isempty(startingLength)==0)
     lengthStr = '';
-    if(startingLength < 1)
+    if(abs(startingLength) < 1 )
+      if(startingLength >= 0)
         lengthStr = int2str(round(startingLength,2)*100);      
         lengthStr = ['0',lengthStr];
+      else
+        lengthStr = int2str(round(abs(startingLength),2)*100);      
+        lengthStr = ['m0',lengthStr];
+      end
     else
+      if(startingLength >= 0)
         lengthStr = sprintf('%i',round(startingLength*100));
+      else
+        lengthStr = sprintf('m%i',round(abs(startingLength)*100));
+      end
     end
 
     if(isempty(seriesName))

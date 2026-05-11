@@ -5,8 +5,9 @@ function auroraConfig =  getDefaultAuroraConfiguration610A(...
                             specimenLceOptInMM,...                                                        
                             maxNormalizedSpeedLPS)
 
-disp('Aurora Configuration for the 3EE');
+%disp('Aurora Configuration for the 305B-LR');
 
+auroraConfig.model = '305B-LR';
 
 auroraConfig.approximateSampleLengthInDefaultUnits = ...
     specimenLceOptInMM;
@@ -19,8 +20,7 @@ auroraConfig.maximumRampSpeedInLPS = maxNormalizedSpeedLPS;
 auroraConfig.maximumRampSpeedInMMPS = ...
     maxNormalizedSpeedLPS*(specimenLceOptInMM);
 
-disp('  Note: Find the maximum Length-Ramp speed of the 300E');
-auroraConfig.maximumSpeedInMMPS = auroraConfig.maximumRampSpeedInMMPS;
+auroraConfig.maximumSpeedInMMPS = 20/0.002;
 auroraConfig.maximumSpeedInLPS = auroraConfig.maximumRampSpeedInLPS;
 
 
@@ -44,7 +44,7 @@ auroraConfig.lengthStepResponseTime = 0.002*2;
 auroraConfig.maximumLengthChangeInMM = 10;
 auroraConfig.scaleLengthUnitsToMM = 1;
 
-disp('  Note: Find the maximum of commands for the 300E');
+%disp('  Note: Find the maximum of commands for the 300E');
 auroraConfig.maximumNumberOfCommands = 945;
 
 
