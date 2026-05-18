@@ -1,11 +1,11 @@
-function trialId = constructForceLengthRelationshipExperiment610A(...
-                        dateId,...
-                        trialId,...
-                        sequenceId,...
-                        auroraConfig,...
-                        expConfig,...
-                        expFolders,...
-                        projectFolders)
+function [trialId, expFoldersUpd] = constructForceLengthRelationshipExperiment610A(...
+                                        dateId,...
+                                        trialId,...
+                                        sequenceId,...
+                                        auroraConfig,...
+                                        expConfig,...
+                                        expFolders,...
+                                        projectFolders)
 
 auroraConfigRecovery = getDefaultAuroraConfiguration610A(...
                         expConfig.muscleName,...
@@ -41,41 +41,43 @@ end
 
 flrFolderName         = [sequenceIdStr,'_flr'];
 
-assert(contains(expFolders.sequenceMetaData,'/')==0);
-assert(contains(expFolders.sequenceMetaData,'\')==0);
-assert(contains(expFolders.protocolFolderName,'/')==0);
-assert(contains(expFolders.protocolFolderName,'\')==0);
-assert(contains(expFolders.dataFolderName,'/')==0);
-assert(contains(expFolders.dataFolderName,'\')==0);
+expFoldersUpd = expFolders;
+
+assert(contains(expFoldersUpd.sequenceMetaData,'/')==0);
+assert(contains(expFoldersUpd.sequenceMetaData,'\')==0);
+assert(contains(expFoldersUpd.protocolFolderName,'/')==0);
+assert(contains(expFoldersUpd.protocolFolderName,'\')==0);
+assert(contains(expFoldersUpd.dataFolderName,'/')==0);
+assert(contains(expFoldersUpd.dataFolderName,'\')==0);
 
 sequenceMetaDataFiles.folder  = ...
-  [{expFolders.sequenceMetaData},{flrFolderName}];
+  [{expFoldersUpd.sequenceMetaData},{flrFolderName}];
 sequenceProtocolFiles.folder  = ...
-  [{expFolders.protocolFolderName},{flrFolderName}];
+  [{expFoldersUpd.protocolFolderName},{flrFolderName}];
 sequenceDataFiles.folder      = ...
-  [{expFolders.dataFolderName},{flrFolderName}];
+  [{expFoldersUpd.dataFolderName},{flrFolderName}];
 
-flrDataDir         = fullfile(expFolders.dataFolderName,flrFolderName); 
-flrProtocolDir     = fullfile(expFolders.protocolFolderName,flrFolderName); 
-flrLabelDir        = fullfile(expFolders.blockLabelsFolderName,flrFolderName); 
-flrMetaDataDir     = fullfile(expFolders.sequenceMetaData,flrFolderName); 
+flrDataDir         = fullfile(expFoldersUpd.dataFolderName,flrFolderName); 
+flrProtocolDir     = fullfile(expFoldersUpd.protocolFolderName,flrFolderName); 
+flrLabelDir        = fullfile(expFoldersUpd.blockLabelsFolderName,flrFolderName); 
+flrMetaDataDir     = fullfile(expFoldersUpd.sequenceMetaData,flrFolderName); 
 
-expFolders.dataFolderName         = flrDataDir;
-expFolders.protocolFolderName     = flrProtocolDir;
-expFolders.blockLabelsFolderName  = flrLabelDir;
-expFolders.sequenceMetaData       = flrMetaDataDir;
+expFoldersUpd.dataFolderName         = flrDataDir;
+expFoldersUpd.protocolFolderName     = flrProtocolDir;
+expFoldersUpd.blockLabelsFolderName  = flrLabelDir;
+expFoldersUpd.sequenceMetaData       = flrMetaDataDir;
 
-if(~exist(fullfile(expFolders.rootFolderPath,flrDataDir),'dir'))
-  mkdir(fullfile(expFolders.rootFolderPath,flrDataDir));
+if(~exist(fullfile(expFoldersUpd.rootFolderPath,flrDataDir),'dir'))
+  mkdir(fullfile(expFoldersUpd.rootFolderPath,flrDataDir));
 end  
-if(~exist(fullfile(expFolders.rootFolderPath,flrProtocolDir),'dir'))
-  mkdir(fullfile(expFolders.rootFolderPath,flrProtocolDir));
+if(~exist(fullfile(expFoldersUpd.rootFolderPath,flrProtocolDir),'dir'))
+  mkdir(fullfile(expFoldersUpd.rootFolderPath,flrProtocolDir));
 end  
-if(~exist(fullfile(expFolders.rootFolderPath,flrLabelDir),'dir'))
-  mkdir(fullfile(expFolders.rootFolderPath,flrLabelDir));
+if(~exist(fullfile(expFoldersUpd.rootFolderPath,flrLabelDir),'dir'))
+  mkdir(fullfile(expFoldersUpd.rootFolderPath,flrLabelDir));
 end
-if(~exist(fullfile(expFolders.rootFolderPath,flrMetaDataDir),'dir'))
-  mkdir(fullfile(expFolders.rootFolderPath,flrMetaDataDir));
+if(~exist(fullfile(expFoldersUpd.rootFolderPath,flrMetaDataDir),'dir'))
+  mkdir(fullfile(expFoldersUpd.rootFolderPath,flrMetaDataDir));
 end
 
 
@@ -165,18 +167,18 @@ for idxTrial = 1:1:length(expConfig.ramp.length)
                             trialFileNameNoExt,...                                     
                             auroraConfigRecovery,...
                             expConfig,...
-                            expFolders,...
+                            expFoldersUpd,...
                             flag_isASequence);   
        
       case 2
   
-        fid = fopen(fullfile(expFolders.rootFolderPath,...
-                             expFolders.protocolFolderName,...
+        fid = fopen(fullfile(expFoldersUpd.rootFolderPath,...
+                             expFoldersUpd.protocolFolderName,...
                              [trialFileNameNoExt,'.dpf']),'w');
        
         
-        trialBlockLabelFilePath = fullfile(expFolders.rootFolderPath,...
-                                          expFolders.blockLabelsFolderName,...
+        trialBlockLabelFilePath = fullfile(expFoldersUpd.rootFolderPath,...
+                                          expFoldersUpd.blockLabelsFolderName,...
                                           [trialFileNameNoExt,'.csv']);
         
         programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
@@ -268,8 +270,8 @@ for idxTrial = 1:1:length(expConfig.ramp.length)
  
 
         jsonMetaDataEncoded = jsonencode(jsonMetaData);
-        fidJson = fopen(fullfile(expFolders.rootFolderPath,...
-                                  expFolders.sequenceMetaData,...
+        fidJson = fopen(fullfile(expFoldersUpd.rootFolderPath,...
+                                  expFoldersUpd.sequenceMetaData,...
                                  [trialFileNameNoExt,'.json']),'w');
         fprintf(fidJson,jsonMetaDataEncoded);
         fclose(fidJson);
@@ -300,7 +302,7 @@ jsonSequenceMetaData.sequence = jsonSequenceSeriesMetaData;
 trialFileNameNoExt  = getTrialName(sequenceIdStr,[],'flr',[],...
                                     '', dateId,'');
 
-fidSeqJson = fopen(fullfile(expFolders.rootFolderPath,...
+fidSeqJson = fopen(fullfile(expFoldersUpd.rootFolderPath,...
                          [trialFileNameNoExt,'.seq.json']),'w');
 
 jsonMetaDataEncoded = jsonencode(jsonSequenceMetaData);

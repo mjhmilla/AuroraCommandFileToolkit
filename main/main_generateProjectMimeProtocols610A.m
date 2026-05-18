@@ -26,7 +26,7 @@ dateIdOverride                  = [];
 sineWaveRecoveryDurationS       = 30;
 sineWaveRecoveryAmplitude       = 1;
 muscleTemperature               = 37;
-stimulationFrequency = 200;
+stimulationFrequency            = 300;
 stimulationPulseWidth           = 0.4;
 timeToReachMaxActivation        = 0.25;
 
@@ -44,7 +44,7 @@ flag_degradationProtocol      =1;
 
 flag_forceFrequencyProtocol   =0;
 flag_FLRProtocol              =0;
-flag_rampImpededanceProtocol  =1;
+flag_rampImpededanceProtocol  =0;
 flag_injuryRampProtocol       =1;
 
 
@@ -60,6 +60,9 @@ perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
                                              %will be realized
 perturbationDuration = [1,2];
 sampleFrequency = 4000;
+
+experimentComputerFolder=...
+  'C:\Users\Administrator.ASI601A-AHQNPTB\Desktop\skeletal_muscle\';
 
 %
 % Protocol specific settings
@@ -504,7 +507,7 @@ dataFolderName        = 'data';
 protocolFolderName    = 'protocols';
 blockLabelsFolderName = 'segmentLabels';
 sequenceMetaData      = 'sequenceMetaData';
-sequenceFolder        = 'sequenceFiles';
+
 
 codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
 if(~exist(codeDir,'dir'))
@@ -517,6 +520,7 @@ if(~exist(dataDir,'dir'))
 end
 
 protocolDir     = fullfile(codeDir,protocolFolderName); 
+protocolLocalDir= fullfile([dateId,'_610A'],protocolFolderName);
 if(~exist(protocolDir,'dir'))
   mkdir(protocolDir);
 end
@@ -524,11 +528,6 @@ end
 labelDir = fullfile(codeDir,blockLabelsFolderName); 
 if(~exist(labelDir,'dir'))
   mkdir(labelDir);
-end
-
-sequenceDir = fullfile(codeDir,sequenceFolder);
-if(~exist(sequenceDir,'dir'))
-  mkdir(sequenceDir);
 end
 
 
@@ -617,16 +616,16 @@ end
 
 if(flag_degradationProtocol==1)
 
-  degradationConfig.numberOfTrials = 20;
-  degradationConfig.waitTime=1;
-  degradationConfig.tetanus.initialDelay   = 0;
-  degradationConfig.tetanus.pulseFrequency = stimulationFrequency;
+  degradationConfig.numberOfTrials = [10,10];
+  degradationConfig.waitTime=[1,1];
+  degradationConfig.tetanus.initialDelay   = [0,0];
+  degradationConfig.tetanus.pulseFrequency = [1,1].*stimulationFrequency;
 
   assert(stimulationPulseWidth*0.001 < 0.5/max(stimulationFrequency));
 
-  degradationConfig.tetanus.pulseWidth     = stimulationPulseWidth;
-  degradationConfig.tetanus.duration       = 1;
-  degradationConfig.tetanus.sampleFrequency= 4000;
+  degradationConfig.tetanus.pulseWidth     = [1,1].*stimulationPulseWidth;
+  degradationConfig.tetanus.duration       = [1,0.25];
+  degradationConfig.tetanus.sampleFrequency= [1,1].*4000;
 
   degradationConfig.sineWave.waitTime   = 0;
   degradationConfig.sineWave.frequency  = 1;
@@ -643,7 +642,7 @@ if(flag_degradationProtocol==1)
   
   degradationConfig.temperature = muscleTemperature;
 
-  trialId = constructDegradationExperiment610A(...
+  [trialId,degradationFolders]= constructDegradationExperiment610A(...
                         dateId,...
                         trialId,...
                         sequenceId,...
@@ -652,6 +651,24 @@ if(flag_degradationProtocol==1)
                         projectFolders);   
   sequenceId=sequenceId+1;
 
+
+  [protocolPath,sequenceName] = fileparts(degradationFolders.protocolFolderName);
+  protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
+
+  degradationSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  degradationSequenceSettings.baseFile = [dateId,'_degradation_610A'];
+  degradationSequenceSettings.isTimed = 1;
+  degradationSequenceSettings.delayTime =0;
+  degradationSequenceSettings.repeats   =0;
+  degradationSequenceSettings.expProtocolFolderName = ...
+    [ experimentComputerFolder,...
+      protocolLocalDirWindows,...
+      '\',sequenceName,'\'];
+
+  success=generateSequenceFile(...
+    fullfile(degradationFolders.rootFolderPath,...
+             degradationFolders.protocolFolderName),...
+    degradationSequenceSettings)  ;
 end
 
 if(flag_impedanceCalibrationProtocol==1)
@@ -662,6 +679,8 @@ if(flag_impedanceCalibrationProtocol==1)
                     expFolders,...
                     plotConfig);
   sequenceId=sequenceId+1;
+
+
 
 end
 
@@ -701,7 +720,7 @@ if(flag_FLRProtocol==1)
   flrConfig.lceOptMM    =lceOptMM;
   flrConfig.vceMaxLPS   =vceMaxLPS;
 
-  trialId = constructForceLengthRelationshipExperiment610A(...
+  [trialId, flrFolders]= constructForceLengthRelationshipExperiment610A(...
                           dateId,...
                           trialId,...
                           sequenceId,...
@@ -710,6 +729,24 @@ if(flag_FLRProtocol==1)
                           expFolders,...
                           projectFolders);  
   sequenceId=sequenceId+1;
+
+  [protocolPath,sequenceName] = fileparts(flrFolders.protocolFolderName);
+  protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
+
+  flrSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  flrSequenceSettings.baseFile = [dateId,'_flr_610A'];
+  flrSequenceSettings.isTimed = 1;
+  flrSequenceSettings.delayTime =0;
+  flrSequenceSettings.repeats   =0;
+  flrSequenceSettings.expProtocolFolderName = ...
+    [ experimentComputerFolder,...
+      protocolLocalDirWindows,...
+      '\',sequenceName,'\'];
+
+  success=generateSequenceFile(...
+            fullfile(flrFolders.rootFolderPath,...
+                     flrFolders.protocolFolderName),...
+                     flrSequenceSettings)  ;
 
 end
 
@@ -884,10 +921,15 @@ if(flag_injuryRampProtocol==1)
   rampConfig.tetanus.initialDelay   = 0;
   rampConfig.tetanus.pulseFrequency = stimulationFrequency;
   rampConfig.tetanus.pulseWidth     = stimulationPulseWidth;
-  rampConfig.tetanus.durationExtension = 0.5;
+  rampConfig.tetanus.durationExtension = timeToReachMaxActivation;
   rampConfig.tetanus.duration       = nan;
 
-  
+  %Probe trial settings
+  rampConfig.probe.velocity = 1;
+  rampConfig.probe.waitTime = 1;
+  rampConfig.probe.passiveLength = 3;
+
+    
 
   %This is the relaxation sine wave between trials
   rampConfig.sineWave.waitTime  = 1;
@@ -901,16 +943,37 @@ if(flag_injuryRampProtocol==1)
   rampConfig.lceOptMM    =lceOptMM;
   rampConfig.vceMaxLPS   =vceMaxLPS;
 
-  trialId = constructRampExperiment610A(...
-                          dateId,...
-                          trialId,...
-                          sequenceId,...
-                          'rampInjury',...
-                          auroraConfig,...
-                          rampConfig,...
-                          expFolders,...
-                          projectFolders);  
+  [trialId, alFolders] = constructActiveLengtheningInjuryExperiment610A(...
+                              dateId,...
+                              trialId,...
+                              sequenceId,...
+                              'rampInjury',...
+                              auroraConfig,...
+                              rampConfig,...
+                              expFolders,...
+                              projectFolders);  
+
+  [protocolPath,sequenceName] = fileparts(alFolders.protocolFolderName);
+  protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
+
+  alSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  alSequenceSettings.baseFile = [dateId,'_rampInjury_610A'];
+  alSequenceSettings.isTimed = 0;
+  alSequenceSettings.delayTime =0;
+  alSequenceSettings.repeats   =0;
+  alSequenceSettings.expProtocolFolderName = ...
+    [ experimentComputerFolder,...
+      protocolLocalDirWindows,...
+      '\',sequenceName,'\'];
+
+  success=generateSequenceFile(...
+            fullfile(alFolders.rootFolderPath,...
+                     alFolders.protocolFolderName),...
+                     alSequenceSettings)  ;
+
   sequenceId=sequenceId+1;
+
+
 
 end
 
