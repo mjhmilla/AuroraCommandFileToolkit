@@ -1,86 +1,62 @@
 function trialId = createPlateauSearchTrail610A(...
+                      trialFileNameNoExt,...
                       dateId,...
                       trialId,...
                       sequenceId,...
                       auroraConfig,...
                       expConfig,...   
                       expFolders,...
-                      projectFolders)
+                      projectFolders,...
+                      flag_isASequence)
 
 success = 0;
 
-%%
-% Set up the folders
-%%
-sequenceIdStr = '';
-assert(~isempty(sequenceId),'Error: sequenceId cannot be empty');
 
-if(~isempty(sequenceId))
-  sequenceIdStr = num2str(sequenceId);
-  if(length(sequenceIdStr)<2)
-    sequenceIdStr = ['0',sequenceIdStr];
-  end
-
-
-%   plateauFolderName         = [sequenceIdStr,'_plateau'];
-% 
-% 
-% 
-%   plateauDataDir         = fullfile(expFolders.dataFolderName,plateauFolderName); 
-%   plateauProtocolDir     = fullfile(expFolders.protocolFolderName,plateauFolderName); 
-%   plateauLabelDir        = fullfile(expFolders.blockLabelsFolderName,plateauFolderName); 
-%   plateauMetaDataDir     = fullfile(expFolders.sequenceMetaData,plateauFolderName); 
-% 
-%   expFolders.dataFolderName         = plateauDataDir;
-%   expFolders.protocolFolderName     = plateauProtocolDir;
-%   expFolders.blockLabelsFolderName  = plateauLabelDir;
-%   expFolders.sequenceMetaData       = plateauMetaDataDir;
-% 
-%   if(~exist(fullfile(expFolders.rootFolderPath,plateauDataDir),'dir'))
-%     mkdir(fullfile(expFolders.rootFolderPath,plateauDataDir));
-%   end  
-%   if(~exist(fullfile(expFolders.rootFolderPath,plateauProtocolDir),'dir'))
-%     mkdir(fullfile(expFolders.rootFolderPath,plateauProtocolDir));
-%   end  
-%   if(~exist(fullfile(expFolders.rootFolderPath,plateauLabelDir),'dir'))
-%     mkdir(fullfile(expFolders.rootFolderPath,plateauLabelDir));
-%   end
-%   if(~exist(fullfile(expFolders.rootFolderPath,plateauMetaDataDir),'dir'))
-%     mkdir(fullfile(expFolders.rootFolderPath,plateauMetaDataDir));
-%   end
-
-end
 
 %%
 % Create the file name
 %%
+if(isempty(trialFileNameNoExt))
+  sequenceIdStr = '';
+  assert(~isempty(sequenceId),'Error: sequenceId cannot be empty');
+  
+  if(~isempty(sequenceId))
+    sequenceIdStr = num2str(sequenceId);
+    if(length(sequenceIdStr)<2)
+      sequenceIdStr = ['0',sequenceIdStr];
+    end
+  
+  
+  end
 
-lengthRange = [expConfig.ramp.lengths(1),...
-               expConfig.ramp.lengths(end)];
 
-lengthRangeStr = {'',''};
-
-for i=1:1:length(lengthRange)
-  lengthRounded  = round(100*lengthRange(i));
-  lengthRangeStr{i} = sprintf('%i',lengthRounded);
-  lengthRangeStr{i} = strrep(lengthRangeStr{i},'-','m');
-  if(abs(lengthRange(i))<1)
-    while(length(lengthRangeStr{i})<2)
-      lengthRangeStr{i} = ['0',lengthRangeStr{i}];
+  lengthRange = [expConfig.ramp.lengths(1),...
+                 expConfig.ramp.lengths(end)];
+  
+  lengthRangeStr = {'',''};
+  
+  for i=1:1:length(lengthRange)
+    lengthRounded  = round(100*lengthRange(i));
+    lengthRangeStr{i} = sprintf('%i',lengthRounded);
+    lengthRangeStr{i} = strrep(lengthRangeStr{i},'-','m');
+    if(abs(lengthRange(i))<1)
+      while(length(lengthRangeStr{i})<2)
+        lengthRangeStr{i} = ['0',lengthRangeStr{i}];
+      end
     end
   end
+  
+  type = ['plateau_search_',lengthRangeStr{1},'_',lengthRangeStr{2}];
+  
+  seriesName = sequenceIdStr;
+  idxP = trialId;
+  if(~isempty(sequenceIdStr))
+    idxP = 0;
+  end
+  
+  trialFileNameNoExt  = getTrialName(seriesName,idxP,type,[],...
+                  auroraConfig.defaultLengthUnit, dateId,'');
 end
-
-type = ['plateau_search_',lengthRangeStr{1},'_',lengthRangeStr{2}];
-
-seriesName = sequenceIdStr;
-idxP = trialId;
-if(~isempty(sequenceIdStr))
-  idxP = 0;
-end
-
-trialFileNameNoExt  = getTrialName(seriesName,idxP,type,[],...
-                auroraConfig.defaultLengthUnit, dateId,'');
 
 %%
 % Set up the files and metadata structures
@@ -97,18 +73,21 @@ trialBlockLabelFilePath = fullfile(expFolders.rootFolderPath,...
 programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
 programMetaData = writePreamble610A(fid,auroraConfig,programMetaData);
 
-jsonMetaData = struct('data',[],'protocol',[],...
-                      'segments',[],'experiment',[]);
-
-jsonMetaData.data.file = {expFolders.dataFolderName, ...
-                          [trialFileNameNoExt,'.ddf']};
-jsonMetaData.data.sha256 = "";
-
-jsonMetaData.protocol.file = {expFolders.protocolFolderName, ...
-                              [trialFileNameNoExt,'.dpf']};
-jsonMetaData.protocol.sha256 = "";
-
-
+if(flag_isASequence==0)
+  jsonMetaData = struct('data',[],'protocol',[],...
+                        'segments',[],'experiment',[]);
+  
+  jsonMetaData.data.file = {expFolders.dataFolderName, ...
+                            [trialFileNameNoExt,'.ddf']};
+  jsonMetaData.data.sha256 = "";
+  
+  jsonMetaData.protocol.file = {expFolders.protocolFolderName, ...
+                                [trialFileNameNoExt,'.dpf']};
+  jsonMetaData.protocol.sha256 = "";
+else
+  jsonMetaData = struct('segments',[],'experiment',[]);
+  
+end
 mdFieldNames = getMetaDataFieldNames610A(auroraConfig);
 
 timeFieldName = mdFieldNames.time;
@@ -383,10 +362,19 @@ jsonMetaData.experiment.manually_measured_temperature_C = expConfig.temperature;
 jsonMetaData.experiment.tags = {'twitch-plateau-search'};
 
 jsonMetaDataEncoded = jsonencode(jsonMetaData);
-fidJson = fopen(fullfile(expFolders.rootFolderPath,...
-                         [trialFileNameNoExt,'.json']),'w');
+
+if(flag_isASequence==0)
+  fidJson = fopen(fullfile(expFolders.rootFolderPath,...
+                           [trialFileNameNoExt,'.json']),'w');
+else                     
+  fidJson = fopen(fullfile(expFolders.rootFolderPath,...
+                           expFolders.sequenceMetaData,...
+                           [trialFileNameNoExt,'.json']),'w');
+
+end
 fprintf(fidJson,jsonMetaDataEncoded);
 fclose(fidJson);
+
 
 fclose(fid);
 fclose(programMetaData.labelFileHandle);

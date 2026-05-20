@@ -44,7 +44,7 @@ amplitudeFieldName = mdFieldNames.amplitude;
 lengthFieldName = mdFieldNames.length;
 
 % Sine wave
-segmentMetaDataArray(2) = ...
+segmentMetaDataArray(3) = ...
     struct('type','',timeFieldName,[0,0],'meta_data',[]);
 
 %
@@ -122,6 +122,40 @@ endTimeError = endTime - programMetaData.controlFunction.endTime;
 assert(abs(endTimeError)<1e-3,...
     'Error: end time differs from the meta data');
 
+
+%
+% Ramp
+%
+
+idxSeg=idxSeg+1;
+
+startTime = programMetaData.nextStartTime+expConfig.ramp.waitTime;
+endTime   = startTime + lengthRampOptions(2).value;
+
+segmentMetaDataArray(idxSeg).type = 'Ramp';
+segmentMetaDataArray(idxSeg).(timeFieldName) = [startTime,endTime];
+segmentMetaDataArray(idxSeg).meta_data.is_active = 0;
+segmentMetaDataArray(idxSeg).meta_data.channel=lengthRampOptions(1).port;
+segmentMetaDataArray(idxSeg).meta_data.(lengthFieldName)=lengthRampOptions(1).value;
+segmentMetaDataArray(idxSeg).meta_data.(timeFieldName)=lengthRampOptions(2).value;
+
+programMetaData ...
+    = writeControlFunction610A(...
+            fid,...
+            expConfig.ramp.waitTime,...
+            'Ramp',...
+            lengthRampOptions,...
+            auroraConfig,...
+            programMetaData,...
+            flag_printMetaDataToFile);
+
+endTimeError = endTime - programMetaData.controlFunction.endTime;
+assert(abs(endTimeError)<1e-3,...
+    'Error: end time differs from the meta data');
+
+%
+% End the program
+%
 programMetaData = ...
   writeClosingBlock610A(...
       fid,...

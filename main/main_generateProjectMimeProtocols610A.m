@@ -2,7 +2,7 @@ clc;
 close all;
 clear all;
 
-disp('Update script to take in measured parameters: lceOptMM, fceMax, lpeHalf, fpeHalf')
+%disp('Update script to take in measured parameters: lceOptMM, fceMax, lpeHalf, fpeHalf')
 
 %% 66 50 LR.: 10N max
 % Folders
@@ -21,31 +21,89 @@ addpath(projectFolders.signals);
 %%
 % Script Configuration
 %%
+
 dateIdOverride                  = [];
+
+temperatureSettings(2)=...
+  struct('muscle','','temperatureC',0,'stimulationFrequencyHz',0,'pulseWidthMs',0,...
+         'riseTimeS',0,'lceOptMM',0,'vceMaxMMPS',0);
+
+idxTemp = 1;
+idxEDL22=1;
+idxEDL37=2;
+temperatureSettings(idxEDL22).muscle                = 'EDL';
+temperatureSettings(idxEDL22).temperatureC          =22;     %20260326
+temperatureSettings(idxEDL22).stimulationFrequencyHz=70;     %20260326
+temperatureSettings(idxEDL22).pulseWidthMs          = 5;     %20260326
+temperatureSettings(idxEDL22).riseTimeS             = 0.401; %20260326
+temperatureSettings(idxEDL22).lceOptMM              = 9.8;   %20260311
+temperatureSettings(idxEDL22).vceMaxMMPS              = 70; %Ranatunga 1984 Fig.4
+
+temperatureSettings(idxEDL37).muscle                = 'EDL';
+temperatureSettings(idxEDL37).temperatureC          = 37;   %20260519
+temperatureSettings(idxEDL37).stimulationFrequencyHz= 300;  %20260512
+temperatureSettings(idxEDL37).pulseWidthMs          = 0.4;  %20260512
+temperatureSettings(idxEDL37).riseTimeS             = 0.087;%20260519 
+temperatureSettings(idxEDL37).lceOptMM              = 9.8;  %20260311 (22C)
+temperatureSettings(idxEDL37).vceMaxMMPS              = 167.5; %Ranatunga 1984 Fig.4
+
+settingsFields = fields(temperatureSettings(idxTemp));
+fprintf('Settings\n')
+for idxF = 1:1:length(settingsFields)
+  param = num2str(temperatureSettings(idxTemp).(settingsFields{idxF}));
+  if(isnumeric(param))
+    fprintf('\t%1.1f\t%s\n',param,settingsFields{idxF});
+  else
+    fprintf('\t%s\t%s\n',param,settingsFields{idxF});
+  end
+end
+fprintf('\n\n');
 
 sineWaveRecoveryDurationS       = 30;
 sineWaveRecoveryAmplitude       = 1;
-muscleTemperature               = 37;
-stimulationFrequency            = 300;
-stimulationPulseWidth           = 0.4;
-timeToReachMaxActivation        = 0.25;
+muscleTemperature               = temperatureSettings(idxTemp).temperatureC;
+stimulationFrequency            = temperatureSettings(idxTemp).stimulationFrequencyHz;
+stimulationPulseWidth           = temperatureSettings(idxTemp).pulseWidthMs;
+timeOfMinimumStimulus           = temperatureSettings(idxTemp).riseTimeS;
+lceOptMM                        = temperatureSettings(idxTemp).lceOptMM;
+vceMaxMMPS                      = temperatureSettings(idxTemp).vceMaxMMPS;
+vceMaxLPS                       = vceMaxMMPS/temperatureSettings(idxTemp).lceOptMM;
 
-muscleName                      = 'EDL'; %'EDL', or 'SOL';
-measuredMuscleParams.lceOptMM   = 10;
-measuredMuscleParams.vceMaxMMPS = 12;
+muscleName                      = temperatureSettings(idxTemp).muscle; %'EDL', or 'SOL';
+measuredMuscleParams.lceOptMM   = [];
+measuredMuscleParams.vceMaxMMPS = [];
 
+if(~isempty(measuredMuscleParams.lceOptMM))
+  fprintf('%1.1f to %1.1f mm\t Updated lceOptMM\n',...
+      lceOptMM,measuredMuscleParams.lceOptMM)
+  lceOptMM = measuredMuscleParams.lceOptMM;
+
+end
+if(~isempty(measuredMuscleParams.vceMaxMMPS))
+  fprintf('%1.1f to %1.1f mm\t Updated vceOptMMPS\n',...
+      (vceMaxMMPS),measuredMuscleParams.vceMaxMMPS);  
+  vceMaxMMPS  = measuredMuscleParams.vceMaxMMPS;
+  vceMaxLPS   = vceMaxMMPS/lceOptMM;
+end
+
+%%
+% Configure the experiment
+%%
 
 flag_normalizationProtocol    =0;
-flag_injuryProtocol           =0;
-flag_characterizationProtocol =0;
+%flag_injuryProtocol           =0;
+%flag_characterizationProtocol =0;
 
 flag_plateauSearchProtocol    =1;
-flag_degradationProtocol      =1;
+flag_degradationProtocol      =0;
 
 flag_forceFrequencyProtocol   =0;
 flag_FLRProtocol              =0;
 flag_rampImpededanceProtocol  =0;
-flag_injuryRampProtocol       =1;
+
+flag_preInjuryProtocol        = 1;
+flag_injuryRampProtocol       = 1;
+flag_postInjuryProtocol       = 1;
 
 
 flag_impedanceCalibrationProtocol = 0;
@@ -58,7 +116,7 @@ stochasticWaveSetType             = 7; %only step waves;
 perturbationLengthMM              = 0.125;
 perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
                                              %will be realized
-perturbationDuration = [1,2];
+perturbationDuration = [0.5,2];
 sampleFrequency = 4000;
 
 experimentComputerFolder=...
@@ -109,67 +167,7 @@ flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
 
 
-%%
-% Approximate specimen properties
-%%
-%From: Table II of
-%
-%W. L. Johnson, D. L. Jindrich, H. Zhong, R. R. Roy and V. R. Edgerton, 
-% "Application of a Rat Hindlimb Model: A Prediction of Force Spaces 
-% Reachable Through Stimulation of Nerve Fascicles," in IEEE 
-% Transactions on Biomedical Engineering, vol. 58, no. 12, pp. 
-% 3328-3338, Dec. 2011, doi: 10.1109/TBME.2011.2106784. 
 
-g2N                 = 9.81*0.001;
-switch muscleName
-    case 'EDL'
-        muscleParams.fisoN     = 265*g2N;   %225g 
-        muscleParams.lceOptMM  = 13.7;      %mm 
-        muscleParams.vceMaxLPS   = 243/muscleParams.lceOptMM; %Lo/s  
-        muscleParams.alphaOpt  = deg2rad(10);
-        muscleParams.ltSlkMM   = 9;         %mm
-        muscleParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
-    case 'SOL'
-        muscleParams.fisoN     = 234*g2N;   %225g 
-        muscleParams.lceOptMM  = 16.0;      %mm 
-        muscleParams.vceMaxLPS = 89/muscleParams.lceOptMM; %Lo/s  
-        muscleParams.alphaOpt  = deg2rad(4);
-        muscleParams.ltSlkMM   = 9.5;         %mm
-        muscleParams.etIso     = 0.033; % Johnson et al. took the default value from Zajac
-    case 'CAL'
-        muscleParams.fisoN     = 1;     %225g 
-        muscleParams.lceOptMM  = 10.0;  %mm 
-        muscleParams.vceMaxLPS = 100; %Lo/s  
-        muscleParams.alphaOpt  = 0;
-        muscleParams.ltSlkMM   = muscleParams.lceOptMM;         %mm
-        muscleParams.etIso     = 0.0;       
-    otherwise
-        assert(0,'Error: Invalid muscle name');
-end
-
-
-
-
-lceOptMM = nan;
-vceMaxLPS = nan;
-if(isempty(measuredMuscleParams.lceOptMM)==0)
-    lceOptMM = measuredMuscleParams.lceOptMM;
-else
-    lceOptMM = muscleParams.lceOptMM;
-end
-
-if(isempty(measuredMuscleParams.vceMaxMMPS)==0 ...
-    && isempty(measuredMuscleParams.lceOptMM)==0)
-    vceMaxLPS = measuredMuscleParams.vceMaxMMPS ...
-               /measuredMuscleParams.lceOptMM;
-else
-    vceMaxLPS = muscleParams.vceMaxLPS;
-end
-
-disp('Generating dpf files for:');
-disp(muscleName);
-fprintf('%1.1f mm\tlceOpt\n',lceOptMM);
-fprintf('%1.1f lps\tvceMaxLPS\n',vceMaxLPS);
 
 %%
 % Perturbation settings
@@ -545,7 +543,7 @@ sequenceId = 1;
 
 if(flag_plateauSearchProtocol==1)  
   plateauConfig.ramp.waitTime       = 1;
-  plateauConfig.ramp.lengths        = [-2:1:2]';
+  plateauConfig.ramp.lengths        = [-3:1:3]';
   plateauConfig.ramp.duration       = 1;
   
   plateauConfig.sineWave.waitTime   = 1;
@@ -562,14 +560,17 @@ if(flag_plateauSearchProtocol==1)
   plateauConfig.temperature = muscleTemperature;
 
   trialIdStart=trialId;
+  flag_isASequence=0;
   trialId = createPlateauSearchTrail610A(...
+                        [],...
                         dateId,...
                         trialId,...
                         sequenceId,...
                         auroraConfig,...
                         plateauConfig,...
                         expFolders,...
-                        projectFolders);  
+                        projectFolders,...
+                        flag_isASequence);  
 
   sequenceId=sequenceId+1;
 
@@ -691,7 +692,7 @@ if(flag_FLRProtocol==1)
   flrConfig.waitTime = 1;  
   flrConfig.stopWaitTime = 5;
   flrConfig.temperature = muscleTemperature;
-  flrConfig.timeToReachMaxActivation = timeToReachMaxActivation;
+  flrConfig.timeOfMinimumStimulus = timeOfMinimumStimulus;
   
   flrConfig.ramp.velocity = 1; 
   flrConfig.ramp.waitTime = 1;
@@ -705,7 +706,7 @@ if(flag_FLRProtocol==1)
   flrConfig.tetanus.pulseFrequency = stimulationFrequency;
   flrConfig.tetanus.pulseWidth     = stimulationPulseWidth;
   flrConfig.tetanus.durationExtension = 0.5;
-  flrConfig.tetanus.duration       = timeToReachMaxActivation;
+  flrConfig.tetanus.duration       = timeOfMinimumStimulus;
 
  
   %This is the relaxation sine wave between trials
@@ -808,7 +809,7 @@ if(flag_rampImpededanceProtocol==1)
 
   rampImpConfig.stochasticWaves.waitTime                 = 5;
   rampImpConfig.stochasticWaves.timeToReachMaxActivation = ...
-      timeToReachMaxActivation;
+      timeOfMinimumStimulus;
 
   switch muscleName
     case 'EDL'
@@ -903,25 +904,155 @@ if(flag_rampImpededanceProtocol==1)
 end
 
 
+
+if(flag_preInjuryProtocol==1)
+
+  prePostConfig.muscleName  =muscleName;
+  prePostConfig.temperature = muscleTemperature;
+  prePostConfig.timeToReachMaxActivation = timeOfMinimumStimulus;  
+  prePostConfig.unitSystem  ='mm_mN_s_Hz';
+  prePostConfig.lceOptMM    =lceOptMM;
+  prePostConfig.vceMaxLPS   =vceMaxLPS;
+
+  prePostConfig.waitTime = 1;  
+  prePostConfig.stopWaitTime = 5;
+  
+  prePostConfig.passive.ramp.velocity = vceMaxMMPS*0.5; 
+  prePostConfig.passive.ramp.waitTime = 1;
+  prePostConfig.passive.ramp.length   = [3,3];  
+
+  durationRamp      = prePostConfig.passive.ramp.length ./ ([0.1,0.5].*vceMaxMMPS);
+  durationRamp      = round(durationRamp.*sampleFrequency)./sampleFrequency;
+  velocityRampMMPS  = prePostConfig.passive.ramp.length./durationRamp;
+
+  prePostConfig.passive.ramp.duration = durationRamp;
+  prePostConfig.passive.ramp.holdDuration=[5,5];
+  prePostConfig.passive.ramp.velocity = velocityRampMMPS;
+  prePostConfig.passive.ramp.isActive = zeros(size(prePostConfig.passive.ramp.length));
+  
+  prePostConfig.passive.impedance.waitTime = 1;
+  prePostConfig.passive.impedance.length = [2,4];
+  prePostConfig.passive.impedance.stochasticWaveIndex=2;
+  prePostConfig.passive.impedance.amplitude=perturbationLengthMM;  
+
+  f0 = sqrt(min(perturbationBandwidth)/max(perturbationBandwidth));
+  sineFreqSample = [f0:((1-f0)/10):1]';
+  prePostConfig.passive.impedance.sine.frequencyHz = ...
+      (sineFreqSample.^2)*max(perturbationBandwidth);
+  prePostConfig.passive.impedance.sine.amplitude = ...
+      perturbationLengthMM;
+  prePostConfig.passive.impedance.sine.cycles = 10;
+
+  %Isometric
+  prePostConfig.isometric.lengths = [-3,3];
+
+  %Active ramp
+  prePostConfig.activeRamp.lengths = [1,-2;-2,1];
+  prePostConfig.activeRamp.velocity= [-1;1].*(vceMaxMMPS*0.5);
+
+  %Active impedance
+  prePostConfig.active.impedance.waitTime = 1;
+  prePostConfig.active.impedance.length = [0];
+  prePostConfig.active.impedance.stochasticWaveIndex=1;
+  prePostConfig.active.impedance.amplitude=perturbationLengthMM;  
+
+
+  %Activations settings
+  prePostConfig.tetanus.waitTime       = 1;
+  prePostConfig.tetanus.initialDelay   = 0;
+  prePostConfig.tetanus.pulseFrequency = stimulationFrequency;
+  prePostConfig.tetanus.pulseWidth     = stimulationPulseWidth;
+  prePostConfig.tetanus.durationExtension = 0;
+  prePostConfig.tetanus.duration       = nan;  
+
+
+
+  %This is the relaxation sine wave between trials
+  prePostConfig.recovery.sineWave.waitTime  = 1;
+  prePostConfig.recovery.sineWave.frequency = 1;
+  prePostConfig.recovery.sineWave.amplitude = sineWaveRecoveryAmplitude;
+  prePostConfig.recovery.sineWave.cycles    = ...
+    prePostConfig.recovery.sineWave.frequency*sineWaveRecoveryDurationS;
+  prePostConfig.recovery.sineWave.sampleFrequency = 100;
+  prePostConfig.recovery.stopWaitTime = 5;
+  prePostConfig.recovery.sampleFrequency = 100;
+  prePostConfig.recovery.ramp.waitTime = 1;
+
+  prePostConfig.plateau.ramp.waitTime       = 1;
+  prePostConfig.plateau.ramp.lengths        = [-3:1:3]';
+  prePostConfig.plateau.ramp.duration       = 1;
+  
+  prePostConfig.plateau.sineWave.waitTime   = 1;
+  prePostConfig.plateau.sineWave.frequency  = 20;
+  prePostConfig.plateau.sineWave.amplitude  = 0.25;
+  prePostConfig.plateau.sineWave.cycles     = ...
+    prePostConfig.plateau.sineWave.frequency*5;
+
+  prePostConfig.plateau.twitch.waitTime     = 1;
+  prePostConfig.plateau.twitch.initialDelayS = 0;
+  prePostConfig.plateau.twitch.pulseWidthMS  = 0.25;
+
+  prePostConfig.plateau.stopWaitTime =1;
+  prePostConfig.plateau.temperature = muscleTemperature;
+
+  
+  sequenceName = 'preInjury';
+
+  [trialId, preInjuryFolders] = ...
+    constructPrePostInjuryExperiment610A(...
+                          dateId,...
+                          trialId,...
+                          sequenceId,...
+                          sequenceName,...
+                          stochasticWaves,...                          
+                          auroraConfig,...
+                          prePostConfig,...
+                          expFolders,...
+                          projectFolders);  
+  sequenceId=sequenceId+1;
+
+
+  [protocolPath,sequenceName] = fileparts(preInjuryFolders.protocolFolderName);
+  protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
+
+  degradationSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  degradationSequenceSettings.baseFile = ['preInjury_610A_',dateId];
+  degradationSequenceSettings.isTimed = 1;
+  degradationSequenceSettings.delayTime =0;
+  degradationSequenceSettings.repeats   =0;
+  degradationSequenceSettings.expProtocolFolderName = ...
+    [ experimentComputerFolder,...
+      protocolLocalDirWindows,...
+      '\',sequenceName,'\'];
+
+  success=generateSequenceFile(...
+    fullfile(preInjuryFolders.rootFolderPath,...
+             preInjuryFolders.protocolFolderName),...
+    degradationSequenceSettings)  ;  
+
+end
+
 if(flag_injuryRampProtocol==1)
 
   rampConfig.waitTime = 1;  
   rampConfig.stopWaitTime = 5;
   rampConfig.temperature = muscleTemperature;
-  rampConfig.timeToReachMaxActivation = timeToReachMaxActivation;
+  rampConfig.timeToReachMaxActivation = timeOfMinimumStimulus;
   
-  rampConfig.ramp.velocity = 10; 
+  rampConfig.ramp.velocity = vceMaxMMPS*0.5; 
   rampConfig.ramp.waitTime = 1;
-  rampConfig.ramp.length   = [3,4,5,6,7,8,9];  
+  rampConfig.ramp.length   = [5,7,9];  
   rampConfig.ramp.duration = rampConfig.ramp.length ./ rampConfig.ramp.velocity;
+  rampConfig.ramp.duration = round(rampConfig.ramp.duration*sampleFrequency)/sampleFrequency;
+  rampConfig.ramp.velocity = rampConfig.ramp.length./rampConfig.ramp.duration;
   rampConfig.ramp.isActive = ones(size(rampConfig.ramp.length));
-
+  
   %Activations settings
   rampConfig.tetanus.waitTime       = 1;
   rampConfig.tetanus.initialDelay   = 0;
   rampConfig.tetanus.pulseFrequency = stimulationFrequency;
   rampConfig.tetanus.pulseWidth     = stimulationPulseWidth;
-  rampConfig.tetanus.durationExtension = timeToReachMaxActivation;
+  rampConfig.tetanus.durationExtension = 0.5*timeOfMinimumStimulus;
   rampConfig.tetanus.duration       = nan;
 
   %Probe trial settings
@@ -930,14 +1061,16 @@ if(flag_injuryRampProtocol==1)
   rampConfig.probe.passiveLength = 3;
 
     
-
   %This is the relaxation sine wave between trials
-  rampConfig.sineWave.waitTime  = 1;
-  rampConfig.sineWave.frequency = 1;
-  rampConfig.sineWave.amplitude = sineWaveRecoveryAmplitude;
-  rampConfig.sineWave.cycles    = ...
-  rampConfig.sineWave.frequency*sineWaveRecoveryDurationS;
-  rampConfig.sineWave.sampleFrequency = 100;
+  rampConfig.recovery.sineWave.waitTime  = 1;
+  rampConfig.recovery.sineWave.frequency = 1;
+  rampConfig.recovery.sineWave.amplitude = sineWaveRecoveryAmplitude;
+  rampConfig.recovery.sineWave.cycles    = ...
+    rampConfig.recovery.sineWave.frequency*sineWaveRecoveryDurationS;
+  rampConfig.recovery.sineWave.sampleFrequency = 100;
+  rampConfig.recovery.stopWaitTime = rampConfig.stopWaitTime;
+  rampConfig.recovery.sampleFrequency = 100;
+
   rampConfig.muscleName  =muscleName;
   rampConfig.unitSystem  ='mm_mN_s_Hz';
   rampConfig.lceOptMM    =lceOptMM;
@@ -957,7 +1090,7 @@ if(flag_injuryRampProtocol==1)
   protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
 
   alSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
-  alSequenceSettings.baseFile = [dateId,'_rampInjury_610A'];
+  alSequenceSettings.baseFile = ['rampInjury_610A_',dateId];
   alSequenceSettings.isTimed = 0;
   alSequenceSettings.delayTime =0;
   alSequenceSettings.repeats   =0;
@@ -979,6 +1112,46 @@ end
 
 
 
+if(flag_postInjuryProtocol==1)
+
+  
+  sequenceName = 'postInjury';
+
+  [trialId, postInjuryFolders] = ...
+    constructPrePostInjuryExperiment610A(...
+                          dateId,...
+                          trialId,...
+                          sequenceId,...
+                          sequenceName,...
+                          stochasticWaves,...                          
+                          auroraConfig,...
+                          prePostConfig,...
+                          expFolders,...
+                          projectFolders);  
+  sequenceId=sequenceId+1;
+
+
+  [protocolPath,sequenceName] = fileparts(postInjuryFolders.protocolFolderName);
+  protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
+
+  degradationSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  degradationSequenceSettings.baseFile = ['postInjury_610A_',dateId];
+  degradationSequenceSettings.isTimed = 1;
+  degradationSequenceSettings.delayTime =0;
+  degradationSequenceSettings.repeats   =0;
+  degradationSequenceSettings.expProtocolFolderName = ...
+    [ experimentComputerFolder,...
+      protocolLocalDirWindows,...
+      '\',sequenceName,'\'];
+
+  success=generateSequenceFile(...
+    fullfile(postInjuryFolders.rootFolderPath,...
+             postInjuryFolders.protocolFolderName),...
+    degradationSequenceSettings)  ;  
+
+end
+
+
 if(flag_normalizationProtocol==1)
   success = constructNormalizationExperiments610A(...
                           stochasticWaveScalesToTest,...
@@ -990,21 +1163,21 @@ if(flag_normalizationProtocol==1)
 
 end
 
-if(flag_injuryProtocol==1)
-  success = constructInjuryExperiments610A(...        
-                    stochasticWaves,...             
-                    auroraConfig,...
-                    expConfig,...
-                    projectFolders);
-  sequenceId=sequenceId+1;
-
-end
-
-if(flag_characterizationProtocol==1)
-  success = constructCharacterizationExperiments610A(...        
-                    stochasticWaves,...           
-                    auroraConfig,...
-                    expConfig,...
-                    projectFolders);
-  sequenceId=sequenceId+1;  
-end
+% if(flag_injuryProtocol==1)
+%   success = constructInjuryExperiments610A(...        
+%                     stochasticWaves,...             
+%                     auroraConfig,...
+%                     expConfig,...
+%                     projectFolders);
+%   sequenceId=sequenceId+1;
+% 
+% end
+% 
+% if(flag_characterizationProtocol==1)
+%   success = constructCharacterizationExperiments610A(...        
+%                     stochasticWaves,...           
+%                     auroraConfig,...
+%                     expConfig,...
+%                     projectFolders);
+%   sequenceId=sequenceId+1;  
+% end
