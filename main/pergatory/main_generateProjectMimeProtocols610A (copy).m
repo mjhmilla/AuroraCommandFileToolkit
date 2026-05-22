@@ -23,69 +23,79 @@ addpath(projectFolders.signals);
 %
 
 dateIdOverride                  = [];
+sampleFrequency = 1000;
 
-verbose     = 1;
+configTiming = getPropertiesTiming610A();
 
 muscleName  ='EDL';
 temperatureC= 22;
+verbose     = 1;
+configMuscle = getPropertiesMuscle610A(muscleName,temperatureC,verbose);
 
-lceOptMM_measured = [];
-vceOptMM_measured = [];
+configTetanus = getPropertiesTetanus610A(sampleFrequency,configMuscle,verbose);
+configTwitch  = getPropertiesTwitch610A(sampleFrequency,configTiming,verbose);
 
-sampleFrequency       = 1000;
-sampleFrequencyTwitch = 4000; %2026/05/22: Twitches must be 0.25 ms, and so, 
-                              %            a higher sample rate is needed
-                              %            to record these signals
 durationRecoveryS=30;
 amplitudeMM      = 1;
-                 
-%
-% Generate configuration structs
-%
-
-configTiming   = getPropertiesTiming610A( sampleFrequency,...
-                                          sampleFrequencyTwitch,verbose);
-configMuscle   = getPropertiesMuscle610A( muscleName,...
-                                          temperatureC,...
-                                          lceOptMM_measured, ...
-                                          vceOptMM_measured, verbose);
-configTetanus  = getPropertiesTetanus610A(configMuscle,...
-                                          configTiming,verbose);
-configTwitch   = getPropertiesTwitch610A( configTiming,verbose);
 configRecovery = getPropertiesRecovery610A(durationRecoveryS,...
-                                           amplitudeMM,verbose);
+                                           amplitudeMM,...
+                                           verbose);
+
 configRelax = getPropertiesPassiveForceRelaxation610A(verbose);
 
-%
-% Sequence settings
-%
-experimentComputerFolder=...
-  'C:\Users\Administrator.ASI601A-AHQNPTB\Desktop\skeletal_muscle\';
-
 
 %
-% Aurora configurationconfigTetanus.timeToReachMaxActivation
+% Aurora configuration
 %
-auroraConfigDefault = getDefaultAuroraConfiguration610A(...
-                        configTiming.sampleFrequency,...    
-                        configMuscle.lceOptMM,...
-                        configMuscle.vceMaxLPS,...
-                        verbose);
+auroraConfig = getDefaultAuroraConfiguration610A(...
+                    muscleName,...
+                    'mm_mN_s_Hz',...
+                    sampleFrequency,...    
+                    lceOptMM,...
+                    vceMaxLPS);
 
-auroraConfigTwitch = getDefaultAuroraConfiguration610A(...
-                    configTiming.sampleFrequencyTwitch,...    
-                    configMuscle.lceOptMM,...
-                    configMuscle.vceMaxLPS,...
-                    verbose);
+
+
+
+sineWaveRecoveryDurationS       = 30;
+sineWaveRecoveryAmplitude       = 1;
+muscleTemperature               = configMuscle.temperatureC;
+stimulationFrequency            = configMuscle.stimulationFrequencyHz;
+stimulationPulseWidth           = configMuscle.pulseWidthMs;
+timeOfMinimumStimulus           = configMuscle.riseTimeS;
+lceOptMM                        = configMuscle.lceOptMM;
+vceMaxMMPS                      = configMuscle.vceMaxMMPS;
+vceMaxLPS                       = vceMaxMMPS/configMuscle.lceOptMM;
+
+muscleName                      = configMuscle.name; %'EDL', or 'SOL';
+measuredMuscleParams.lceOptMM   = [];
+measuredMuscleParams.vceMaxMMPS = [];
+
+if(~isempty(measuredMuscleParams.lceOptMM))
+  fprintf('%1.1f to %1.1f mm\t Updated lceOptMM\n',...
+      lceOptMM,measuredMuscleParams.lceOptMM)
+  lceOptMM = measuredMuscleParams.lceOptMM;
+
+end
+if(~isempty(measuredMuscleParams.vceMaxMMPS))
+  fprintf('%1.1f to %1.1f mm\t Updated vceOptMMPS\n',...
+      (vceMaxMMPS),measuredMuscleParams.vceMaxMMPS);  
+  vceMaxMMPS  = measuredMuscleParams.vceMaxMMPS;
+  vceMaxLPS   = vceMaxMMPS/lceOptMM;
+end
 
 %%
 % Configure the experiment
 %%
 
-flag_plateauSearchProtocol    =0;
+flag_normalizationProtocol    =0;
+%flag_injuryProtocol           =0;
+%flag_characterizationProtocol =0;
 
-flag_forceFrequencyProtocol   =0;
-flag_degradationProtocol      =1;
+flag_plateauSearchProtocol    =0;
+flag_degradationProtocol      =0;
+
+flag_forceFrequencyProtocol   =1;
 flag_FLRProtocol              =0;
 flag_rampImpededanceProtocol  =0;
 
@@ -96,9 +106,6 @@ flag_postInjuryProtocol       = 0;
 
 flag_impedanceCalibrationProtocol = 0;
 
-%
-% Stochastic wave settings
-%
 flag_generateRandomSignal         = 0;
 flag_fitPerturbationPowerSpectrum = 1;
 stochasticWaveScalesToTest        = [1];
@@ -110,19 +117,42 @@ perturbationBandwidth             = [2, 90]; %Only 2/3 of the upper bandwidth
 perturbationDuration = [0.5,2];
 
 
+experimentComputerFolder=...
+  'C:\Users\Administrator.ASI601A-AHQNPTB\Desktop\skeletal_muscle\';
+
+
+
+%
+% Protocol specific settings
+%
+settingsImpedanceCalibration.amplitudeMM = 4; %peak-to-peak 
+settingsImpedanceCalibration.amplitudeN  = 0.1;
+
+freqSample = [sqrt(2/100):0.1:1]';
+settingsImpedanceCalibration.frequencyHz = (freqSample.^2)*75;
+
+settingsImpedanceCalibration.perturbation.bandwidthHz  = ...
+    [1,35];
+settingsImpedanceCalibration.perturbation.points = ...
+    2.^round(log2(sampleFrequency.*4));
+settingsImpedanceCalibration.perturbation.amplitudeMM = ...
+    settingsImpedanceCalibration.amplitudeMM;
+
+settingsImpedanceCalibration.waitTime    = configTiming.waitTime;
+
 settingsImpedance.createMultiTemperatureProtocol = 0;
 settingsImpedance.amplitude_mm                   = 0.125;
 settingsImpedance.addRampAtStart                 = 1;
 settingsImpedance.waveAmplitudeStudy             = 0;
 
-if(strcmp(configMuscle.name,'CAL'))
+if(strcmp(muscleName,'CAL'))
   settingsImpedance.amplitude_mm=2;
 end
 
 %
 % Perturbation wave settings
 %
-pointsPower   = round(log2(configTiming.sampleFrequency.*perturbationDuration));
+pointsPower   = round(log2(sampleFrequency.*perturbationDuration));
 pointsSet     = 2.^(pointsPower);
 unitSystem    = 'mm_mN_s_Hz'; %Alternative: 'mm_mN_s_Hz'
 
@@ -202,17 +232,26 @@ plotConfig.plotHeight                       = 6;
 % Perturbation settings
 %%
 
+
+
 perturbation(length(pointsSet)) = ...
   struct('magnitude',[],'bandwidth',[],'unit',[],'points',[]);
 
 for i=1:1:length(pointsSet)
-
-  perturbation(i).magnitude = perturbationLengthMM;
-  perturbation(i).bandwidth = perturbationBandwidth;
-  perturbation(i).unit      = 'mm';
-  perturbation(i).points    = pointsSet(i);
-          
-  assert(strcmp(auroraConfigDefault.unitSystem,'mm_mN_s_Hz'));
+  switch auroraConfig.unitSystem
+      case 'mm_mN_s_Hz'
+          perturbation(i).magnitude = perturbationLengthMM;
+          perturbation(i).bandwidth = perturbationBandwidth;
+          perturbation(i).unit      = 'mm';
+          perturbation(i).points    = pointsSet(i);
+      case 'Ref_s_Hz'
+          perturbation(i).magnitude = perturbationLengthMM/lceOptMM;
+          perturbation(i).bandwidth = perturbationBandwidth;
+          perturbation(i).unit      = 'Ref';
+          perturbation(i).points    = pointsSet(i);
+    otherwise
+          assert(0,'Error: unrecognized unit settings');
+  end  
   if(perturbation(i).magnitude > 0.25)
     disp(['Warning: Perturbation magnitude > 0.25mm, expect low coherence']);
   end
@@ -263,7 +302,7 @@ if(flag_generateRandomSignal==1)
   
       for idxP = 1:1:length(perturbation)
         assert(strcmp(perturbation(idxP).unit,...
-                      auroraConfigDefault.defaultLengthUnit),...
+                      auroraConfig.defaultLengthUnit),...
             ['Error: perturbation unit and the defaultLengthUnit must',...
              'match']);
     
@@ -272,10 +311,10 @@ if(flag_generateRandomSignal==1)
                                  perturbation(idxP).bandwidth,...
                                  perturbation(idxP).points,...
                                  flag_fitPerturbationPowerSpectrum,...
-                                 auroraConfigDefault);
+                                 auroraConfig);
     
         commandFunctionOption = getCommandFunctionOptions610A(...
-                          commandFunctionName,'Length Out',auroraConfigDefault);
+                          commandFunctionName,'Length Out',auroraConfig);
     
         [preconditioningWave(idxP), ...
          stochasticWave(idxP), ...    
@@ -284,7 +323,7 @@ if(flag_generateRandomSignal==1)
                   commandFunctionName,...
                   commandFunctionOption,...
                   configStochasticWave,...
-                  auroraConfigDefault, ...
+                  auroraConfig, ...
                   figPerturbation,...
                   perturbationPlotConfig,...
                   verbose);
@@ -435,7 +474,7 @@ for i=1:1:length(waveSet)
           + size(wave(j).controlFunctions.optionValues,1);
 
       assert(size(wave(j).controlFunctions.optionValues,1) ...
-           < (auroraConfigDefault.maximumNumberOfCommands + 40),...
+           < (auroraConfig.maximumNumberOfCommands + 40),...
         'Error: the number of perturbation commands in this perturbation is too high');      
     end
 end
@@ -488,28 +527,40 @@ trialId = 1;
 sequenceId = 1;
 
 if(flag_plateauSearchProtocol==1)  
-  if(verbose==1)
-    fprintf('createPlateauSearchTrail610A\n');
-  end
 
   plateauConfig.muscle = configMuscle;
   plateauConfig.timing = configTiming;
   plateauConfig.twitch = configTwitch;
-  plateauConfig.relax = configRelax;
+
 
   plateauConfig.ramp.waitTime       = 1;
   plateauConfig.ramp.lengths        = [-3:1:3]';
   plateauConfig.ramp.duration       = 1;
   
+  plateauConfig.sineWave.waitTime   = 1;
+  plateauConfig.sineWave.frequency  = 20;
+  plateauConfig.sineWave.amplitude  = 0.25;
+  plateauConfig.sineWave.cycles     = ...
+    plateauConfig.sineWave.frequency*5;
+
+
+  %plateauConfig.twitch.waitTime     = 1;
+  %plateauConfig.twitch.initialDelayS = 0;
+  %plateauConfig.twitch.pulseWidthMS  = 0.25;
+
+  %plateauConfig.stopWaitTime =1;
+
+
+  
+
   trialIdStart=trialId;
   flag_isASequence=0;
-  
   trialId = createPlateauSearchTrail610A(...
                         [],...
                         dateId,...
                         trialId,...
                         sequenceId,...
-                        auroraConfigTwitch,...
+                        auroraConfig,...
                         plateauConfig,...
                         expFolders,...
                         projectFolders,...
@@ -521,32 +572,34 @@ end
 
 if(flag_forceFrequencyProtocol==1)
 
-  if(verbose==1)
-    fprintf('createForceFrequencyTrials610A\n');
-  end
+  ffrConfig.muscle = configMuscle;
+  ffrConfig.unitSystem  =unitSystem;
 
-  ffrConfig.muscle    = configMuscle;
-  ffrConfig.timing     = configTiming;
-  ffrConfig.tetanus   = configTetanus;
-  ffrConfig.recovery  = configRecovery;
+  ffrConfig.waitTime=1;
+  ffrConfig.tetanus = configTetanus;
 
-  %Make sure the duty cycle less than 50% (for no apparent reason)
-  assert(configTetanus.pulseWidth*0.001 ...
-         < 0.5/max(ffrConfig.tetanus.pulseFrequency));  
-  
-  %Make sure the ADC is running fast enough to record the pulses
-  assert((1/auroraConfigDefault.analogToDigitalSampleRateHz) ...
-                < (configTetanus.pulseWidth/1000));
-
+  %ffrConfig.tetanus.initialDelay   = 0;
   ffrConfig.tetanus.pulseFrequency = [50,100,200,300,400,500];
-  ffrConfig.tetanus.duration       = configTetanus.timeToReachMaxActivation*2;
-  ffrConfig.tetanus.sampleFrequency= configTiming.sampleFrequency;
+
+  assert(stimulationPulseWidth*0.001 < 0.5/max(ffrConfig.tetanus.pulseFrequency));
+
+  ffrConfig.tetanus.pulseWidth     = stimulationPulseWidth;
+  ffrConfig.tetanus.duration       = 1;
+  ffrConfig.tetanus.sampleFrequency= 4000;
+
+
+  ffrConfig.recovery = configRecovery;
+
+
+  ffrConfig.stopWaitTime = 5;
+
+
   
   trialId = createForceFrequencyTrials610A(...
                       dateId,...
                       trialId,...                      
                       sequenceId,...
-                      auroraConfigDefault,...
+                      auroraConfig,...
                       ffrConfig,...   
                       expFolders,...
                       projectFolders);
@@ -570,11 +623,11 @@ if(flag_degradationProtocol==1)
   
   %degradationConfig.waitTime=[1,1];
   %degradationConfig.tetanus.initialDelay   = [0,0];
-  %degradationConfig.tetanus.pulseFrequency = [1,1].*pulseFrequency;
+  %degradationConfig.tetanus.pulseFrequency = [1,1].*stimulationFrequency;
 
-  %assert(configTetanus.pulseWidth*0.001 < 0.5/max(pulseFrequency));
+  %assert(stimulationPulseWidth*0.001 < 0.5/max(stimulationFrequency));
 
-  %degradationConfig.tetanus.pulseWidth     = [1,1].*configTetanus.pulseWidth;
+  %degradationConfig.tetanus.pulseWidth     = [1,1].*stimulationPulseWidth;
   %degradationConfig.tetanus.duration       = [1,0.25];
   %degradationConfig.tetanus.sampleFrequency= [1,1].*4000;
 
@@ -593,7 +646,7 @@ if(flag_degradationProtocol==1)
                                   dateId,...
                                   trialId,...
                                   sequenceId,...
-                                  auroraConfigDefault,...
+                                  auroraConfig,...
                                   degradationConfig,...
                                   expFolders,...
                                   projectFolders);   
@@ -620,28 +673,9 @@ if(flag_degradationProtocol==1)
 end
 
 if(flag_impedanceCalibrationProtocol==1)
-
-
-  settingsImpedanceCalibration.timing = configTiming;
-
-  settingsImpedanceCalibration.amplitudeMM = 4; %peak-to-peak 
-  settingsImpedanceCalibration.amplitudeN  = 0.1;
-
-  freqSample = [sqrt(2/100):0.1:1]';
-  settingsImpedanceCalibration.frequencyHz = (freqSample.^2)*100;
-
-  settingsImpedanceCalibration.perturbation.bandwidthHz  = ...
-      [1,100];
-  settingsImpedanceCalibration.perturbation.points = ...
-      2.^round(log2(configTiming.sampleFrequency.*4));
-
-  settingsImpedanceCalibration.perturbation.amplitudeMM = ...
-      settingsImpedanceCalibration.amplitudeMM;
-
-
   success= createCalibrationImpedanceTrial610A(...                    
                     dateId,...                      
-                    auroraConfigDefault,...
+                    auroraConfig,...
                     settingsImpedanceCalibration,...                    
                     expFolders,...
                     plotConfig);
@@ -675,8 +709,8 @@ if(flag_FLRProtocol==1)
   %flrConfig.tetanus = config
   %flrConfig.tetanus.waitTime       = 5;
   %flrConfig.tetanus.initialDelay   = 0;
-  %flrConfig.tetanus.pulseFrequency = pulseFrequency;
-  %flrConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
+  %flrConfig.tetanus.pulseFrequency = stimulationFrequency;
+  %flrConfig.tetanus.pulseWidth     = stimulationPulseWidth;
   %flrConfig.tetanus.durationExtension = 0.5;
   %flrConfig.tetanus.duration       = ;
 
@@ -697,7 +731,7 @@ if(flag_FLRProtocol==1)
                           dateId,...
                           trialId,...
                           sequenceId,...
-                          auroraConfigDefault,...
+                          auroraConfig,...
                           flrConfig,...
                           expFolders,...
                           projectFolders);  
@@ -733,7 +767,7 @@ if(flag_rampImpededanceProtocol==1)
 
   %trialId=1;
 
-  switch configMuscle.name
+  switch muscleName
     case 'EDL'
       rampImpConfig.isStochasticWaveActive = [1,0];
     case 'SOL'
@@ -781,16 +815,16 @@ if(flag_rampImpededanceProtocol==1)
 
   %rampImpConfig.tetanus.waitTime       = 1;
   %rampImpConfig.tetanus.initialDelay   = 0;
-  %rampImpConfig.tetanus.pulseFrequency = pulseFrequency;
-  %rampImpConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
+  %rampImpConfig.tetanus.pulseFrequency = stimulationFrequency;
+  %rampImpConfig.tetanus.pulseWidth     = stimulationPulseWidth;
   %rampImpConfig.tetanus.duration       = nan;
   %rampImpConfig.tetanus.durationExtension = 0.5;
 
   rampImpConfig.stochasticWaves.waitTime                 = 5;
   rampImpConfig.stochasticWaves.timeToReachMaxActivation = ...
-      configTetanus.timeToReachMaxActivation;
+      timeOfMinimumStimulus;
 
-  switch configMuscle.name
+  switch muscleName
     case 'EDL'
       rampImpConfig.stochasticWaves.amplitudeSet             = [1];
       rampImpConfig.stochasticWaves.overridePassiveAmplitude = 0.125;
@@ -836,7 +870,7 @@ if(flag_rampImpededanceProtocol==1)
                             trialId,...
                             sequenceId,...
                             stochasticWaves,...             
-                            auroraConfigDefault,...
+                            auroraConfig,...
                             rampImpConfig,...
                             expFolders,...
                             projectFolders);
@@ -848,7 +882,7 @@ if(flag_rampImpededanceProtocol==1)
                             trialId,...
                             sequenceId,...
                             stochasticWaves,...             
-                            auroraConfigDefault,...
+                            auroraConfig,...
                             rampImpConfig,...
                             expFolders,...
                             projectFolders);
@@ -860,19 +894,19 @@ if(flag_rampImpededanceProtocol==1)
                             trialId,...
                             sequenceId,...
                             stochasticWaves,...             
-                            auroraConfigDefault,...
+                            auroraConfig,...
                             rampImpConfig,...
                             expFolders,...
                             projectFolders);
   else
-    seriesId = ['impedance_',configMuscle.name];
+    seriesId = ['impedance_',muscleName];
     %trialId = 1;
     trialId = constructRampImpedanceExperiments610A(...
                             dateId,...    
                             trialId,...
                             sequenceId,...
                             stochasticWaves,...             
-                            auroraConfigDefault,...
+                            auroraConfig,...
                             rampImpConfig,...
                             expFolders,...
                             projectFolders);    
@@ -887,26 +921,22 @@ end
 if(flag_preInjuryProtocol==1)
 
   prePostConfig.muscle = configMuscle;
-  prePostConfig.timing = configTiming;
   prePostConfig.recovery= configRecovery;
-  prePostConfig.tetanus =configTetanus;
 
 
-  %prePostConfig.unitSystem  = unitSystem;
-  %prePostConfig.lceOptMM    = lceOptMM;
-  %prePostConfig.vceMaxLPS   = vceMaxLPS;
+  prePostConfig.unitSystem  = unitSystem;
+  prePostConfig.lceOptMM    = lceOptMM;
+  prePostConfig.vceMaxLPS   = vceMaxLPS;
 
-  %prePostConfig.waitTime = 1;  
-  %prePostConfig.stopWaitTime = 5;
+  prePostConfig.waitTime = 1;  
+  prePostConfig.stopWaitTime = 5;
   
-  prePostConfig.passive.ramp.velocity = configMuscle.vceMaxMMPS*0.5; 
+  prePostConfig.passive.ramp.velocity = vceMaxMMPS*0.5; 
   prePostConfig.passive.ramp.waitTime = 1;
   prePostConfig.passive.ramp.length   = [3,3];  
 
-  durationRamp      = prePostConfig.passive.ramp.length ./ ([0.1,0.5].*configMuscle.vceMaxMMPS);
-  durationRamp      = roundToNearestSampleTime(durationRamp,auroraConfigDefault);
-  
-
+  durationRamp      = prePostConfig.passive.ramp.length ./ ([0.1,0.5].*vceMaxMMPS);
+  durationRamp      = round(durationRamp.*sampleFrequency)./sampleFrequency;
   velocityRampMMPS  = prePostConfig.passive.ramp.length./durationRamp;
 
   prePostConfig.passive.ramp.duration = durationRamp;
@@ -932,7 +962,7 @@ if(flag_preInjuryProtocol==1)
 
   %Active ramp
   prePostConfig.activeRamp.lengths = [1,-2;-2,1];
-  prePostConfig.activeRamp.velocity= [-1;1].*(configMuscle.vceMaxMMPS*0.5);
+  prePostConfig.activeRamp.velocity= [-1;1].*(vceMaxMMPS*0.5);
 
   %Active impedance
   prePostConfig.active.impedance.waitTime = 1;
@@ -942,12 +972,12 @@ if(flag_preInjuryProtocol==1)
 
 
   %Activations settings
-  %prePostConfig.tetanus.waitTime       = 1;
-  %prePostConfig.tetanus.initialDelay   = 0;
-  %prePostConfig.tetanus.pulseFrequency = configTetanus.pulseFrequency;
-  %prePostConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
-  %prePostConfig.tetanus.durationExtension = 0;
-  %prePostConfig.tetanus.duration       = nan;  
+  prePostConfig.tetanus.waitTime       = 1;
+  prePostConfig.tetanus.initialDelay   = 0;
+  prePostConfig.tetanus.pulseFrequency = stimulationFrequency;
+  prePostConfig.tetanus.pulseWidth     = stimulationPulseWidth;
+  prePostConfig.tetanus.durationExtension = 0;
+  prePostConfig.tetanus.duration       = nan;  
 
 
 
@@ -967,11 +997,18 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.plateau.ramp.lengths        = [-3:1:3]';
   prePostConfig.plateau.ramp.duration       = 1;
   
-  prePostConfig.plateau.relax  = configRelax;
-  prePostConfig.plateau.twitch = configTwitch;
+  prePostConfig.plateau.sineWave.waitTime   = 1;
+  prePostConfig.plateau.sineWave.frequency  = 20;
+  prePostConfig.plateau.sineWave.amplitude  = 0.25;
+  prePostConfig.plateau.sineWave.cycles     = ...
+    prePostConfig.plateau.sineWave.frequency*5;
+
+  prePostConfig.plateau.twitch.waitTime     = 1;
+  prePostConfig.plateau.twitch.initialDelayS = 0;
+  prePostConfig.plateau.twitch.pulseWidthMS  = 0.25;
 
   prePostConfig.plateau.stopWaitTime =1;
-  prePostConfig.plateau.temperature = configMuscle.temperatureC;
+  prePostConfig.plateau.temperature = muscleTemperature;
 
   
   sequenceName = 'preInjury';
@@ -983,8 +1020,7 @@ if(flag_preInjuryProtocol==1)
                           sequenceId,...
                           sequenceName,...
                           stochasticWaves,...                          
-                          auroraConfigDefault,...
-                          auroraConfigTwitch,...
+                          auroraConfig,...
                           prePostConfig,...
                           expFolders,...
                           projectFolders);  
@@ -994,12 +1030,12 @@ if(flag_preInjuryProtocol==1)
   [protocolPath,sequenceName] = fileparts(preInjuryFolders.protocolFolderName);
   protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
 
-  preInjurySequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
-  preInjurySequenceSettings.baseFile = ['preInjury_610A_',dateId];
-  preInjurySequenceSettings.isTimed = 1;
-  preInjurySequenceSettings.delayTime =0;
-  preInjurySequenceSettings.repeats   =0;
-  preInjurySequenceSettings.expProtocolFolderName = ...
+  degradationSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  degradationSequenceSettings.baseFile = ['preInjury_610A_',dateId];
+  degradationSequenceSettings.isTimed = 1;
+  degradationSequenceSettings.delayTime =0;
+  degradationSequenceSettings.repeats   =0;
+  degradationSequenceSettings.expProtocolFolderName = ...
     [ experimentComputerFolder,...
       protocolLocalDirWindows,...
       '\',sequenceName,'\'];
@@ -1007,7 +1043,7 @@ if(flag_preInjuryProtocol==1)
   success=generateSequenceFile(...
     fullfile(preInjuryFolders.rootFolderPath,...
              preInjuryFolders.protocolFolderName),...
-    preInjurySequenceSettings)  ;  
+    degradationSequenceSettings)  ;  
 
 end
 
@@ -1021,22 +1057,22 @@ if(flag_injuryRampProtocol==1)
   %rampConfig.waitTime = 1;  
   %rampConfig.stopWaitTime = 5;
   %rampConfig.temperature = muscleTemperature;
-  %rampConfig.timeToReachMaxActivation = configTetanus.timeToReachMaxActivation;
+  %rampConfig.timeToReachMaxActivation = timeOfMinimumStimulus;
   
-  rampConfig.ramp.velocity = configMuscle.vceMaxMMPS*0.5; 
+  rampConfig.ramp.velocity = vceMaxMMPS*0.5; 
   rampConfig.ramp.waitTime = 1;
   rampConfig.ramp.length   = [5,7,9];  
   rampConfig.ramp.duration = rampConfig.ramp.length ./ rampConfig.ramp.velocity;
-  rampConfig.ramp.duration = roundToNearestSampleTime(rampConfig.ramp.duration,auroraConfigDefault);
+  rampConfig.ramp.duration = round(rampConfig.ramp.duration*sampleFrequency)/sampleFrequency;
   rampConfig.ramp.velocity = rampConfig.ramp.length./rampConfig.ramp.duration;
   rampConfig.ramp.isActive = ones(size(rampConfig.ramp.length));
   
   %Activations settings
   %rampConfig.tetanus.waitTime       = 1;
   %rampConfig.tetanus.initialDelay   = 0;
-  %rampConfig.tetanus.pulseFrequency = pulseFrequency;
-  %rampConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
-  %rampConfig.tetanus.durationExtension = 0.5*configTetanus.timeToReachMaxActivation;
+  %rampConfig.tetanus.pulseFrequency = stimulationFrequency;
+  %rampConfig.tetanus.pulseWidth     = stimulationPulseWidth;
+  %rampConfig.tetanus.durationExtension = 0.5*timeOfMinimumStimulus;
   %rampConfig.tetanus.duration       = nan;
 
   %Probe trial settings
@@ -1066,7 +1102,7 @@ if(flag_injuryRampProtocol==1)
                               trialId,...
                               sequenceId,...
                               'rampInjury',...
-                              auroraConfigDefault,...
+                              auroraConfig,...
                               rampConfig,...
                               expFolders,...
                               projectFolders);  
@@ -1109,8 +1145,7 @@ if(flag_postInjuryProtocol==1)
                           sequenceId,...
                           sequenceName,...
                           stochasticWaves,...                          
-                          auroraConfigDefault,...
-                          auroraConfigTwitch,...
+                          auroraConfig,...
                           prePostConfig,...
                           expFolders,...
                           projectFolders);  
@@ -1120,12 +1155,12 @@ if(flag_postInjuryProtocol==1)
   [protocolPath,sequenceName] = fileparts(postInjuryFolders.protocolFolderName);
   protocolLocalDirWindows = strrep(protocolLocalDir,'/','\');
 
-  postInjurySequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
-  postInjurySequenceSettings.baseFile = ['postInjury_610A_',dateId];
-  postInjurySequenceSettings.isTimed = 1;
-  postInjurySequenceSettings.delayTime =0;
-  postInjurySequenceSettings.repeats   =0;
-  postInjurySequenceSettings.expProtocolFolderName = ...
+  degradationSequenceSettings.sequenceFileName = [sequenceName,'.dsf'];
+  degradationSequenceSettings.baseFile = ['postInjury_610A_',dateId];
+  degradationSequenceSettings.isTimed = 1;
+  degradationSequenceSettings.delayTime =0;
+  degradationSequenceSettings.repeats   =0;
+  degradationSequenceSettings.expProtocolFolderName = ...
     [ experimentComputerFolder,...
       protocolLocalDirWindows,...
       '\',sequenceName,'\'];
@@ -1133,7 +1168,37 @@ if(flag_postInjuryProtocol==1)
   success=generateSequenceFile(...
     fullfile(postInjuryFolders.rootFolderPath,...
              postInjuryFolders.protocolFolderName),...
-    postInjurySequenceSettings)  ;  
+    degradationSequenceSettings)  ;  
 
 end
 
+
+%if(flag_normalizationProtocol==1)
+%  success = constructNormalizationExperiments610A(...
+%                          stochasticWaveScalesToTest,...
+%                          stochasticWaves,...                  
+%                          auroraConfigNormalization,...
+%                          expConfig,...
+%                          projectFolders);
+%  sequenceId=sequenceId+1;
+%
+%end
+
+% if(flag_injuryProtocol==1)
+%   success = constructInjuryExperiments610A(...        
+%                     stochasticWaves,...             
+%                     auroraConfig,...
+%                     expConfig,...
+%                     projectFolders);
+%   sequenceId=sequenceId+1;
+% 
+% end
+% 
+% if(flag_characterizationProtocol==1)
+%   success = constructCharacterizationExperiments610A(...        
+%                     stochasticWaves,...           
+%                     auroraConfig,...
+%                     expConfig,...
+%                     projectFolders);
+%   sequenceId=sequenceId+1;  
+% end

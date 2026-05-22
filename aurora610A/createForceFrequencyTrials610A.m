@@ -117,20 +117,21 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
     typeStr = '';
     switch idxTrialType
       case 1 
-        typeStr = 'ffr';
+        pulseFreqStr = sprintf('%1.0fHz',expConfig.tetanus.pulseFrequency(idxS));
+        pulseWidthStr = sprintf('%1.0ms',expConfig.tetanus.pulseWidth);
+        typeStr = ['ffr_',pulseFreqStr,'_',pulseWidthStr];
         auroraConfig = auroraConfigDefault;
  
 
       case 2
         typeStr = 'sineWave';
-        sampleFrequency = expConfig.sineWave.sampleFrequency;
+        sampleFrequency = expConfig.recovery.sampleFrequency;
   
         auroraConfig = getDefaultAuroraConfiguration610A(...
-                            expConfig.muscleName,...
-                            expConfig.unitSystem,...
+                            expConfig.muscle.name,...
                             sampleFrequency,...    
-                            expConfig.lceOptMM,...
-                            expConfig.vceMaxLPS);   
+                            expConfig.muscle.lceOptMM,...
+                            expConfig.muscle.vceMaxLPS);   
 
       otherwise
         assert(0,'Error: Unrecognized trial type');
@@ -183,7 +184,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
     segmentMetaDataArray(1) = ...
         struct('type','',timeFieldName,[0,0],'meta_data',[]);
 
-    idxSeg = 1;
+    
 
     switch idxTrialType
 
@@ -206,6 +207,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
 
 
         %Tetanus structure
+        idxSeg = 1;
         segmentMetaDataArray(idxSeg).type = 'Stimulus-Tetanus';
         segmentMetaDataArray(idxSeg).(timeFieldName) = [startTime,endTime];
         segmentMetaDataArray(idxSeg).meta_data.is_active = 1;
@@ -219,7 +221,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
         segmentMetaDataArray(idxSeg).meta_data.(durationFieldName)=...
           stimulusTetanusOptions(4).value;
 
-        %Write the twitch
+        %Write the tetanus
         programMetaData = writeControlFunction610A(...
                             fid,...
                             0,...
@@ -240,21 +242,21 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
 
         lengthSineOptions = getCommandFunctionOptions610A(...
                               'Sine Wave','Length Out',auroraConfig);
-        lengthSineOptions(1).value = expConfig.sineWave.frequency;
-        lengthSineOptions(2).value = expConfig.sineWave.amplitude;
-        lengthSineOptions(3).value = expConfig.sineWave.cycles;
+        lengthSineOptions(1).value = expConfig.recovery.sineWave.frequency;
+        lengthSineOptions(2).value = expConfig.recovery.sineWave.amplitude;
+        lengthSineOptions(3).value = expConfig.recovery.sineWave.cycles;
 
 
-        sineTime = (expConfig.sineWave.cycles ...
-                   /expConfig.sineWave.frequency);
+        sineTime = (expConfig.recovery.sineWave.cycles ...
+                   /expConfig.recovery.sineWave.frequency);
 
         startTime = programMetaData.nextStartTime ...
-                   +expConfig.sineWave.waitTime;
+                   +expConfig.recovery.sineWave.waitTime;
         
         endTime = startTime + sineTime;
 
         % Sine wave
-        idxSeg =idxSeg + 1;
+        idxSeg = 1;
         segmentMetaDataArray(idxSeg).type = 'Sine Wave';
         segmentMetaDataArray(idxSeg).(timeFieldName) = [startTime,endTime];
         segmentMetaDataArray(idxSeg).meta_data.is_active = 0;
@@ -269,7 +271,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
         %Write the wave
         programMetaData = writeControlFunction610A(...
                             fid,...
-                            expConfig.sineWave.waitTime,...
+                            expConfig.recovery.sineWave.waitTime,...
                             'Sine Wave',...
                             lengthSineOptions,...
                             auroraConfig,...                
@@ -287,7 +289,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
     programMetaData = ...
       writeClosingBlock610A(...
           fid,...
-          expConfig.stopWaitTime,...
+          expConfig.timing.stopWaitTime,...
           auroraConfig,...
           programMetaData,...
           flag_printMetaDataToFile);
@@ -307,9 +309,9 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
       case 2
         trialTitleStr = ...
           sprintf("Passive Sine Wave: %1.1fHz %1.1fmm %1.1f cycles",...
-                           expConfig.sineWave.frequency,...
-                           expConfig.sineWave.amplitude,...
-                           expConfig.sineWave.cycles);
+                           expConfig.recovery.sineWave.frequency,...
+                           expConfig.recovery.sineWave.amplitude,...
+                           expConfig.recovery.sineWave.cycles);
         tags = {'recovery'};          
       otherwise
         assert(0,'Error: Unrecognized trial type');
@@ -330,6 +332,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
     fclose(fid);
     fclose(programMetaData.labelFileHandle);
 
+    clear('segmentMetaDataArray');
 
   end
 
@@ -343,7 +346,7 @@ jsonSequenceSeriesMetaData.data      = sequenceDataFiles;
 
 jsonSequenceMetaData.experiment.comment = "";
 jsonSequenceMetaData.experiment.manually_measured_temperature_C ...
-  = expConfig.temperature;
+  = expConfig.muscle.temperatureC;
 jsonSequenceMetaData.sequence = jsonSequenceSeriesMetaData;
 
 

@@ -624,7 +624,7 @@ if(flag_generateSingleWaveCalibration==1)
         %
         % Write the closing block
         %
-        waitTime = auroraConfig.stop.waitTime;
+        waitTime = expConfig.timing.stopWaitTime;
         
         programMetaData = ...
             writeClosingBlock610A(...
