@@ -1,11 +1,14 @@
 function configTiming = getPropertiesTiming610A(...
                           defaultSampleFrequency,...
+                          recoverySampleFrequency,...
                           twitchSampleFrequency,verbose)
 
 configTiming.waitTime     = 1;
 configTiming.stopWaitTime = 1;
 configTiming.sampleFrequency = defaultSampleFrequency;
+configTiming.sampleFrequencyRecovery = recoverySampleFrequency;
 configTiming.sampleFrequencyTwitch=twitchSampleFrequency;
+
 
 if(verbose==1)
     settingsFields = fields(configTiming);

@@ -1,4 +1,5 @@
-function configTetanus = getPropertiesTetanus610A(configMuscle,configTiming,verbose)
+function configTetanus = ...
+  getPropertiesTetanus610A(configMuscle,configTiming,verbose)
 
 
 switch configMuscle.name 

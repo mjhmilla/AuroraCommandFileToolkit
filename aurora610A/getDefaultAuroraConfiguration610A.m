@@ -102,7 +102,7 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
 
 if(verbose==1)
     settingsFields = fields(auroraConfig);
-    fprintf('getDefaultAuroraConfiguration610A\n')
+    %fprintf('getDefaultAuroraConfiguration610A\n')
     for idxF = 1:1:length(settingsFields)
       param = num2str(auroraConfig.(settingsFields{idxF}));
       if(isnumeric(param))
