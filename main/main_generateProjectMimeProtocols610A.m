@@ -103,10 +103,10 @@ auroraConfig.twitch = getDefaultAuroraConfiguration610A(...
 % Configure the experiment
 %%
 
-flag_plateauSearchProtocol    =0;
+flag_plateauSearchProtocol    =1;
 flag_forceFrequencyProtocol   =0;
 flag_degradationProtocol      =0;
-flag_FLRProtocol              =1;
+flag_FLRProtocol              =0;
 flag_rampImpededanceProtocol  =0;
 
 flag_preInjuryProtocol        = 0;
@@ -509,7 +509,7 @@ sequenceId = 1;
 
 if(flag_plateauSearchProtocol==1)  
   if(verbose==1)
-    fprintf('createPlateauSearchTrail610A\n');
+    fprintf('createPlateauSearchTrial610A\n');
   end
 
   plateauConfig.muscle = configMuscle;
@@ -524,7 +524,7 @@ if(flag_plateauSearchProtocol==1)
   trialIdStart=trialId;
   flag_isASequence=0;
   
-  trialId = createPlateauSearchTrail610A(...
+  trialId = createPlateauSearchTrial610A(...
                         [],...
                         dateId,...
                         trialId,...

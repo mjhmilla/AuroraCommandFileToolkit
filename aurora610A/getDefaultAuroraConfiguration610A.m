@@ -100,15 +100,35 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'s'),...
        ['Error: many functions in the 610 only accept seconds',... 
         ' seconds must be the default time unit']);
 
+auroraConfig.labels = getMetaDataFieldNames610A(auroraConfig);
+
 if(verbose==1)
     settingsFields = fields(auroraConfig);
     %fprintf('getDefaultAuroraConfiguration610A\n')
     for idxF = 1:1:length(settingsFields)
-      param = num2str(auroraConfig.(settingsFields{idxF}));
+
+      param = auroraConfig.(settingsFields{idxF});
       if(isnumeric(param))
         fprintf('\t%1.1f\t%s\n',param,settingsFields{idxF});
       else
-        fprintf('\t%s\t%s\n',param,settingsFields{idxF});
+        if(ischar(param))
+          fprintf('\t%s\t%s\n',param,settingsFields{idxF});
+        end
+        if(isstruct(param))
+          fprintf('\n\t.%s\t\t%s\n',settingsFields{idxF},'(struct)');
+          subFields = fields(auroraConfig.(settingsFields{idxF}));
+          for idxJ = 1:1:length(subFields)
+            subParam = auroraConfig.(settingsFields{idxF}).(subFields{idxJ});
+            if(isnumeric(subParam))
+              fprintf('\t%1.1f\t\t%s.%s\n',subParam,...
+                settingsFields{idxF},subFields{idxJ});              
+            end
+            if(ischar(subParam))
+              fprintf('\t%s\t\t%s.%s\n',subParam,...
+                settingsFields{idxF},subFields{idxJ});                            
+            end
+          end
+        end
       end
     end
     fprintf('\n\n');

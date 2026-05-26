@@ -2,9 +2,9 @@ function configRelaxation = getPropertiesPassiveForceRelaxation610A(verbose)
 
 
 configRelaxation.waitTime  = 1;
-configRelaxation.duration  = 2;
-configRelaxation.frequency = 50;
-configRelaxation.amplitude = 0.5;
+configRelaxation.duration  = 5;
+configRelaxation.frequency = 20;
+configRelaxation.amplitude = 0.25;
 configRelaxation.cycles    = configRelaxation.frequency ...
                             *configRelaxation.duration;
 
