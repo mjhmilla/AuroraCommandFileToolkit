@@ -103,11 +103,17 @@ idxSeg = 0;
 %%
 lengthRampOptions = getCommandFunctionOptions610A(...
                       'Ramp','Length Out',auroraConfig);
+
+positioningDuration = abs(nominalLength)...
+                      /expConfig.positioning.rampSpeedInMMPS;
+positioningDuration = max(positioningDuration,...
+                          expConfig.positioning.minimumRampTime);
+
 lengthRampOptions(1).value = nominalLength;
-lengthRampOptions(2).value = expConfig.impedance.waitTime;
+lengthRampOptions(2).value = positioningDuration;
 
 startTime = programMetaData.nextStartTime ...
-            + expConfig.impedance.waitTime;
+            + positioningDuration;
 endTime   = startTime + expConfig.impedance.waitTime;
 
 idxSeg=idxSeg+1;
@@ -137,7 +143,16 @@ assert(abs(endTimeError)<1e-3,...
 % Apply a series of sine waves to make high resolution measurements of 
 % gain and phase
 %%
+waitTime = expConfig.impedance.waitTime;
+if(abs(nominalLength) > 1e-6)
+  waitTime = expConfig.positioning.recoveryWaitTime;
+end
+
 for idxSine=1:1:length(expConfig.impedance.sine.frequencyHz)
+
+  if(idxSine > 1)
+    waitTime = expConfig.impedance.waitTime;
+  end
 
   lengthSineOptions = getCommandFunctionOptions610A(...
                         'Sine Wave','Length Out',auroraConfig);
@@ -163,7 +178,7 @@ for idxSine=1:1:length(expConfig.impedance.sine.frequencyHz)
            ' this combination will not yield the correct number of cycles']);
   
   startTime = programMetaData.nextStartTime ...
-              + expConfig.impedance.waitTime;
+              + waitTime;
   endTime   = startTime + sineTime;
   
   %
@@ -188,7 +203,7 @@ for idxSine=1:1:length(expConfig.impedance.sine.frequencyHz)
   programMetaData ...
           = writeControlFunction610A(...
                   fid,...
-                  expConfig.impedance.waitTime,...
+                  waitTime,...
                   'Sine Wave',...
                   lengthSineOptions,...
                   auroraConfig,...                
@@ -334,12 +349,18 @@ end
 %%
 lengthRampOptions = getCommandFunctionOptions610A(...
                       'Ramp','Length Out',auroraConfig);
-lengthRampOptions(1).value = nominalLength;
-lengthRampOptions(2).value = expConfig.impedance.waitTime;
+
+positioningDuration = abs(nominalLength)...
+                      /expConfig.positioning.rampSpeedInMMPS;
+positioningDuration = max(positioningDuration,...
+                          expConfig.positioning.minimumRampTime);
+
+lengthRampOptions(1).value = 0;
+lengthRampOptions(2).value = positioningDuration;
 
 startTime = programMetaData.nextStartTime ...
             + expConfig.impedance.waitTime;
-endTime   = startTime + expConfig.impedance.waitTime;
+endTime   = startTime + positioningDuration;
 
 idxSeg=idxSeg+1;
 segmentMetaDataArray(idxSeg).type = 'Ramp';
@@ -375,10 +396,15 @@ jsonMetaData.experiment.title = ...
 jsonMetaData.experiment.tags = {'passive-impedance'};
 
 
+stopWaitTime = expConfig.timing.stopWaitTime;
+if(abs(nominalLength) > 1e-6)
+  stopWaitTime = expConfig.positioning.recoveryWaitTime;
+end
+
 programMetaData = ...
     writeClosingBlock610A(...
         fid,...
-        expConfig.timing.stopWaitTime,...
+        stopWaitTime,...
         auroraConfig,...
         programMetaData,...
         flag_printMetaDataToFile);

@@ -2,6 +2,7 @@ function configPositioning = getPropertiesPositioning610A(verbose)
 
 
 configPositioning.rampSpeedInMMPS  = 0.5;
+configPositioning.minimumRampTime  = 1.0;
 configPositioning.waitTime         = 1.0;
 configPositioning.recoveryWaitTime = 5.0;
 

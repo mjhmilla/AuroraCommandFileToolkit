@@ -11,7 +11,7 @@ configRelaxation.cycles    = configRelaxation.frequency ...
 
 if(verbose==1)
     settingsFields = fields(configRelaxation);
-    fprintf('getPropertiesRecovery610A\n')
+    fprintf('getPropertiesPassiveForceRelaxation610A\n')
     for idxF = 1:1:length(settingsFields)
       param = num2str(configRelaxation.(settingsFields{idxF}));
       if(isnumeric(param))

@@ -103,14 +103,24 @@ numberOfSegments = length(expConfig.ramp.lengths)*3+1;
 segmentMetaDataArray(numberOfSegments) = ...
   struct('type','',auroraConfig.twitch.labels.time,[],'meta_data',[]);
 idxSeg=0;
+
+previousLength = 0;
 for idxL = 1:1:length(expConfig.ramp.lengths)
 
   %%
   %Ramp
   %%
+  if(idxL > 1)
+    previousLength = expConfig.ramp.lengths(idxL-1);
+  end
+
+  lengthChange = expConfig.ramp.lengths(idxL)-previousLength;
+  rampDuration  = abs(lengthChange) ...
+                  /expConfig.positioning.rampSpeedInMMPS;
+  rampDuration  =max(rampDuration, expConfig.ramp.duration);
 
   lengthRampOptions(1).value = expConfig.ramp.lengths(idxL); 
-  lengthRampOptions(2).value = expConfig.ramp.duration;
+  lengthRampOptions(2).value = rampDuration;
 
   %Write the ramp
   isActive=0;
@@ -179,8 +189,13 @@ end
 % Bring the muscle back to its reference length
 %%
 
+  lengthChange = expConfig.ramp.lengths(end);
+  rampDuration  = abs(lengthChange) ...
+                  /expConfig.positioning.rampSpeedInMMPS;
+  rampDuration  =max(rampDuration, expConfig.ramp.duration);
+
 lengthRampOptions(1).value = 0; 
-lengthRampOptions(2).value = expConfig.ramp.duration;
+lengthRampOptions(2).value = rampDuration;
 
 isActive=0;
 [programMetaData, fcnMetaDataUpd] ...
@@ -203,12 +218,15 @@ segmentMetaDataArray(idxSeg)=fcnMetaDataUpd;
 %%
 disableOptions = getCommandFunctionOptions610A('Stop','',auroraConfig);
 
+stopWaitTime=expConfig.timing.stopWaitTime;
+stopWaitTime = max(stopWaitTime,expConfig.positioning.recoveryWaitTime);
+
 isActive=0;
 [programMetaData, fcnMetaDataUpd] ...
     = writeControlFunction610AUpd(...
             fid,...
             isActive,...
-            expConfig.timing.stopWaitTime,...
+            stopWaitTime,...
             'Stop',...
             disableOptions,...              
             auroraConfig.twitch,...

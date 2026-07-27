@@ -142,6 +142,8 @@ for idxPR = 1:1:length(expConfig.passive.ramp.length)
   expConfigTrial = [];
   expConfigTrial.tetanus = expConfig.tetanus;  
   expConfigTrial.timing  = expConfig.timing;
+  expConfigTrial.positioning=expConfig.positioning;
+  
   rampFields = fields(expConfig.passive.ramp);
   for idxField=1:1:length(rampFields)
     if(length(expConfig.passive.ramp.(rampFields{idxField}))>1)
@@ -153,7 +155,7 @@ for idxPR = 1:1:length(expConfig.passive.ramp.length)
     end
   end
   assert(expConfigTrial.ramp.isActive==0);
-  nominalLength = 0;
+  nominalLength=0;
   success = createStretchShortenTrial610A(...  
                     nominalLength,...
                     trialFileNameNoExt,...                                     
@@ -196,16 +198,10 @@ for idxPI = 1:1:length(expConfig.passive.impedance.length)
   %%
   % Ramp Recovery sine wave
   %%
-  lengthRampOptions = ...
-    getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig.default); 
-     
-  lengthRampOptions(1).value = lengthChange;
-  lengthRampOptions(2).value = 1;
-  
+
 
   flag_isASequence=1;
   success = createRampRecoveryTrial610A(...
-                      lengthRampOptions,...
                       trialFileNameNoExt,...                                     
                       auroraConfig.recovery,...
                       expConfig.recovery,...
@@ -244,8 +240,9 @@ for idxPI = 1:1:length(expConfig.passive.impedance.length)
   %
   flag_isASequence=1;
   expConfigTrial = [];
-  expConfigTrial.impedance = expConfig.passive.impedance;
-  expConfigTrial.timing    =expConfig.timing;
+  expConfigTrial.impedance   = expConfig.passive.impedance;
+  expConfigTrial.timing      = expConfig.timing;
+  expConfigTrial.positioning = expConfig.positioning;
 
   nominalLength=expConfig.passive.impedance.length(idxPI);
 
@@ -290,15 +287,9 @@ sequenceDataFiles.sha256 = ...
 %
 % Ramp Recovery sine wave
 %
-lengthRampOptions = ...
-  getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig.default); 
-   
-lengthRampOptions(1).value = lengthChange;
-lengthRampOptions(2).value = 1;
 
 flag_isASequence=1;
 success = createRampRecoveryTrial610A(...
-                    lengthRampOptions,...
                     trialFileNameNoExt,...                                     
                     auroraConfig.recovery,...
                     expConfig.recovery,...
@@ -330,6 +321,7 @@ expConfigPlateau.timing = expConfig.timing;
 expConfigPlateau.twitch = expConfig.twitch;
 expConfigPlateau.relax  = expConfig.relax;
 expConfigPlateau.ramp   = expConfig.plateau.ramp;
+expConfigPlateau.positioning = expConfig.positioning;
 
 flag_isASequence = 1;
 trialId = createPlateauSearchTrial610A(...
@@ -358,9 +350,12 @@ trialFileNameNoExt  = ...
   getTrialName(seriesName,sequenceTrialCount,typeName,nominalLength,...
                auroraConfig.default.defaultLengthUnit, dateId,''); 
 
-expConfigUpd.timing    = expConfig.timing;
-expConfigUpd.impedance = expConfig.active.impedance;
-expConfigUpd.tetanus   = expConfig.tetanus;
+expConfigUpd.timing      = expConfig.timing;
+expConfigUpd.impedance   = expConfig.active.impedance;
+expConfigUpd.tetanus     = expConfig.tetanus;
+expConfigUpd.positioning = expConfig.positioning;
+
+disp('You are here')
 
 flag_isASequence=1;
 success = createIsometricImpedanceTrial610A(...
@@ -412,16 +407,9 @@ for idxRamp = 1:1:size(expConfig.activeRamp.lengths,2)
       %
       % Ramp Recovery sine wave
       %
-      lengthRampOptions = ...
-      getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig.default); 
-       
-      lengthRampOptions(1).value = lengthChange;
-      lengthRampOptions(2).value = 1;
-      
-      
+            
       flag_isASequence=1;
       success = createRampRecoveryTrial610A(...
-                        lengthRampOptions,...
                         trialFileNameNoExt,...                                     
                         auroraConfig.recovery,...
                         expConfig.recovery,...
@@ -531,7 +519,6 @@ for idxIso = 1:1:length(expConfig.isometric.lengths)
   
   flag_isASequence=1;
   success = createRampRecoveryTrial610A(...
-                    lengthRampOptions,...
                     trialFileNameNoExt,...                                     
                     auroraConfig.recovery,...
                     expConfig.recovery,...
@@ -614,16 +601,9 @@ sequenceDataFiles.sha256 = ...
 %
 % Ramp Recovery sine wave
 %
-lengthRampOptions = ...
-getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig.default); 
- 
-lengthRampOptions(1).value = 0;
-lengthRampOptions(2).value = 1;
-
 
 flag_isASequence=1;
 success = createRampRecoveryTrial610A(...
-                  lengthRampOptions,...
                   trialFileNameNoExt,...                                     
                   auroraConfig.recovery,...
                   expConfig.recovery,...

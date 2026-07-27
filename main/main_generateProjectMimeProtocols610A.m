@@ -906,18 +906,19 @@ if(flag_preInjuryProtocol==1)
   %prePostConfig.waitTime = 1;  
   %prePostConfig.stopWaitTime = 5;
   
-  prePostConfig.passive.ramp.velocity = configMuscle.vceMaxMMPS*0.5; 
+  prePostConfig.passive.ramp.velocity = [0.01,0.33,1].*configMuscle.vceMaxMMPS*0.5; 
   prePostConfig.passive.ramp.waitTime = 1;
-  prePostConfig.passive.ramp.length   = [3,3];  
+  prePostConfig.passive.ramp.length   = [3,3,3];  
 
-  durationRamp      = prePostConfig.passive.ramp.length ./ ([0.1,0.5].*configMuscle.vceMaxMMPS);
+  durationRamp      = prePostConfig.passive.ramp.length ...
+                     ./ prePostConfig.passive.ramp.velocity;
   durationRamp      = roundTimeToNearestSampleTime(durationRamp,auroraConfig.default);
   
 
   velocityRampMMPS  = prePostConfig.passive.ramp.length./durationRamp;
 
   prePostConfig.passive.ramp.duration = durationRamp;
-  prePostConfig.passive.ramp.holdDuration=[5,5];
+  prePostConfig.passive.ramp.holdDuration=[5,5,5];
   prePostConfig.passive.ramp.velocity = velocityRampMMPS;
   prePostConfig.passive.ramp.isActive = zeros(size(prePostConfig.passive.ramp.length));
   
