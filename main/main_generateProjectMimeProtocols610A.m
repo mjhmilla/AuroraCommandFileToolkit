@@ -14,7 +14,7 @@ fprintf('\nPhase 2 updates');
 fprintf('\n Update writeControlFunction command to return the meta-data struct');
 fprintf('\n Append this struct into the array (perhaps write a function for this)');
 fprintf('\n Write a function to create the meta data struct');
-fprintf('\n Update all other functions to use this format and reduce the boiler plate');
+fprintf('\n Update all other functions to use this format and reduce the boiler plate\n\n');
 
 
 rootDir        = getRootProjectDirectory('AuroraCommandFileToolkit');
@@ -68,6 +68,8 @@ configRecovery = getPropertiesRecovery610A(durationRecoveryS,...
                                            amplitudeMM,verbose);
 configRelax = getPropertiesPassiveForceRelaxation610A(verbose);
 
+configPositioning = getPropertiesPositioning610A(verbose);
+
 %
 % Sequence settings
 %
@@ -103,15 +105,15 @@ auroraConfig.twitch = getDefaultAuroraConfiguration610A(...
 % Configure the experiment
 %%
 
-flag_plateauSearchProtocol    =1;
+flag_plateauSearchProtocol    =0;
 flag_forceFrequencyProtocol   =0;
 flag_degradationProtocol      =0;
 flag_FLRProtocol              =0;
 flag_rampImpededanceProtocol  =0;
 
-flag_preInjuryProtocol        = 0;
-flag_injuryRampProtocol       = 0;
-flag_postInjuryProtocol       = 0;
+flag_preInjuryProtocol        = 1;
+flag_injuryRampProtocol       = 1;
+flag_postInjuryProtocol       = 1;
 
 
 flag_impedanceCalibrationProtocol = 0;
@@ -519,7 +521,7 @@ if(flag_plateauSearchProtocol==1)
 
   plateauConfig.ramp.waitTime       = 1;
   plateauConfig.ramp.lengths        = [-3:1:3]';
-  plateauConfig.ramp.duration       = 1;
+  plateauConfig.ramp.duration       = 5;
   
   trialIdStart=trialId;
   flag_isASequence=0;
@@ -561,7 +563,10 @@ if(flag_forceFrequencyProtocol==1)
   ffrConfig.tetanus.pulseFrequency = [50,100,200,300,400,500];
   ffrConfig.tetanus.duration       = configTetanus.timeToReachMaxActivation*2;
   ffrConfig.tetanus.sampleFrequency= configTiming.sampleFrequency;
-  
+  ffrConfig.waitTime       =1;
+
+  flag_isASequence=0; 
+
   trialId = createForceFrequencyTrials610A(...
                       dateId,...
                       trialId,...                      
@@ -570,6 +575,7 @@ if(flag_forceFrequencyProtocol==1)
                       ffrConfig,...   
                       expFolders,...
                       projectFolders);
+
   sequenceId=sequenceId+1;
 end
 
@@ -585,27 +591,6 @@ if(flag_degradationProtocol==1)
 
   degradationConfig.exp.numberOfTrials      = [10,10];
   degradationConfig.exp.stimulationDuration = [1,0.25];
-
-
-  
-  %degradationConfig.waitTime=[1,1];
-  %degradationConfig.tetanus.initialDelay   = [0,0];
-  %degradationConfig.tetanus.pulseFrequency = [1,1].*pulseFrequency;
-
-  %assert(configTetanus.pulseWidth*0.001 < 0.5/max(pulseFrequency));
-
-  %degradationConfig.tetanus.pulseWidth     = [1,1].*configTetanus.pulseWidth;
-  %degradationConfig.tetanus.duration       = [1,0.25];
-  %degradationConfig.tetanus.sampleFrequency= [1,1].*4000;
-
-
-  %degradationConfig.sineWave.waitTime   = 0;
-  %degradationConfig.sineWave.frequency  = 1;
-  %degradationConfig.sineWave.amplitude  = sineWaveRecoveryAmplitude;
-  %degradationConfig.sineWave.cycles     = ...
-  %  degradationConfig.sineWave.frequency...
-  %  *sineWaveRecoveryDurationS;
-  %degradationConfig.sineWave.sampleFrequency = 100;
 
   
 
@@ -906,11 +891,13 @@ end
 
 if(flag_preInjuryProtocol==1)
 
-  prePostConfig.muscle = configMuscle;
-  prePostConfig.timing = configTiming;
-  prePostConfig.recovery= configRecovery;
-  prePostConfig.tetanus =configTetanus;
-
+  prePostConfig.muscle      = configMuscle;
+  prePostConfig.timing      = configTiming;
+  prePostConfig.recovery    = configRecovery;
+  prePostConfig.tetanus     = configTetanus;
+  prePostConfig.twitch      = configTwitch;
+  prePostConfig.positioning = configPositioning;
+  prePostConfig.relax       = configRelax;
 
   %prePostConfig.unitSystem  = unitSystem;
   %prePostConfig.lceOptMM    = lceOptMM;
@@ -924,7 +911,7 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.passive.ramp.length   = [3,3];  
 
   durationRamp      = prePostConfig.passive.ramp.length ./ ([0.1,0.5].*configMuscle.vceMaxMMPS);
-  durationRamp      = roundToNearestSampleTime(durationRamp,auroraConfig.default);
+  durationRamp      = roundTimeToNearestSampleTime(durationRamp,auroraConfig.default);
   
 
   velocityRampMMPS  = prePostConfig.passive.ramp.length./durationRamp;
@@ -986,12 +973,7 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.plateau.ramp.waitTime       = 1;
   prePostConfig.plateau.ramp.lengths        = [-3:1:3]';
   prePostConfig.plateau.ramp.duration       = 1;
-  
-  prePostConfig.plateau.relax  = configRelax;
-  prePostConfig.plateau.twitch = configTwitch;
 
-  prePostConfig.plateau.stopWaitTime =1;
-  prePostConfig.plateau.temperature = configMuscle.temperatureC;
 
   
   sequenceName = 'preInjury';
@@ -1036,6 +1018,8 @@ if(flag_injuryRampProtocol==1)
   rampConfig.timing=configTiming;
   rampConfig.tetanus=configTetanus;
   rampConfig.recovery = configRecovery;
+  rampConfig.positioning = configPositioning;
+
 
   %rampConfig.waitTime = 1;  
   %rampConfig.stopWaitTime = 5;
@@ -1046,7 +1030,8 @@ if(flag_injuryRampProtocol==1)
   rampConfig.ramp.waitTime = 1;
   rampConfig.ramp.length   = [5,7,9];  
   rampConfig.ramp.duration = rampConfig.ramp.length ./ rampConfig.ramp.velocity;
-  rampConfig.ramp.duration = roundToNearestSampleTime(rampConfig.ramp.duration,auroraConfigDefault);
+  rampConfig.ramp.duration = ...
+    roundTimeToNearestSampleTime(rampConfig.ramp.duration,auroraConfig.default);
   rampConfig.ramp.velocity = rampConfig.ramp.length./rampConfig.ramp.duration;
   rampConfig.ramp.isActive = ones(size(rampConfig.ramp.length));
   
@@ -1085,7 +1070,7 @@ if(flag_injuryRampProtocol==1)
                               trialId,...
                               sequenceId,...
                               'rampInjury',...
-                              auroraConfigDefault,...
+                              auroraConfig.default,...
                               rampConfig,...
                               expFolders,...
                               projectFolders);  
@@ -1128,8 +1113,7 @@ if(flag_postInjuryProtocol==1)
                           sequenceId,...
                           sequenceName,...
                           stochasticWaves,...                          
-                          auroraConfigDefault,...
-                          auroraConfigTwitch,...
+                          auroraConfig,...
                           prePostConfig,...
                           expFolders,...
                           projectFolders);  

@@ -263,7 +263,7 @@ jsonSequenceSeriesMetaData.data      = sequenceDataFiles;
 
 jsonSequenceMetaData.experiment.comment = "";
 jsonSequenceMetaData.experiment.manually_measured_temperature_C ...
-  = expConfig.temperature;
+  = expConfig.muscle.temperatureC;
 jsonSequenceMetaData.sequence = jsonSequenceSeriesMetaData;
 
 

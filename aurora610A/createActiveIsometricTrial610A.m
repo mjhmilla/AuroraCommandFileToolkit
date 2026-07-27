@@ -114,7 +114,7 @@ function success = createActiveIsometricTrial610A(...
       stimulusTetanusOptions(4).value;
 
 
-
+    tetanusDuration = stimulusTetanusOptions(4).value;
     %
     % Command
     %

@@ -11,10 +11,10 @@ function trialId = createPlateauSearchTrial610A(...
 
 success = 0;
 
-fprintf('\ncreatePlateauSearchTrail610A');
-fprintf('\n Update writeControlFunction command to return the meta-data struct');
-fprintf('\n Append this struct into the array (perhaps write a function for this)');
-fprintf('\n Write a function to create the meta data struct');
+%fprintf('\ncreatePlateauSearchTrail610A');
+%fprintf('\n Update writeControlFunction command to return the meta-data struct');
+%fprintf('\n Append this struct into the array (perhaps write a function for this)');
+%fprintf('\n Write a function to create the meta data struct');
 
 %%
 % Create the file name

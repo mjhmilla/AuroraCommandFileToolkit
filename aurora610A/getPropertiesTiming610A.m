@@ -12,7 +12,7 @@ configTiming.sampleFrequencyTwitch=twitchSampleFrequency;
 
 if(verbose==1)
     settingsFields = fields(configTiming);
-    fprintf('getPropertiesTiming610A\n')
+    fprintf('\ngetPropertiesTiming610A\n')
     for idxF = 1:1:length(settingsFields)
       param = num2str(configTiming.(settingsFields{idxF}));
       if(isnumeric(param))
