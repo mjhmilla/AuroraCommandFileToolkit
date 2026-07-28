@@ -932,11 +932,11 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.passive.impedance.sine.frequencyHz = ...
       (sineFreqSample.^2)*max(perturbationBandwidth);
   prePostConfig.passive.impedance.sine.amplitude = ...
-      perturbationLengthMM;
+      perturbationLengthMM*0.5;
   prePostConfig.passive.impedance.sine.cycles = 10;
 
   %Isometric
-  prePostConfig.isometric.lengths = [-3,3];
+  prePostConfig.isometric.lengths = [-3,2,4];
 
   %Active ramp
   prePostConfig.activeRamp.lengths = [1,-2;-2,1];
@@ -948,34 +948,9 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.active.impedance.stochasticWaveIndex=1;
   prePostConfig.active.impedance.amplitude=perturbationLengthMM;  
 
-
-  %Activations settings
-  %prePostConfig.tetanus.waitTime       = 1;
-  %prePostConfig.tetanus.initialDelay   = 0;
-  %prePostConfig.tetanus.pulseFrequency = configTetanus.pulseFrequency;
-  %prePostConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
-  %prePostConfig.tetanus.durationExtension = 0;
-  %prePostConfig.tetanus.duration       = nan;  
-
-
-
-  %This is the relaxation sine wave between trials
-  %prePostConfig.recovery = configRecovery;
-  %prePostConfig.recovery.sineWave.waitTime  = 1;
-  %prePostConfig.recovery.sineWave.frequency = 1;
-  %prePostConfig.recovery.sineWave.amplitude = sineWaveRecoveryAmplitude;
-  %prePostConfig.recovery.sineWave.cycles    = ...
-  %  prePostConfig.recovery.sineWave.frequency*sineWaveRecoveryDurationS;
-  %prePostConfig.recovery.sineWave.sampleFrequency = 100;
-  %prePostConfig.recovery.stopWaitTime = 5;
-  %prePostConfig.recovery.sampleFrequency = 100;
-  %prePostConfig.recovery.ramp.waitTime = 1;
-
   prePostConfig.plateau.ramp.waitTime       = 1;
   prePostConfig.plateau.ramp.lengths        = [-3:1:3]';
   prePostConfig.plateau.ramp.duration       = 1;
-
-
   
   sequenceName = 'preInjury';
 

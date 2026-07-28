@@ -1,7 +1,7 @@
 function configRecovery = getPropertiesRecovery610A(...
                             durationS,amplitudeMM, verbose)
 
-configRecovery.sineWave.waitTime  = 10;
+configRecovery.sineWave.waitTime  = 1;
 configRecovery.sineWave.frequency = 1;
 configRecovery.sineWave.amplitude = amplitudeMM;
 configRecovery.sineWave.cycles    = ...
