@@ -355,8 +355,6 @@ expConfigUpd.impedance   = expConfig.active.impedance;
 expConfigUpd.tetanus     = expConfig.tetanus;
 expConfigUpd.positioning = expConfig.positioning;
 
-disp('You are here')
-
 flag_isASequence=1;
 success = createIsometricImpedanceTrial610A(...
                     nominalLength,...
@@ -459,6 +457,7 @@ for idxRamp = 1:1:size(expConfig.activeRamp.lengths,2)
       expConfigTrial = [];
       expConfigTrial.tetanus = expConfig.tetanus;
       expConfigTrial.timing  = expConfig.timing;
+      expConfigTrial.positioning = expConfig.positioning;
 
       expConfigTrial.ramp.length   = expConfig.activeRamp.lengths(idxRamp,2);
       expConfigTrial.ramp.duration = duration;
@@ -473,6 +472,7 @@ for idxRamp = 1:1:size(expConfig.activeRamp.lengths,2)
                       expFoldersUpd,...
                       flag_isASequence);
       trialId=trialId + 1;
+
   end
 end
 
@@ -552,14 +552,14 @@ for idxIso = 1:1:length(expConfig.isometric.lengths)
   
   
   expConfigTrial = [];
-  expConfigTrial.timing = expConfig.timing;
-  expConfigTrial.tetanus = expConfig.tetanus;  
+  expConfigTrial.timing      = expConfig.timing;
+  expConfigTrial.tetanus     = expConfig.tetanus;  
+  expConfigTrial.positioning = expConfig.positioning;
 
   expConfigTrial.ramp.length   = expConfig.isometric.lengths(idxIso);
   expConfigTrial.ramp.duration = duration;
   expConfigTrial.ramp.isActive = isActive;
   expConfigTrial.ramp.holdDuration = 0;
-
 
   success = createActiveIsometricTrial610A(...
                       expConfig.isometric.lengths(idxIso),...

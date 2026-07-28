@@ -43,6 +43,10 @@ switch configMuscle.name
     %Why? Sometimes the ramp and tetanus timing are not completely 
     %synchronized and this can result in a post-tetanus ramp beginning
     %before the tetanus has completed.
+    
+    configTetanus.recoveryTime            = 5;
+    %2026/07/28
+    %The time needed to return to baseline.
 
   case 'SOL'
     assert(0,'Error: Populate the solues settings');

@@ -112,9 +112,10 @@ positioningDuration = max(positioningDuration,...
 lengthRampOptions(1).value = nominalLength;
 lengthRampOptions(2).value = positioningDuration;
 
-startTime = programMetaData.nextStartTime ...
-            + positioningDuration;
-endTime   = startTime + expConfig.impedance.waitTime;
+waitTime=expConfig.positioning.waitTime;
+
+startTime = programMetaData.nextStartTime+waitTime;
+endTime   = startTime + positioningDuration;
 
 idxSeg=idxSeg+1;
 segmentMetaDataArray(idxSeg).type = 'Ramp';
@@ -127,7 +128,7 @@ segmentMetaDataArray(idxSeg).meta_data.(mdfn.time)=lengthRampOptions(2).value;
 programMetaData ...
     = writeControlFunction610A(...
             fid,...
-            expConfig.impedance.waitTime,...
+            waitTime,...
             'Ramp',...
             lengthRampOptions,...
             auroraConfig,...
@@ -163,9 +164,15 @@ for idxSine=1:1:length(expConfig.impedance.sine.frequencyHz)
            /auroraConfig.analogToDigitalSampleRateHz;
   frequencyHz = 1/period;
 
+  sineCycles=expConfig.impedance.sine.cycles;
+  sineDuration = period*sineCycles;
+  if(sineDuration < 1.0)
+    sineCycles = round(frequencyHz);
+  end
+
   lengthSineOptions(1).value = frequencyHz;
   lengthSineOptions(2).value = expConfig.impedance.sine.amplitude;
-  lengthSineOptions(3).value = expConfig.impedance.sine.cycles;
+  lengthSineOptions(3).value = sineCycles;
   
   sineTime   = lengthSineOptions(3).value/lengthSineOptions(1).value;
   
@@ -258,7 +265,10 @@ for i=1:1:length(stochasticWaveSet)
     singleWaveDuration = (stochasticWaveSet(i).config.points...
                          /stochasticWaveSet(i).config.frequencyHz);
 
-    waveWaitTime  = expConfig.impedance.waitTime;      
+    waveWaitTime  = expConfig.impedance.waitTime;  
+    if(i==1)
+      waveWaitTime = expConfig.positioning.recoveryWaitTime;
+    end
 
 
     startTime = programMetaData.nextStartTime + waveWaitTime;

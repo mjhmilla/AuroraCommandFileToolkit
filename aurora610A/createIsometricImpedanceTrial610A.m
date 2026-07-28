@@ -112,33 +112,37 @@ idxSeg=0;
 %%
 %Move the specimen to its nominal length
 %%
-lengthChangeOptions = ...
+lengthRampOptions = ...
   getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
 waitTime                    = 1;
-rampTime                    = 1;
 flag_printMetaDataToFile    = 1;
 
-lengthChangeOptions(1).value    = nominalLength;
-lengthChangeOptions(2).value    = 1;
+positioningDuration = abs(nominalLength)...
+                      /expConfig.positioning.rampSpeedInMMPS;
+positioningDuration = max(positioningDuration,...
+                          expConfig.positioning.minimumRampTime);
+
+lengthRampOptions(1).value = nominalLength; 
+lengthRampOptions(2).value = positioningDuration;
 
 startTime = programMetaData.nextStartTime+waitTime;
-endTime = startTime+rampTime;
+endTime = startTime+positioningDuration;
 
 idxSeg=idxSeg+1;
 segmentMetaDataArray(idxSeg).type = 'Ramp';
 segmentMetaDataArray(idxSeg).(mdfn.time) = [startTime,endTime];
 segmentMetaDataArray(idxSeg).meta_data.is_active = 0;
-segmentMetaDataArray(idxSeg).meta_data.channel=lengthChangeOptions(1).port;
-segmentMetaDataArray(idxSeg).meta_data.(mdfn.length)=lengthChangeOptions(1).value;
-segmentMetaDataArray(idxSeg).meta_data.(mdfn.time)=lengthChangeOptions(2).value;
+segmentMetaDataArray(idxSeg).meta_data.channel=lengthRampOptions(1).port;
+segmentMetaDataArray(idxSeg).meta_data.(mdfn.length)=lengthRampOptions(1).value;
+segmentMetaDataArray(idxSeg).meta_data.(mdfn.time)=lengthRampOptions(2).value;
 
 programMetaData ...
     = writeControlFunction610A(...
             fid,...
             waitTime,...
             'Ramp',...
-            lengthChangeOptions,...
+            lengthRampOptions,...
             auroraConfig,...
             programMetaData,...
             flag_printMetaDataToFile);
@@ -187,7 +191,10 @@ for i=1:1:length(stochasticWaveSet)
     singleWaveDuration = (stochasticWaveSet(i).config.points...
                          /stochasticWaveSet(i).config.frequencyHz);
 
-    waveWaitTime  = expConfig.impedance.waitTime;      
+    waveWaitTime  = expConfig.impedance.waitTime;   
+    if(i==1)
+      waveWaitTime = expConfig.positioning.recoveryWaitTime;
+    end
 
 
     startTime = programMetaData.nextStartTime + waveWaitTime;
@@ -279,11 +286,12 @@ end
 %Activate
 %%
 
-
+waitTime = max(expConfig.positioning.recoveryWaitTime,...
+               expConfig.timing.waitTime);
 
 tetanusDuration  =waveDurationInS ...
                  +expConfig.tetanus.timeToReachMaxActivation ...
-                 +expConfig.tetanus.timeToReachMaxActivation*0.5;
+                 +expConfig.tetanus.durationExtension;
 
 stimulusTetanusOptions = getCommandFunctionOptions610A(...
                           'Stimulus-Tetanus','Stimulator',auroraConfig);
@@ -293,7 +301,7 @@ stimulusTetanusOptions(2).value=expConfig.tetanus.pulseFrequency;
 stimulusTetanusOptions(3).value=expConfig.tetanus.pulseWidth;
 stimulusTetanusOptions(4).value=tetanusDuration;
 
-startTime = programMetaData.nextStartTime+expConfig.timing.waitTime;
+startTime = programMetaData.nextStartTime+waitTime;
 endTime = startTime ...
             +expConfig.tetanus.initialDelay ...
             +tetanusDuration;
@@ -322,7 +330,7 @@ segmentMetaDataArray(idxSeg).meta_data.(mdfn.duration)      = ...
    
 programMetaData = writeControlFunction610A(...
                     fid,...
-                    expConfig.timing.waitTime,...
+                    waitTime,...
                     'Stimulus-Tetanus',...
                     stimulusTetanusOptions,...
                     auroraConfig,...                
@@ -463,32 +471,37 @@ end
 %Move the specimen from its ending length to a length of 0
 %%
 
-lengthChangeOptions = ...
+lengthRampOptions = ...
   getCommandFunctionOptions610A('Ramp','Length Out',auroraConfig);
 
 waitTime                    = 1;
-rampTime                    = 1;
 
-lengthChangeOptions(1).value    = nominalLength;
-lengthChangeOptions(2).value    = 1;
+positioningDuration = abs(nominalLength)...
+                      /expConfig.positioning.rampSpeedInMMPS;
+positioningDuration = max(positioningDuration,...
+                          expConfig.positioning.minimumRampTime);
+
+
+lengthRampOptions(1).value    = 0;
+lengthRampOptions(2).value    = positioningDuration;
 
 startTime = programMetaData.nextStartTime+waitTime;
-endTime = startTime+rampTime;
+endTime = startTime+positioningDuration;
 
 idxSeg=idxSeg+1;
 segmentMetaDataArray(idxSeg).type = 'Ramp';
 segmentMetaDataArray(idxSeg).(mdfn.time) = [startTime,endTime];
 segmentMetaDataArray(idxSeg).meta_data.is_active = 0;
-segmentMetaDataArray(idxSeg).meta_data.channel=lengthChangeOptions(1).port;
-segmentMetaDataArray(idxSeg).meta_data.(mdfn.length)=lengthChangeOptions(1).value;
-segmentMetaDataArray(idxSeg).meta_data.(mdfn.time)=lengthChangeOptions(2).value;
+segmentMetaDataArray(idxSeg).meta_data.channel=lengthRampOptions(1).port;
+segmentMetaDataArray(idxSeg).meta_data.(mdfn.length)=lengthRampOptions(1).value;
+segmentMetaDataArray(idxSeg).meta_data.(mdfn.time)=lengthRampOptions(2).value;
 
 programMetaData ...
     = writeControlFunction610A(...
             fid,...
             waitTime,...
             'Ramp',...
-            lengthChangeOptions,...
+            lengthRampOptions,...
             auroraConfig,...
             programMetaData,...
             flag_printMetaDataToFile);
@@ -503,6 +516,10 @@ assert(abs(endTimeError)<1e-3,...
 %%
 
 waitTime =  expConfig.timing.stopWaitTime;
+
+if(abs(nominalLength)>1e-6)
+  waitTime = max(waitTime,expConfig.positioning.recoveryWaitTime);
+end
 
 programMetaData = ...
     writeClosingBlock610A(...
