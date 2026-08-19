@@ -18,19 +18,22 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal   = 0;
+flag_generateRandomSignal   = 1;
+flag_generateExponentiallySpacedSinusoids=1;
 
 % Experiments to generate
-flag_generateRubberProtocol                 = 0;
-flag_generateForceRampProtocol              = 0;
-flag_generateTRSS2017PerturbationProtocol   = 0;
-flag_generateInjuryProtocol                 = 0;
+flag_generateRubberProtocol                     = 0;
+flag_generateForceRampProtocol                  = 0;
+flag_generateTRSS2017PerturbationProtocol       = 0;
+flag_generateInjuryProtocol                     = 0;
 
-flag_generateArbitraryWaveImpedanceProtocol = 0; 
+flag_generateArbitraryWaveImpedanceProtocol     = 0; 
 
-flag_generateImpedanceForceLengthProtocol_Sine          = 0; %For length/sine
-flag_generateImpedanceForceLengthProtocol_Larb          = 0; %For larb
-flag_generateImpedanceAmplitudeProtocol_Larb            = 1;
+flag_generateImpedanceForceLengthProtocol_Sine  = 0; %For length/sine
+flag_generateImpedanceForceLengthProtocol_Larb  = 0; %For larb
+flag_generateImpedanceAmplitudeProtocol_Larb    = 0;
+
+flag_generateCalibrationProtocol                = 1;
 
 
 settingsExperiment = [];
@@ -53,7 +56,7 @@ perturbationSettings.magnitude = 0.01;
 perturbationSettings.bandwidth = 'high';
 % 'high'
 % 'low'
-perturbationSettings.waveType = 'sineWave';
+perturbationSettings.waveType = 'larb';
 % 'lengthRamp'
 % 'sineWave'
 % 'larb
@@ -64,9 +67,10 @@ perturbationSettings.waveType = 'sineWave';
 % 2. Arbitrary Waveform
 % Applies to the random Length-Ramp and Sine-Ramp waveforms.
 
-if(flag_generateArbitraryWaveImpedanceProtocol ...
+if(        flag_generateArbitraryWaveImpedanceProtocol ...
         || flag_generateImpedanceForceLengthProtocol_Larb ...
-        || flag_generateImpedanceAmplitudeProtocol_Larb)
+        || flag_generateImpedanceAmplitudeProtocol_Larb ...
+        || flag_generateCalibrationProtocol)
     perturbationSettings.waveType = 'larb';
 end
 
@@ -118,18 +122,23 @@ end
 
 if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     arbitraryWaveformManualSettings.frequencyHz   = 1000;
-
-    arbitraryWaveformManualSettings.points        = ...
-        [2^13,2^13];
-    arbitraryWaveformManualSettings.magnitude     = ...
-        [1,1];
-    arbitraryWaveformManualSettings.bandwidth     = ...
-        [35, 90];        
-    arbitraryWaveformManualSettings.canBeMerged = ...
-        [1,1];   
-    arbitraryWaveformManualSettings.paddingDuration= ...
-        [1,1].*0.125;
+    arbitraryWaveformManualSettings.points          = [2^13,2^13];
+    arbitraryWaveformManualSettings.magnitude       = [1,1];
+    arbitraryWaveformManualSettings.bandwidth       = [35, 90];        
+    arbitraryWaveformManualSettings.canBeMerged     = [1,1];   
+    arbitraryWaveformManualSettings.paddingDuration = [1,1].*0.125;
 end
+
+if(flag_generateCalibrationProtocol==1)
+    arbitraryWaveformManualSettings.frequencyHz     = 1000;
+    arbitraryWaveformManualSettings.points          = [2^13];
+    arbitraryWaveformManualSettings.magnitude       = [1];
+    arbitraryWaveformManualSettings.bandwidth       = [90];        
+    arbitraryWaveformManualSettings.canBeMerged     = [1];   
+    arbitraryWaveformManualSettings.paddingDuration = [1].*0.125;
+end
+
+
 
 
 
@@ -143,6 +152,10 @@ approximateSampleLengthInMM     = 1.5;
 sampleFrequency                 = 1000;
 minNormLength                   = 0.5;
 maxNormLength                   = 1.85;
+
+if(flag_generateCalibrationProtocol==1)
+  sampleFrequency=4000;
+end
 
 switch ratMuscleName
     case 'SOL'
@@ -172,9 +185,38 @@ expSettings = getExperimentSettings(maxNormalizedShorteningSpeedLPS);
 %%
 flag_plotRandomSignal       = 1 && flag_generateRandomSignal;
 
-muscleTemperatureInC            = 12;
+muscleTemperatureInC        = 12;
 
 
+%%
+% Create the exponentially spaced sinusoids used by Kawai to measure the
+% response of muscle fibers
+%%
+if(flag_generateExponentiallySpacedSinusoids==1)
+  
+  sinSettings.maxFrequencyHz                    = 167*1.43526477;
+  sinSettings.minFrequencyHz                    = 0.25;
+  sinSettings.numberOfSinusoids                 = 20;
+  sinSettings.maxSinusoidDurationS              = 8;
+  sinSettings.maxCycleCount                     = 100;
+  sinSettings.numberOfDigits                    = 6;
+  sinSettings.maxAngularErrorDegrees            = 0.1;
+  sinSettings.frequencyHzTolerancePercentage    = 0.075;
+  sinSettings.flag_correctFrequencyToSampleRate =1;
+
+  sineSeriesExponentiallySpaced = ...
+    generateExponentiallySpacedSinusoids(sampleFrequency,...
+                                         sinSettings,...
+                                         1);
+
+  save(fullfile(projectFolders.output_structs,...
+       'sineSeriesExponentiallySpaced.mat'),...
+       'sineSeriesExponentiallySpaced','-mat');    
+else
+  load(fullfile(projectFolders.output_structs,...
+       'sineSeriesExponentiallySpaced.mat'));    
+  
+end
 
 %%
 % Create the system identification vibration signal
@@ -413,6 +455,33 @@ stochasticWaves = ...
 %%
 % Generate the protocols
 %%
+if(flag_generateCalibrationProtocol==1)
+  assert(length(larbStochasticWaveSet)==1);
+
+  %We're going to scale and shift this perturbation waveform, so it 
+  %should have a magnitude of 1
+  assert(abs(larbStochasticWaveSet(1).wave.config.magnitude-1)<1e-6);  
+
+  %For now
+  assert(abs(larbStochasticWaveSet(1).wave.config.arbitraryWaveform.bandwidth-90)<1e-6);
+
+  indexStart=1;
+  writeProtocolHeader=1;
+
+  indexEnd = createCalibrationExperiments600A(...
+              indexStart,...
+              'zcal',...              
+              expSettings.impedanceCalibration,...              
+              larbStochasticWaveSet,...
+              sineSeriesExponentiallySpaced,...
+              writeProtocolHeader,...
+              projectFolders,...
+              auroraConfig,...
+              settingsExperiment);
+
+end
+
+
 if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     %%
     % Merge the isometric waves

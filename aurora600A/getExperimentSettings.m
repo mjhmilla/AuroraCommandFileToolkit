@@ -1,5 +1,23 @@
 function expSettings = getExperimentSettings(maxNormalizedShorteningSpeedLPS)
 %%
+% Impedance calibration block
+%%
+expSettings.impedanceCalibration.perturbationMagnitude=0.001;
+
+expSettings.impedanceCalibration.passiveLengths       =[1.4,1.7];
+expSettings.impedanceCalibration.passiveRecoveryTimeS =[5*60];
+
+expSettings.impedanceCalibration.defaultLength       = [1.0];
+expSettings.impedanceCalibration.defaultSLTriggerDelayTimeS=0.010;
+expSettings.impedanceCalibration.defaultSLTriggerWaitTimeS= 20;
+%expSettings.impedanceCalibration.bathLengthStepCycle = [1.0,0.8,1.0];
+%expSettings.impedanceCalibration.bathLengthStepWaitS = [0.1];
+%expSettings.impedanceCalibration.bathPaddingTimeS    = [2];
+
+expSettings.impedanceCalibration.stepUpDownChangeLo  = [0.12];
+expSettings.impedanceCalibration.stepUpDownWaitTimeS = [10];
+
+%%
 % Detailed impedance block
 %%
 

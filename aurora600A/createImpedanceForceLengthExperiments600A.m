@@ -29,7 +29,8 @@ assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
 %%
 %Experiment configuration
 %%
-lengthRampOptions=getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
+lengthRampOptions = ...
+  getCommandFunctionOptions600A('Length-Ramp',auroraConfig);
 
 scaleTime=1;
 switch auroraConfig.defaultTimeUnit
