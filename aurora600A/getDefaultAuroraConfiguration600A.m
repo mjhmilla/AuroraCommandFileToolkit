@@ -1,9 +1,11 @@
 function auroraConfig =  getDefaultAuroraConfiguration600A(...
+                            minActivationTimeS,...
                             approximateSampleLengthInMM,...
                             sampleFrequencyHz,...
                             minLengthLo,...
                             maxLengthLo,...
-                            maxNormalizedSpeedLPS)
+                            maxNormalizedSpeedLPS,...
+                            commentStr)
 
 
 %pg 3 of the manual for 322 C-I: 300um in 700us
@@ -27,6 +29,9 @@ auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 auroraConfig.minimumWaitTime = 0.1; 
 %  The Aurora system needs a pause time of at least 0.1 ms between ramps
 
+auroraConfig.lengthStepResponseTime = 1;
+%  This is a (very) conservative guess
+
 auroraConfig.maximumNumberOfCommands = 945;
 %  The Aurora system tends to crash if the command file has more than 950 
 %  commands. This parameter is used to check how many entries are in the 
@@ -34,8 +39,11 @@ auroraConfig.maximumNumberOfCommands = 945;
 %  complicated, the most reliable way to ensure that the *.pro file is of 
 %  an acceptable size is to check after the fact.
 
-auroraConfig.comment = 'EDL, h: 0.091 w:  0.079';
+auroraConfig.comment = commentStr;
 %
+
+auroraConfig.numberOfDigits=6;
+
 s2ms = 1000;
 
 auroraConfig.minimumNormalizedLength    = minLengthLo;
@@ -43,17 +51,19 @@ auroraConfig.maximumNormalizedLength    = maxLengthLo;
 auroraConfig.pdDeadBand                 = 0;
 auroraConfig.bath.changeTime            = 0.5*s2ms;
 auroraConfig.bath.preActivationDuration = 60*s2ms;
+auroraConfig.bath.minimumActivationDuration = minActivationTimeS*s2ms;
 auroraConfig.bath.activationDuration    = 40*s2ms; %20
 
 auroraConfig.bath.passive               = 1;
 auroraConfig.bath.preActivation         = 2;
 auroraConfig.bath.active                = 3;
-
+auroraConfig.bath.sampleTime            = 1*s2ms;
 
 auroraConfig.defaultLengthUnit      = 'Lo';
 auroraConfig.defaultForceUnit       = 'Fmax';
 auroraConfig.defaultTimeUnit        = 'ms';
 auroraConfig.defaultFrequencyUnit   = 'Hz';
+
 
 auroraConfig.scaleFrequencyUnit     = 0.001; %To put it in cycles/millisecond 
 
@@ -65,3 +75,8 @@ auroraConfig.maximumSpeedInDefaultUnits = ...
 auroraConfig.maximumRampSpeedInDefaultUnits = ...
     auroraConfig.maximumRampSpeedInLPS/1000; %lengths per millisecond
 
+auroraConfig.labels = getMetaDataFieldNames600A(auroraConfig);
+
+assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
+    ['Error: The 600A code base has only been tested using', ...
+     ' time units of ms']);

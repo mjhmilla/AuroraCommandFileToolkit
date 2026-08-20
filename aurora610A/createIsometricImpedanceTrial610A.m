@@ -20,7 +20,7 @@ trialBlockLabelFilePath = fullfile(expFolders.rootFolderPath,...
                                   expFolders.blockLabelsFolderName,...
                                   [trialFileNameNoExt,'.csv']);
 
-programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
+programMetaData = getEmptyProgramMetaDataStruct610A(trialBlockLabelFilePath);
 programMetaData = writePreamble610A(fid,auroraConfig,programMetaData);
 
 mdfn = getMetaDataFieldNames610A(auroraConfig);

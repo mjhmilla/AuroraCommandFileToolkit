@@ -44,6 +44,8 @@ nextStartTime   = nan;
 
 switch controlFunctionName
     case 'Step'
+        assert(strcmp(controlFunctionOptions(1).type,'length'),...
+               'Error: Expected a length at this option index');
 
         smallestNextWaitTime  = 0;        
         commandDuration       = 0;
@@ -55,7 +57,15 @@ switch controlFunctionName
                           + auroraConfig.lengthStepResponseTime;        
         end
         
+        metaData = struct('is_active',isActive,...
+          'channel', controlFunctionOptions(1).port,...
+          auroraConfig.labels.length, controlFunctionOptions(1).value);
+
+        fcnMetaData.meta_data=metaData;
+
     case 'Ramp'
+        assert(strcmp(controlFunctionOptionsUpd(1).type,'length'),...
+               'Error: Expected a duration at this option index');
         
         assert(strcmp(controlFunctionOptions(2).type,'time'),...
                'Error: Expected a duration at this option index');

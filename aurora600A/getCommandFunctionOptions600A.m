@@ -50,7 +50,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type = 'length';
 
         i=i+1;
@@ -70,7 +70,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type = 'length';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -93,7 +93,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='length';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -126,12 +126,17 @@ switch controlFunctionName
 
     case 'Read-Larb'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
                             'isRelative',nan,'type','');
         i=1;
+        options(i).unit = nan;
+        options(i).printUnit = 0;
+        options(i).isRelative = nan;
+        options(i).type ='string';
+        i=i+1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='length';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -140,13 +145,18 @@ switch controlFunctionName
 
     case 'Write-Larb'
 
-        options(2) = struct('unit','','value',nan,'printUnit',nan,...
+        options(3) = struct('unit','','value',nan,'printUnit',nan,...
                             'isRelative',nan,'type','');
 
         i=1;
+        options(i).unit = nan;
+        options(i).printUnit = 0;
+        options(i).isRelative = nan;
+        options(i).type ='string';
+        i=i+1;
         options(i).unit = auroraConfig.defaultLengthUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='length';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -236,7 +246,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultForceUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='force';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -259,7 +269,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultForceUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='force';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -286,7 +296,7 @@ switch controlFunctionName
         i=i+1;
         options(i).unit = auroraConfig.defaultForceUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='force';
         i=i+1;
         options(i).unit = auroraConfig.defaultTimeUnit;
@@ -331,7 +341,7 @@ switch controlFunctionName
         i=1;
         options(i).unit = auroraConfig.defaultForceUnit;
         options(i).printUnit = 1;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='force';
 
         i=i+1;
@@ -351,7 +361,7 @@ switch controlFunctionName
         i=1;
         options(i).unit = 'um';
         options(i).printUnit = 0;
-        options(i).isRelative = auroraConfig.useRelativeUnits;
+        options(i).isRelative = 0;
         options(i).type ='length';
 
     case 'SL-Ramp'
@@ -361,7 +371,7 @@ switch controlFunctionName
         i=1;
         options(i).unit = 'um';
         options(i).printUnit = 0;
-        options(i).isRelative = auroraConfig.useRelativeUnits;   
+        options(i).isRelative = 0;   
         options(i).type ='length';     
 
         i=i+1;
@@ -378,7 +388,7 @@ switch controlFunctionName
         options(i).printUnit = 0;
         options(i).type ='integer';
         i=i+1;
-        options(i).unit = auroraConfig.defaultTimeUnit;
+        options(i).unit = 0;
         options(i).printUnit = 1;
         options(i).type ='time';
 

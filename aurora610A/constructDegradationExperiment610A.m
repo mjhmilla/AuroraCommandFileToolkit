@@ -131,7 +131,7 @@ for idxTrialType = 1:1:length(degradationConfig.exp.numberOfTrials)
                                         expFolders.blockLabelsFolderName,...
                                         [trialFileNameNoExt,'.csv']);
       
-      programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
+      programMetaData = getEmptyProgramMetaDataStruct610A(trialBlockLabelFilePath);
       programMetaData = writePreamble610A(fid,auroraConfigLocal,programMetaData);
       
       jsonMetaData = struct('segments',[],'experiment',[]);

@@ -52,7 +52,7 @@ if(flag_generateSingleWaveCalibration==1)
         % Set up the meta data
         %
         programMetaData = ...
-          getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
+          getEmptyProgramMetaDataStruct610A(trialBlockLabelFilePath);
     
         programMetaData = ...
           writePreamble610A(fid,auroraConfig,programMetaData);
@@ -759,7 +759,7 @@ if(flag_generateStochasticWaveCalibration==1)
                                     expFolders.blockLabelsFolderName,...
                                     [trialFileNameNoExt,'.csv']);
       
-      programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
+      programMetaData = getEmptyProgramMetaDataStruct610A(trialBlockLabelFilePath);
       programMetaData = writePreamble610A(fid,auroraConfig,programMetaData);
     
       %

@@ -9,6 +9,7 @@ function indexEnd = createCalibrationExperiments600A(...
                       auroraConfigInput,...
                       settingsExperiment)
 
+useMinimalDataRecording=1;
 
 nIsometricTrials = 2;
 nPassiveImpedanceTrials = 2;
@@ -93,6 +94,8 @@ jsonProtocolTrialArray = cell(nIsometricTrials,1);
 fileCount=indexStart;
 
 for idxIso=1:1:nIsometricTrials
+
+
   blockName='active';
 
   if(~isempty(settingsExperiment))
@@ -116,6 +119,9 @@ for idxIso=1:1:nIsometricTrials
   larbFileName = getTrialName(seriesName,idx,blockName,startLength,...
                   auroraConfig.defaultLengthUnit,[dateId,'_larb'],'.dat');
   
+  programMetaData=getEmptyProgramMetaDataStruct600A(...
+                    fullfile(codeLabelDir,fnameLabels));
+
   jsonProtocolTrialArray(idx) = {fnameMetaData};
 
   jsonMetaData = struct('data',[],'protocol',[],...
@@ -141,56 +147,83 @@ for idxIso=1:1:nIsometricTrials
   fid = fopen(fullfile(codeProtocolDir,fname),'w');
   fidLabel = fopen(fullfile(codeLabelDir,fnameLabels),'w');
   
-  if(exist('segmentMetaDataArray','var'))
-    clear('segmentMetaDataArray');
-  end
-
-  segmentMetaDataArray(1) = ...
-      struct('type','','duration',[0,0],'meta_data',[]);
 
 
   %%
   % 0. Write the preamble
   %%
-  
-  lineCount=0;
-  [startTime,lineCount] = writePreamble600A(fid,lineCount,auroraConfig);
+  enableDataRecording=0;
+  [programMetaData, enableSegmentMetaDataArray] = ...
+    writePreamble600AUpd(fid,lineCount,auroraConfig,programMetaData,...
+                         enableDataRecording);
 
   %%
   % 1. Activate 
   %%
-    [endTime, lineCount] = ...
-        writeActivationBlock600A(fid, startTime, 'ms', lineCount, auroraConfig);
-    
-    endActivation = endTime + auroraConfig.bath.activationDuration;
-    
-    fprintf(fidLabel,'%s,%1.6f,%1.6f\n','Pre-Activation',startTime,endTime);
-    fprintf(fidLabel,'%s,%1.6f,%1.6f\n','Activation',endTime,endActivation);
-    
-    startTime = endActivation;
-    lineCount = lineCount+1;
+  [programMetaData, activationSegmentMetaDataArray] = ...
+    writeActivationBlock600AUpd(fid, auroraConfig, programMetaData,...
+                                useMinimalDataRecording);  
 
   %%
   % 2. SL Trigger 
   %%
-    slTriggerOptions = getCommandFunctionOptions600A('SL-Trigger',auroraConfig);
-    slTriggerOptions(1).value=10;
-    nextStartTime = writeControlFunction600A(fid,...
-                      startTime,auroraConfig.defaultTimeUnit,...
-                      'SL-Trigger',slTriggerOptions,auroraConfig);    
+  slTriggerStartTime = programMetaData.nextStartTime ...
+                     + auroraConfig.bath.minimumActivationDuration;
 
-    endTime = nextStartTime + auroraConfig.bath.activationDuration;
-    lineCount = lineCount+1;
-
-    idxSeg=1;
-    startTriggerTime = startTime+slTriggerOptions(1).value;
-    endTriggerTime = startTriggerTime...
-                    +settingsCalibration.defaultSLTriggerWaitTimeS*scaleTime;
+  %%
+  % Data enable
+  %%
+  if(programMetaData.dataEnabled==0)
+    dataEnableOptions = ...
+        getCommandFunctionOptions600A('Data-Enable',auroraConfig);
+  
     isActive=1;
-    segmentMetaDataArray(idxSeg).type='SL-Trigger';
-    segmentMetaDataArray(idxSeg).(timeFieldName) = [startTriggerTime,endTriggerTime];
-    segmentMetaDataArray(idxSeg).meta_data.is_active = isActive;
+    startTime=slTriggerStartTime;
 
+    [programMetaData,fcnMetaData] =  ...
+        writeControlFunction600AUpd(...
+            fid,...
+            isActive,...
+            startTime,...
+            auroraConfig.defaultTimeUnit,...
+            'Data-Enable',...
+            dataEnableOptions,...
+            [],...
+            auroraConfig,...
+            programMetaData,...
+            0);
+    slTriggerStartTime=slTriggerStartTime+programMetaData.nextStartTime;
+  end
+
+  %%
+  % SL Trigger
+  %%
+
+  slTriggerOptions = ...
+    getCommandFunctionOptions600A('SL-Trigger',auroraConfig);
+
+  slTriggerOptions(1).value=10;
+  
+  isActive=1;
+  startTime=slTriggerStartTime;
+
+  [programMetaData,slTriggerMetaData] =  ...
+      writeControlFunction600AUpd(...
+          fid,...
+          isActive,...
+          startTime,...
+          auroraConfig.defaultTimeUnit,...
+          'SL-Trigger',...
+          slTriggerOptions,...
+          [],...
+          auroraConfig,...
+          programMetaData,...
+          1);
+  
+
+  if(programMetaData.dataEnabled==1 && useMinimalDataRecording==1)
+
+  end
 
   %%
   % 3. Deactivate 
@@ -210,12 +243,19 @@ for idxIso=1:1:nIsometricTrials
   success = 1;
   assert(lineCount < auroraConfig.maximumNumberOfCommands,...
       'Error: maximumNumberOfCommandsExceeded');
-  
+   
   fileCount = fileCount+1;  
 
   %%
-  % Write the meta data
+  % Update and Write the meta data
   %%
+  if(exist('segmentMetaDataArray','var'))
+    clear('segmentMetaDataArray');
+  end
+
+  segmentMetaDataArray(1) = ...
+      struct('type','','duration',[0,0],'meta_data',[]);
+
   jsonMetaData.segments = segmentMetaDataArray;   
   jsonMetaData.experiment.title = '';
   

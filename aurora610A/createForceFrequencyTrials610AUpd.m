@@ -160,7 +160,7 @@ for idxS = 1:1:length(expConfig.tetanus.pulseFrequency)
                                       expFolders.blockLabelsFolderName,...
                                       [trialFileNameNoExt,'.csv']);
 
-    programMetaData = getEmptyProgramMetaDataStruct(trialBlockLabelFilePath);
+    programMetaData = getEmptyProgramMetaDataStruct610A(trialBlockLabelFilePath);
     programMetaData = writePreamble610A(fid,auroraConfigLocal,programMetaData);
 
     jsonMetaData = struct('segments',[],'experiment',[]);
