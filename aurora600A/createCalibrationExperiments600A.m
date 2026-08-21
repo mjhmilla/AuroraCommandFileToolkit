@@ -6,10 +6,9 @@ function indexEnd = createCalibrationExperiments600A(...
                       sinSeries,...
                       writeProtocolHeader,...
                       projectFolders,...
-                      auroraConfigInput,...
+                      auroraConfigWaveSet,...
+                      auroraConfigLowRes,...
                       settingsExperiment)
-
-useMinimalDataRecording=1;
 
 nIsometricTrials = 2;
 nPassiveImpedanceTrials = 2;
@@ -17,14 +16,40 @@ nActiveImpedanceTrials  = 1;
 nRigorImpedanceTrials   = 1;
 nFixedImpedanceTrials   = 1;
 
+%%
+% Basic input checking
+%%
+
+assert(strcmp(auroraConfigWaveSet.defaultTimeUnit,'ms'),...
+       'Error: printed time values configured for ms only.');
+assert(strcmp(auroraConfigWaveSet.defaultLengthUnit,'Lo'),...
+       'Error: printed length values configured for Lo only.');
+assert(strcmp(auroraConfigWaveSet.defaultFrequencyUnit,'Hz'),...
+       'Error: printed frequency values configured for Hz only.');
+
+
+assert(strcmp(auroraConfigWaveSet.defaultTimeUnit,...
+              auroraConfigLowRes.defaultTimeUnit),...
+  'Error: both auroraConfig structs need the same time units');
+assert(strcmp(auroraConfigWaveSet.defaultLengthUnit,...
+               auroraConfigLowRes.defaultLengthUnit),...
+  'Error: both auroraConfig structs need the same length units');
+assert(strcmp(auroraConfigWaveSet.defaultFrequencyUnit,...
+               auroraConfigLowRes.defaultFrequencyUnit),...
+  'Error: both auroraConfig structs need the same frequency units');
+
 
 
 %%
 % Setup files
 %%
-timeFieldName = ['time_',auroraConfigInput.defaultTimeUnit];
-bandwidthFieldName = ['bandwidth_',auroraConfigInput.defaultFrequencyUnit];
-amplitudeFieldName = ['amplitude_',auroraConfigInput.defaultLengthUnit];        
+
+timeFieldName = ['time_',auroraConfigWaveSet.defaultTimeUnit];
+
+bandwidthFieldName = ...
+    ['bandwidth_',auroraConfigWaveSet.defaultFrequencyUnit];
+amplitudeFieldName = ...
+    ['amplitude_',auroraConfigWaveSet.defaultLengthUnit];        
 
 
 assert(~isempty(seriesName),...
@@ -33,8 +58,17 @@ assert(~isempty(seriesName),...
 nameMod='';
 nameAppend = ['_',seriesName,'_impedance_cal'];
 
-[codeDir, codeProtocolDir, codeLabelDir,dateId] = ...
-    getTrialDirectories2026(projectFolders,nameAppend,settingsExperiment);
+[codeDir, codeProtocolDir, codeWavesDir, codeLabelDir,dateId] = ...
+    getTrialDirectories600A(projectFolders,nameAppend,settingsExperiment);
+
+waveDir = fullfile(codeDir,'wave');
+
+
+trialFileFolderSettings.codeDir        = codeDir;
+trialFileFolderSettings.codeWavesDir   = codeWavesDir;
+trialFileFolderSettings.codeProtocolDir= codeProtocolDir;
+trialFileFolderSettings.codeLabelDir   = codeLabelDir;
+trialFileFolderSettings.dateId         = dateId;
 
 fidProtocol = [];
 
@@ -53,221 +87,154 @@ end
 assert(length(stochasticWaveSet)==1,...
     'Error: stochasticWaveSet should only have one element');
 
-%%
-% Check (some) of the inputs
-%%
-success=0;
-assert(strcmp(auroraConfigInput.defaultTimeUnit,'ms'),...
-       'Error: printed time values configured for ms only.');
-assert(strcmp(auroraConfigInput.defaultLengthUnit,'Lo'),...
-       'Error: printed length values configured for Lo only.');
-assert(strcmp(auroraConfigInput.defaultFrequencyUnit,'Hz'),...
-       'Error: printed frequency values configured for Hz only.');
-
-%%
-% Experiment configuration
-%%
-
-scaleTime=1;
-switch auroraConfigInput.defaultTimeUnit
-    case 's'
-        scaleTime=1;
-    case 'ms'
-        scaleTime=1000;
-    otherwise
-        assert(0,'Error: Unrecognized time unit');
-end
-
-
-auroraConfigIso=auroraConfigInput;
-auroraConfigIso.useRelativeUnits=0;
-auroraConfigIso.analogToDigitalSampleRateHz=100;
-
-auroraConfigZ  = auroraConfigInput;
 
 %%
 % Isometric trials
 %%
-auroraConfig = auroraConfigIso;
 
-jsonProtocolTrialArray = cell(nIsometricTrials,1);
+
+jsonFileNameArray = [];
 fileCount=indexStart;
 
+
 for idxIso=1:1:nIsometricTrials
+  blockName='screen';
+  startingLength = settingsCalibration.defaultLength;
+  startingBathId = auroraConfigLowRes.bath.passive;
 
-
-  blockName='active';
-
-  if(~isempty(settingsExperiment))
-      idx = settingsExperiment.trialOrder(fileCount);
-      idxStr = getTrialIndexString(idx);        
-  else
-      idx=fileCount;
-      idxStr = getTrialIndexString(idx);
-  end
-      
-  startLength = settingsCalibration.defaultLength;
-  takePhoto   = '';
-  fname       = getTrialName(seriesName,idx,blockName,startLength,...
-                  auroraConfig.defaultLengthUnit,dateId,'.pro');
-  fnameOutput = getTrialName(seriesName,idx,blockName,startLength,...
-                  auroraConfig.defaultLengthUnit,dateId,'.dat');
-  fnameMetaData = getTrialName(seriesName,idx,blockName,startLength,...
-                  auroraConfig.defaultLengthUnit,dateId,'.json');
-  fnameLabels = getTrialName(seriesName,idx,blockName,startLength,...
-                  auroraConfig.defaultLengthUnit,[dateId,'_labels'],'.csv');
-  larbFileName = getTrialName(seriesName,idx,blockName,startLength,...
-                  auroraConfig.defaultLengthUnit,[dateId,'_larb'],'.dat');
-  
-  programMetaData=getEmptyProgramMetaDataStruct600A(...
-                    fullfile(codeLabelDir,fnameLabels));
-
-  jsonProtocolTrialArray(idx) = {fnameMetaData};
-
-  jsonMetaData = struct('data',[],'protocol',[],...
-                        'segments',[],'experiment',[]);
-
-  jsonMetaData.data.file = {'data',fnameOutput};
-  if(~isempty(settingsExperiment))
-      measurementFolder=settingsExperiment.dataPathSha256;
-      [status,cmdout] =  system(['sha256sum ',fullfile(measurementFolder,fnameOutput)]);
-      i0 = strfind(cmdout,' ');        
-      i0=i0-1;
-      sha256Sum = cmdout;
-      sha256Sum = sha256Sum(1,1:i0);            
-      jsonMetaData.data.sha256 = sha256Sum;
-  else
-      jsonMetaData.data.sha256 = 'MANUALLY_UPDATE_AFTER_EXPERIMENT';
-  end
-  jsonMetaData.protocol.file = {'protocols',fname};
-  fprintf(fidProtocol,'%s,%s,%1.2f,%s,%s,%s,%s\n',...
-      idxStr,seriesName,startLength,takePhoto, blockName,fname,...
-      ['Load arb wave 1 with: ',larbFileName]);
-
-  fid = fopen(fullfile(codeProtocolDir,fname),'w');
-  fidLabel = fopen(fullfile(codeLabelDir,fnameLabels),'w');
-  
-
-
-  %%
-  % 0. Write the preamble
-  %%
-  enableDataRecording=0;
-  [programMetaData, enableSegmentMetaDataArray] = ...
-    writePreamble600AUpd(fid,lineCount,auroraConfig,programMetaData,...
-                         enableDataRecording);
-
-  %%
-  % 1. Activate 
-  %%
-  [programMetaData, activationSegmentMetaDataArray] = ...
-    writeActivationBlock600AUpd(fid, auroraConfig, programMetaData,...
-                                useMinimalDataRecording);  
-
-  %%
-  % 2. SL Trigger 
-  %%
-  slTriggerStartTime = programMetaData.nextStartTime ...
-                     + auroraConfig.bath.minimumActivationDuration;
-
-  %%
-  % Data enable
-  %%
-  if(programMetaData.dataEnabled==0)
-    dataEnableOptions = ...
-        getCommandFunctionOptions600A('Data-Enable',auroraConfig);
-  
-    isActive=1;
-    startTime=slTriggerStartTime;
-
-    [programMetaData,fcnMetaData] =  ...
-        writeControlFunction600AUpd(...
-            fid,...
-            isActive,...
-            startTime,...
-            auroraConfig.defaultTimeUnit,...
-            'Data-Enable',...
-            dataEnableOptions,...
-            [],...
-            auroraConfig,...
-            programMetaData,...
-            0);
-    slTriggerStartTime=slTriggerStartTime+programMetaData.nextStartTime;
-  end
-
-  %%
-  % SL Trigger
-  %%
-
-  slTriggerOptions = ...
-    getCommandFunctionOptions600A('SL-Trigger',auroraConfig);
-
-  slTriggerOptions(1).value=10;
-  
-  isActive=1;
-  startTime=slTriggerStartTime;
-
-  [programMetaData,slTriggerMetaData] =  ...
-      writeControlFunction600AUpd(...
-          fid,...
-          isActive,...
-          startTime,...
-          auroraConfig.defaultTimeUnit,...
-          'SL-Trigger',...
-          slTriggerOptions,...
-          [],...
-          auroraConfig,...
-          programMetaData,...
-          1);
-  
-
-  if(programMetaData.dataEnabled==1 && useMinimalDataRecording==1)
-
-  end
-
-  %%
-  % 3. Deactivate 
-  %%
-    startTime=endTriggerTime;
-    [endTime, lineCount] = ...
-        writeDeactivationBlock600A(fid, startTime, lineCount, auroraConfig);
-    
-    startTime=endTime+auroraConfig.minimumWaitTime;            
-
-  %%
-  % 4. Stop
-  %%
-  [endTime, lineCount] = ...
-  writeClosingBlock600A(fid, startTime, lineCount, auroraConfig);
-
-  success = 1;
-  assert(lineCount < auroraConfig.maximumNumberOfCommands,...
-      'Error: maximumNumberOfCommandsExceeded');
-   
-  fileCount = fileCount+1;  
-
-  %%
-  % Update and Write the meta data
-  %%
-  if(exist('segmentMetaDataArray','var'))
-    clear('segmentMetaDataArray');
-  end
-
-  segmentMetaDataArray(1) = ...
-      struct('type','','duration',[0,0],'meta_data',[]);
-
-  jsonMetaData.segments = segmentMetaDataArray;   
-  jsonMetaData.experiment.title = '';
-  
-  jsonMetaDataEncoded = jsonencode(jsonMetaData);
-  fidJson = fopen(fullfile(codeDir,fnameMetaData),'w');
-  fprintf(fidJson,jsonMetaDataEncoded);        
-  fclose(fidJson);
-  
-  fclose(fid);
-  fclose(fidLabel);    
-  
+  jsonFileNames=createActivePassiveScreeningTrial600A(...    
+                  fileCount,...                    
+                  seriesName,...
+                  blockName,...
+                  startingLength,...
+                  startingBathId,...
+                  fidProtocol,...
+                  auroraConfigLowRes,...
+                  trialFileFolderSettings,...
+                  settingsExperiment);
+  jsonFileNameArray = [jsonFileNameArray,jsonFileNames];
+  fileCount=fileCount+1;
 end
+
+%%
+% Impedance trials
+%%
+zTrialSettingsDefault.useMinimalData    = 1;
+
+zTrialSettingsDefault.start.bathNumber  = nan;
+zTrialSettingsDefault.start.length      = nan;
+zTrialSettingsDefault.target.bathNumber = nan;
+zTrialSettingsDefault.target.length     = nan;
+zTrialSettingsDefault.length.isRelative = 0;
+zTrialSettingsDefault.length.ratePerSecond = 0.1;
+zTrialSettingsDefault.passiveRelaxationTime = 5*60*auroraConfigWaveSet.oneSecond; %5 min.
+
+zTrialSettingsDefault.sineSeries.amplitude = 0.002;
+zTrialSettingsDefault.Larb.amplitude    = 0.002;
+
+bwStr = ['',num2str(round(stochasticWaveSet(1).metadata.bandwidth_Hz)),'Hz'];
+ampStr= sprintf('%1.3f%s',zTrialSettingsDefault.Larb.amplitude,...
+                          auroraConfigWaveSet.defaultLengthUnit);
+id=strfind(ampStr,'.');
+ampStr(id)='p';
+
+zTrialSettingsDefault.Larb.fileName = ['larb_',dateId,'_',bwStr,'_',ampStr];
+zTrialSettingsDefault.Larb.id = nan;
+zTrialSettingsDefault.Larb.writeFile=0;
+
+stepSeries.steps  = [-0.12,0.12,0.12,-0.12];
+stepSeries.isRelative=1;
+
+
+for idxZ = 1:1:6
+
+  zTrialSettings=zTrialSettingsDefault;
+  switch idxZ
+    case 1
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.4;
+
+      zTrialSettings.Larb.id=1;
+      zTrialSettings.Larb.writeFile = 1;
+
+    case 2
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.5;
+
+      zTrialSettings.Larb.id=2;
+      zTrialSettings.Larb.writeFile = 1;
+
+    case 3
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.6;
+
+      zTrialSettings.Larb.id=3;
+      zTrialSettings.Larb.writeFile = 1;
+
+    case 4
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.active;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.0;
+
+      zTrialSettings.Larb.id=4;
+      zTrialSettings.Larb.writeFile = 1;
+
+    case 5
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.rigor;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.rigor;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.0;
+
+      zTrialSettings.Larb.id=4;
+      zTrialSettings.Larb.writeFile = 0;
+
+    case 6
+      zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.Karnovsky;
+      zTrialSettings.target.bathNumber = auroraConfigWaveSet.bath.Karnovsky;
+      zTrialSettings.start.length = 1.0;
+      zTrialSettings.target.length= 1.0;
+
+      zTrialSettings.Larb.id=4;
+      zTrialSettings.Larb.writeFile = 0;
+
+    otherwise 
+        assert(0,'Error: exceeded the number of impedance cases');
+  end
+
+  lenStr= sprintf('%1.2f%s',zTrialSettings.target.length,...
+                            auroraConfigWaveSet.defaultLengthUnit);
+  id=strfind(lenStr,'.');
+  lenStr(id)='p';
+
+  idStr = num2str(zTrialSettings.Larb.id);
+
+  zTrialSettings.Larb.fileName = ...
+    [zTrialSettings.Larb.fileName,'_',lenStr,'_',idStr,'.dat'];
+
+  jsonFileNames = createImpedanceCalibrationTrial600A(...    
+                                fileCount,...                    
+                                seriesName,...
+                                blockName,...
+                                stochasticWaveSet,...
+                                sinSeries,...
+                                stepSeries,...
+                                zTrialSettings,...
+                                fidProtocol,... 
+                                auroraConfigWaveSet,...
+                                trialFileFolderSettings,...
+                                settingsExperiment);
+  jsonFileNameArray = [jsonFileNameArray,jsonFileNames];
+  fileCount=fileCount+1; 
+end
+
+
 
 %%
 % Write the experiment-level meta data files
@@ -275,7 +242,7 @@ end
 fclose(fidProtocol);
 
 
-protocolMetaData.trials = jsonProtocolTrialArray;
+protocolMetaData.trials = jsonFileNameArray;
 
 protocolMetaData.experiment.date = 'YYYY/MM/DD';
 protocolMetaData.experiment.location = 'University of Stuttgart';
@@ -311,5 +278,7 @@ fidJsonProtocol = fopen(fnameJsonProtocol,'w');
 fprintf(fidJsonProtocol,jsonProtocolMetaData);
 fclose(fidJsonProtocol);
 
-indexEnd = idx;
+indexEnd=indexStart+fileCount;
+
+
 

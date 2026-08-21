@@ -1,0 +1,23 @@
+function programMetaData = ...
+    writeClosingBlock600AUpd(fid, startTime, auroraConfig, programMetaData)
+
+flag_printMetaDataToCsv=1;
+
+if(programMetaData.dataEnable==1)
+  disableOptions = getCommandFunctionOptions600A('Data-Disable',auroraConfig);
+
+  [programMetaData,fcnMetaData] =  ...
+      writeControlFunction600AUpd(...
+          fid, startTime,'Data-Disable',disableOptions,...
+          [], auroraConfig, programMetaData, flag_printMetaDataToCsv);
+end
+
+stopOptions = getCommandFunctionOptions600A('Stop',auroraConfig);
+startTime   = programMetaData.nextStartTime;
+
+[programMetaData,fcnMetaData] =  ...
+    writeControlFunction600AUpd(...
+        fid, startTime,'Stop',stopOptions,...
+        [], auroraConfig, programMetaData, flag_printMetaDataToCsv);
+
+

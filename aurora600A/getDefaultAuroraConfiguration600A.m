@@ -26,8 +26,15 @@ auroraConfig.numberOfEmptyCommandsPrepended = 10;
 auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 %  This is the rate Aurora's A/D converter will sample signals
 
+auroraConfig.analogToDigitalSampleTimeS  = 1/sampleFrequencyHz;
+
+
+auroraConfig.minimumLengthResolution_um = 0.5;
+auroraConfig.minimumForceResolution_uN  = 0.5;
+
 auroraConfig.minimumWaitTime = 0.1; 
 %  The Aurora system needs a pause time of at least 0.1 ms between ramps
+
 
 auroraConfig.lengthStepResponseTime = 1;
 %  This is a (very) conservative guess
@@ -49,21 +56,27 @@ s2ms = 1000;
 auroraConfig.minimumNormalizedLength    = minLengthLo;
 auroraConfig.maximumNormalizedLength    = maxLengthLo;
 auroraConfig.pdDeadBand                 = 0;
+
 auroraConfig.bath.changeTime            = 0.5*s2ms;
 auroraConfig.bath.preActivationDuration = 60*s2ms;
 auroraConfig.bath.minimumActivationDuration = minActivationTimeS*s2ms;
 auroraConfig.bath.activationDuration    = 40*s2ms; %20
 
+bathOptionFields = fields(auroraConfig.bath);
+
 auroraConfig.bath.passive               = 1;
 auroraConfig.bath.preActivation         = 2;
 auroraConfig.bath.active                = 3;
-auroraConfig.bath.sampleTime            = 1*s2ms;
+auroraConfig.bath.rigor                 = 4;
+auroraConfig.bath.Karnovsky             = 5;
+
 
 auroraConfig.defaultLengthUnit      = 'Lo';
 auroraConfig.defaultForceUnit       = 'Fmax';
 auroraConfig.defaultTimeUnit        = 'ms';
 auroraConfig.defaultFrequencyUnit   = 'Hz';
 
+auroraConfig.oneSecond = 1*s2ms;
 
 auroraConfig.scaleFrequencyUnit     = 0.001; %To put it in cycles/millisecond 
 
@@ -75,7 +88,10 @@ auroraConfig.maximumSpeedInDefaultUnits = ...
 auroraConfig.maximumRampSpeedInDefaultUnits = ...
     auroraConfig.maximumRampSpeedInLPS/1000; %lengths per millisecond
 
-auroraConfig.labels = getMetaDataFieldNames600A(auroraConfig);
+auroraConfig.labels = getMetaDataFieldNames600A(auroraConfig,bathOptionFields);
+
+auroraConfig.structMetaData=...
+    struct('type','',auroraConfig.labels.time,[0,0],'meta_data',[]);
 
 assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
     ['Error: The 600A code base has only been tested using', ...

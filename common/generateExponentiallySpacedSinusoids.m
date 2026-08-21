@@ -33,7 +33,7 @@ sinSeries = struct('frequencyHz',zeros(n,1),...
                    'sampleError',zeros(n,1),...
                    'periodError',zeros(n,1),...
                    'angularDegreeError',zeros(n,1),...                   
-                   'duration',zeros(n,1));
+                   'durationS',zeros(n,1));
 
 
 
@@ -114,7 +114,7 @@ for i=1:1:n
   sinSeries.sampleError(i)        = (d*ts-round(d*ts));
   sinSeries.periodError(i)        = sinSeries.sampleError(i)/(1/rf2);
   sinSeries.angularDegreeError(i) = sinSeries.periodError(i)*(180/pi);
-  sinSeries.duration(i)=d;
+  sinSeries.durationS(i)=d;
 
   if(verbose==1)
 

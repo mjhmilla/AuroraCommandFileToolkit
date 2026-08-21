@@ -18,7 +18,7 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal   = 1;
+flag_generateRandomSignal               = 0;
 flag_generateExponentiallySpacedSinusoids=1;
 
 % Experiments to generate
@@ -150,6 +150,7 @@ rubber.maxNormalizedSpeedLPS      = 2.0;
 ratMuscleName                   = 'EDL';
 approximateSampleLengthInMM     = 1.5;
 sampleFrequency                 = 1000;
+sampleFrequencySlow             = 100;
 minNormLength                   = 0.5;
 maxNormLength                   = 1.85;
 
@@ -158,7 +159,7 @@ if(flag_generateCalibrationProtocol==1)
 end
 
 minActivationTimeS=nan;
-commentStr = ''
+commentStr = '';
 switch ratMuscleName
     case 'SOL'
         minActivationTimeS = 5; %2026/08/20 SW says 3-5 seconds
@@ -181,6 +182,17 @@ auroraConfig = getDefaultAuroraConfiguration600A(...
                     maxNormLength,...
                     maxNormalizedShorteningSpeedLPS,...
                     commentStr);
+
+
+auroraConfigSlow = getDefaultAuroraConfiguration600A(...
+                    minActivationTimeS,...
+                    approximateSampleLengthInMM,...
+                    sampleFrequencySlow,...
+                    minNormLength,...
+                    maxNormLength,...
+                    maxNormalizedShorteningSpeedLPS,...
+                    commentStr);
+
 
 %%
 % Experiment settings
@@ -221,8 +233,10 @@ if(flag_generateExponentiallySpacedSinusoids==1)
        'sineSeriesExponentiallySpaced.mat'),...
        'sineSeriesExponentiallySpaced','-mat');    
 else
-  load(fullfile(projectFolders.output_structs,...
-       'sineSeriesExponentiallySpaced.mat'));    
+  filePath=fullfile(projectFolders.output_structs,...
+          'sineSeriesExponentiallySpaced.mat');
+  load(filePath);    
+  fprintf('\nSine-series file loaded\n\t%s\n\n',filePath);
   
 end
 
@@ -429,11 +443,24 @@ if(flag_generateRandomSignal==1)
                     'fig_randomLarbWave.fig'));        
 
 else
-    load(fullfile(projectFolders.output_structs,'squareStochasticWave.mat'));
-    load(fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat'));
-    load(fullfile(projectFolders.output_structs,'sineStochasticWave.mat'));
-    load(fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat'));
-    load(fullfile(projectFolders.output_structs,'larbStochasticWaveSet.mat'));
+    filePath01=fullfile(projectFolders.output_structs,'squareStochasticWave.mat');
+    filePath02=fullfile(projectFolders.output_structs,'squarePreconditioningWave.mat');
+    filePath03=fullfile(projectFolders.output_structs,'sineStochasticWave.mat');
+    filePath04=fullfile(projectFolders.output_structs,'sinePreconditioningWave.mat');
+    filePath05=fullfile(projectFolders.output_structs,'larbStochasticWaveSet.mat');
+
+    load(filePath01);
+    load(filePath02);
+    load(filePath03);
+    load(filePath04);
+    load(filePath05);
+
+  fprintf('\n\nsquare-stochastic-wave file loaded\n\t%s\n',filePath01);
+  fprintf('square-preconditioning-wave file loaded\n\t%s\n',filePath02);
+  fprintf('sine-stochastic-wave file loaded\n\t%s\n',filePath03);
+  fprintf('sine-preconditioning-wave file loaded\n\t%s\n',filePath04);
+  fprintf('larb-preconditioning-wave file loaded\n\t%s\n\n',filePath05);
+
 
 end
 
@@ -480,11 +507,12 @@ if(flag_generateCalibrationProtocol==1)
               indexStart,...
               'zcal',...              
               expSettings.impedanceCalibration,...              
-              larbStochasticWaveSet,...
+              stochasticWaves,...
               sineSeriesExponentiallySpaced,...
               writeProtocolHeader,...
               projectFolders,...
               auroraConfig,...
+              auroraConfigSlow,...
               settingsExperiment);
 
 end

@@ -1,4 +1,5 @@
-function programMetaData = getEmptyProgramMetaDataStruct600A(fullFilePathSegmentDataFile)
+function programMetaData = getEmptyProgramMetaDataStruct600A(...
+                            fullFilePathSegmentDataFile)
 
 
 programMetaData.controlFunction.startTime   = nan;
@@ -12,3 +13,4 @@ programMetaData.lineCount                   = nan;
 programMetaData.labelFileHandle = fopen(fullFilePathSegmentDataFile,'w');
 
 programMetaData.dataEnable = nan;
+programMetaData.bathNumber = nan;

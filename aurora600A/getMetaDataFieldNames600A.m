@@ -1,4 +1,5 @@
-function metaDataFieldNames = getMetaDataFieldNames600A(auroraConfig)
+function metaDataFieldNames = getMetaDataFieldNames600A(auroraConfig,...
+                                                        bathOptionFields)
 
 metaDataFieldNames.time   = ...
   ['time_',auroraConfig.defaultTimeUnit];
@@ -59,8 +60,36 @@ metaDataFieldNames.triggerPatternNumber = ...
 
 metaDataFieldNames.portNumber=['port_number'];
 
+metaDataFieldNames.pointCount = ['point_count'];
 metaDataFieldNames.bathNumber=['bath_number'];
+metaDataFieldNames.bathName  =['bath'];
 
 metaDataFieldNames.numberOfRepetitions=['number_of_repetitions'];
 
 metaDataFieldNames.fileName=['file_name'];
+
+tmpNames = fields(auroraConfig.bath);
+
+metaDataFieldNames.bathNames=[];
+
+for i=1:1:length(tmpNames)
+  isOptionField=0;
+  for j=1:1:length(bathOptionFields)
+    if(strcmp(tmpNames{i},bathOptionFields{j}))
+      isOptionField=1;
+    end
+  end
+  if(isOptionField==0)
+    metaDataFieldNames.bathNames= ...
+      [metaDataFieldNames.bathNames, tmpNames(i)];
+  end
+end
+
+for i=1:1:length(metaDataFieldNames.bathNames)
+  assert(auroraConfig.bath.(metaDataFieldNames.bathNames{i})==i,...
+         'Error: mis-match between number and name order of the baths');
+end
+
+
+
+

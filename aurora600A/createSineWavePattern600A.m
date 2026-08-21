@@ -280,10 +280,6 @@ frequencyVec   = frequencyVec(1:j,1);
 amplitudeVec   = amplitudeVec(1:j,1);
 durationVec    = durationVec(1:j,1);
 
-
-assert(functionOption(2).isRelative==1,...
-       'Error: Length-Sine length option must have isRelative=1');
-
 controlFunctions = struct('controlFunction','','waitDuration',[],'optionValues',[],'options',[]);
 controlFunctions.controlFunction = 'Length-Sine';
 controlFunctions.waitDuration  = waitVec;
