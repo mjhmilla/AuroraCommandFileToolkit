@@ -1,6 +1,7 @@
 function sinSeries = generateExponentiallySpacedSinusoids(...
                         sampleFrequencyHz,...
                         settings,...
+                        auroraConfig,...
                         verbose)
 
 ts            = sampleFrequencyHz;
@@ -10,7 +11,7 @@ n             = settings.numberOfSinusoids;
 maxDuration   = settings.maxSinusoidDurationS;
 maxCycleCount = settings.maxCycleCount;
 
-nDigits       = settings.numberOfDigits;
+nDigits       = auroraConfig.numberOfDigits;
 
 a = 10^(log10(maxFrequency/minFrequency)/(n-1));
 
@@ -42,7 +43,7 @@ tt=0;
 for i=1:1:n
 
   f = minFrequency*a^(i-1);
-  mag = max(ceil(log10(f)),1);
+  mag = max(floor(log10(f))+1,1);
   nRound = nDigits-mag;
   rf= round(f,(nRound),'decimals');
 
@@ -51,9 +52,12 @@ for i=1:1:n
   rs = round(s);
 
   f2 = 1/(rs/ts);
-  mag = max(ceil(log10(f2)),1);
+  mag = max(floor(log10(f2))+1,1);
   nRound = nDigits-mag;
-  rf2= round(f2,(nRound),'decimals');
+
+  %rf2= round(f2,(nRound),'decimals');
+  [rf2,rf2Str] = convertToAuroraFloatingPointFormat600A(...
+                  f2,'frequency','Hz',0,auroraConfig);
 
   rt = 1/rf2;
   c = min([round(maxDuration*rf2),maxCycleCount]);
@@ -77,10 +81,12 @@ for i=1:1:n
     for j=smin:1:smax
       rs = round(j);    
       f2 = 1/(rs/ts);
-      mag = max(ceil(log10(f2)),1);
+      mag = max(floor(log10(f2))+1,1);
       nRound = nDigits-mag;
-      rf2= round(f2,(nRound),'decimals');
-    
+      %rf2= round(f2,(nRound),'decimals');
+      [rf2,rf2Str] = convertToAuroraFloatingPointFormat600A(...
+                  f2,'frequency','Hz',0,auroraConfig);
+
       rt = 1/rf2;
       c = min([round(maxDuration*rf2),maxCycleCount]);
       d        = c*rt;
@@ -94,7 +100,7 @@ for i=1:1:n
 
     rs = sBest;    
     f2 = 1/(rs/ts);
-    mag = max(ceil(log10(f2)),1);
+    mag = max(floor(log10(f2))+1,1);
     nRound = nDigits-mag;
     rf2= round(f2,(nRound),'decimals');
   
@@ -120,7 +126,7 @@ for i=1:1:n
 
     dataV = [i,f,rf2,(f-rf2),sinSeries.periodError(i)];
     strFormat = '%i\t%1.6e';
-    t1 = max(ceil(log10(rf2+1)),1);
+    t1 = max(floor(log10(rf2))+1,1);
     t2 = nDigits-t1;
     strFormat = [strFormat,['\t%',num2str(t1),'.',num2str(t2),'f']];
     strFormat = [strFormat,'\t%1.5e\t%1.5e\t'];

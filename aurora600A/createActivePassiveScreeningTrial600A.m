@@ -203,6 +203,10 @@ fileCount = fileCount+1;
 %%
 % Update and Write the meta data
 %%
+timingMetaDataArray=getTimingMetaData(programMetaData,auroraConfig);
+segmentMetaDataArray=[segmentMetaDataArray,timingMetaDataArray];
+
+
 
 jsonMetaData.segments = segmentMetaDataArray;   
 jsonMetaData.experiment.title = 'Fiber Screening Test';

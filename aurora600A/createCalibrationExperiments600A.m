@@ -158,6 +158,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=1;
       zTrialSettings.Larb.writeFile = 1;
+      blockName='zPassive';
 
     case 2
       zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
@@ -167,6 +168,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=2;
       zTrialSettings.Larb.writeFile = 1;
+      blockName='zPassive';
 
     case 3
       zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
@@ -176,6 +178,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=3;
       zTrialSettings.Larb.writeFile = 1;
+      blockName='zPassive';
 
     case 4
       zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.passive;
@@ -185,6 +188,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=4;
       zTrialSettings.Larb.writeFile = 1;
+      blockName='zActive';
 
     case 5
       zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.rigor;
@@ -194,6 +198,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=4;
       zTrialSettings.Larb.writeFile = 0;
+      blockName='zRigor';
 
     case 6
       zTrialSettings.start.bathNumber  = auroraConfigWaveSet.bath.Karnovsky;
@@ -203,7 +208,7 @@ for idxZ = 1:1:6
 
       zTrialSettings.Larb.id=4;
       zTrialSettings.Larb.writeFile = 0;
-
+      blockName='zKarnovsky';
     otherwise 
         assert(0,'Error: exceeded the number of impedance cases');
   end

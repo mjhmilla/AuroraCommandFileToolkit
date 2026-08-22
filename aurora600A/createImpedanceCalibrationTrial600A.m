@@ -36,6 +36,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
   %
   trialType = '';
   trialTitle = '';
+  commentStr='';
   lengthStr = sprintf('(%1.2f %s)',zTrialSettings.target.length,....
                                  auroraConfig.defaultLengthUnit);
 
@@ -44,20 +45,21 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
          && zTrialSettings.target.bathNumber == auroraConfig.bath.active);
     trialType='active';
     trialTitle=['Active Impedance ',lengthStr,': Step/Larb/Sine'];
+    commentStr=['Active impedance measurement at ',lengthStr];
   else
     switch zTrialSettings.start.bathNumber
       case auroraConfig.bath.passive
           trialType='passive';
           trialTitle=['Passive Impedance' ,lengthStr,': Step/Larb/Sine'];
-
+          commentStr=['Passive impedance measurement at ',lengthStr];
       case auroraConfig.bath.rigor
           trialType='rigor';
           trialTitle=['Rigor Impedance ',lengthStr,': Step/Larb/Sine'];
-
+          commentStr=['Rigor impedance measurement at ',lengthStr];
       case auroraConfig.bath.Karnovsky
           trialType='Karnovsky';      
           trialTitle=['Karnovsky Impedance ',lengthStr,': Step/Larb/Sine'];
-
+          commentStr=['Karnovsky impedance measurement at ',lengthStr];
       otherwise
         assert(0,'Error: invalid combination of starting and target baths');
     end
@@ -157,7 +159,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 
   fprintf(fidProtocol,'%s,%s,%1.2f,%s,%s,%s,%s\n',...
       idxStr,seriesName,startLength,takePhoto, blockName,fname,...
-      ['Testing if fiber is viable']);
+      commentStr);
 
   fid = fopen(fullfile(codeProtocolDir,fname),'w');
   fidLabel = fopen(fullfile(codeLabelDir,fnameLabels),'w');
@@ -174,7 +176,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
     startTime=programMetaData.nextStartTime;
     [programMetaData,fcnMetaData] = ...
         dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
   end
 
 %
@@ -209,7 +211,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       startTime=programMetaData.nextStartTime;
       [programMetaData,fcnMetaData] = ...
           dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 
     %
@@ -243,7 +245,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
       [programMetaData,fcnMetaData] = ...
           dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 
     programMetaData.nextStartTime= programMetaData.nextStartTime...
@@ -289,7 +291,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       [programMetaData,fcnMetaData] = ...
           dataEnable600A(fid,startTime,auroraConfig,programMetaData);
 
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
 
       dataDisableTime = startTime ...
                       + auroraConfig.bath.minimumActivationDuration;
@@ -316,7 +318,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       startTime=programMetaData.nextStartTime;
       [programMetaData,fcnMetaData] = ...
           dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 
     %Wait 2 x minimalActivationDuration just to be sure that the
@@ -336,7 +338,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
     startTime=programMetaData.nextStartTime;
     [programMetaData,fcnMetaData] = ...
         dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
   end
 %
 % 4b. Execute the step changes
@@ -367,7 +369,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
     startTime=programMetaData.nextStartTime+auroraConfig.oneSecond;
     [programMetaData,fcnMetaData] = ...
         dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     programMetaData.nextStartTime=programMetaData.nextStartTime ...
                                  +auroraConfig.oneSecond*2;
   end
@@ -382,7 +384,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
     startTime=programMetaData.nextStartTime;
     [programMetaData,fcnMetaData] = ...
         dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
   end
 %
 % 5b. Write the Larb command, and the Larb file
@@ -420,7 +422,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
     startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
     [programMetaData,fcnMetaData] = ...
         dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     programMetaData.nextStartTime=programMetaData.nextStartTime ...
                                  +auroraConfig.oneSecond*2;
   end
@@ -436,7 +438,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
       startTime=programMetaData.nextStartTime+auroraConfig.oneSecond*2;
       [programMetaData,fcnMetaData] = ...
           dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 
   %
@@ -465,7 +467,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
       startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
       [programMetaData,fcnMetaData] = ...
           dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-      segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 end
 
@@ -481,7 +483,7 @@ if(zTrialSettings.useMinimalData==1)
   startTime=programMetaData.nextStartTime+auroraConfig.oneSecond;
   [programMetaData,fcnMetaData] = ...
       dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-  segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+  %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
 end
 
 
@@ -511,7 +513,7 @@ segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
     startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
     [programMetaData,fcnMetaData] = ...
         dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+    %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
   end
 
 %
@@ -524,7 +526,7 @@ if(strcmp(trialType,'active'))
   [programMetaData, fcnMetaData] = ...
       writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData);
 
-  segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
+  %segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
 
 end
 
@@ -536,15 +538,23 @@ startTime=programMetaData.nextStartTime;
 programMetaData = ...
   writeClosingBlock600AUpd(fid, startTime, auroraConfig, programMetaData);
 
+segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
+
 success = 1;
 assert(programMetaData.lineCount < auroraConfig.maximumNumberOfCommands,...
     'Error: maximumNumberOfCommandsExceeded');
- 
+
+
+
 fileCount = fileCount+1;  
 
 %%
 % Update and Write the meta data
 %%
+
+timingMetaDataArray=getTimingMetaData(programMetaData,auroraConfig);
+segmentMetaDataArray=[segmentMetaDataArray,timingMetaDataArray];
+
 
 jsonMetaData.segments = segmentMetaDataArray;   
 jsonMetaData.experiment.title = trialTitle;

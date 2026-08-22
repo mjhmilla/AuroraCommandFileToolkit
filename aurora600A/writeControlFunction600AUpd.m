@@ -16,10 +16,14 @@ function [programMetaData,fcnMetaData]= ...
 % unit
 % printUnit
 
+fcnMetaData=getEmptySegmentMetaDataStruct600A(...
+              controlFunctionName,...
+              auroraConfig);
 
-fcnMetaData=struct('type',controlFunctionName, ...
-           auroraConfig.labels.time, [nan,nan],...
-           'meta_data',[]);
+% fcnMetaData=struct('type',controlFunctionName, ...
+%            auroraConfig.labels.time, [nan,nan],...
+%            'is_recorded',nan,...
+%            'meta_data',[]);
 
 
 assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
@@ -52,7 +56,7 @@ switch auroraConfig.defaultTimeUnit
 end
 
 
-[time,timeStr]=...
+[startTime,timeStr]=...
   convertToAuroraFloatingPointFormat600A(...
     startTime,'time',auroraConfig.defaultTimeUnit,0,auroraConfig);
 
@@ -257,11 +261,8 @@ switch controlFunctionName
     auroraConfig.labels.length, controlFunctionOptionsUpd(1).value,...
            'is_relative', controlFunctionOptionsUpd(1).isRelative);
 
-
     commandDuration = auroraConfig.lengthStepResponseTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
   case 'Length-Ramp'
   expectedUnits = {'length','time'};
@@ -272,11 +273,7 @@ switch controlFunctionName
                  'is_relative', controlFunctionOptionsUpd(1).isRelative,...
     auroraConfig.labels.duration, controlFunctionOptionsUpd(2).value);
 
-
     commandDuration = controlFunctionOptionsUpd(2).value;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
   case 'Length-Square'
     expectedUnits = {'frequency','length','time'};
@@ -289,10 +286,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(3).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Length-Sine'
     expectedUnits = {'frequency','length','time'};
 
@@ -303,9 +296,6 @@ switch controlFunctionName
       auroraConfig.labels.duration, controlFunctionOptionsUpd(3).value);
 
     commandDuration = controlFunctionOptionsUpd(3).value;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
   case 'Length-Sweep'
     expectedUnits = {'frequency','frequency','length','time'};
@@ -321,9 +311,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(4).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
   case 'Length-Sample'
     expectedUnits = {'integer','time'};
 
@@ -334,10 +321,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(2).value+sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Length-Hold'
     expectedUnits = {'integer'};
 
@@ -346,10 +329,6 @@ switch controlFunctionName
       auroraConfig.labels.sampleNumber, controlFunctionOptionsUpd(1).value);
 
     commandDuration = sampleTime;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'Read-Larb'
     expectedUnits = {'string','length','time'};
@@ -361,10 +340,6 @@ switch controlFunctionName
 
     commandDuration = sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Write-Larb'
     expectedUnits = {'string','length','time'};
     fcnMetaData.meta_data = ...
@@ -375,19 +350,12 @@ switch controlFunctionName
 
     commandDuration = sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Send-Larb'
     expectedUnits = {};
     fcnMetaData.meta_data = ...
       struct(       bathNameLabel, bathName);
 
     commandDuration = sampleTime;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
   case 'Length-Arb'
     expectedUnits = {'integer','frequency'};
@@ -414,11 +382,6 @@ switch controlFunctionName
 
     commandDuration = externalFileMetaData.duration_s*s2ms;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
-
   %Force functions
   case 'Force-Step'
     expectedUnits = {'force'};
@@ -429,10 +392,6 @@ switch controlFunctionName
              'is_relative', controlFunctionOptionsUpd(1).isRelative);
 
     commandDuration = auroraConfig.lengthStepResponseTime;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'Force-Ramp'
     expectedUnits = {'force','time'};
@@ -445,10 +404,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(2).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Force-Square'
     expectedUnits = {'frequency','force','time'};
 
@@ -460,10 +415,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(3).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Force-Sine'
     expectedUnits = {'frequency','force','time'};
 
@@ -474,9 +425,6 @@ switch controlFunctionName
       auroraConfig.labels.duration, controlFunctionOptionsUpd(3).value);
 
     commandDuration = controlFunctionOptionsUpd(3).value;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
   case 'Force-Sweep'
     expectedUnits = {'frequency','frequency','force','time'};
@@ -492,9 +440,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(4).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
   case 'Force-Sample'
     expectedUnits = {'integer','time'};
 
@@ -505,10 +450,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(2).value+sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'Force-Hold'
     expectedUnits = {'integer'};
 
@@ -517,10 +458,6 @@ switch controlFunctionName
       auroraConfig.labels.sampleNumber, controlFunctionOptionsUpd(1).value);
 
     commandDuration = sampleTime;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'Force-Clamp'
     expectedUnits = {'force','time','time'};
@@ -534,9 +471,6 @@ switch controlFunctionName
     commandDuration = controlFunctionOptionsUpd(2).value ...
                     + controlFunctionOptionsUpd(3).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
   %SL
   case 'SL-Step'
     expectedUnits = {'length'};
@@ -547,10 +481,6 @@ switch controlFunctionName
 
     commandDuration = auroraConfig.lengthStepResponseTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'SL-Ramp'
     expectedUnits = {'length','time'};
     fcnMetaData.meta_data = ...
@@ -559,10 +489,6 @@ switch controlFunctionName
       auroraConfig.labels.duration, controlFunctionOptionsUpd(2).value);
 
     commandDuration = controlFunctionOptionsUpd(2).value;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'SL-Sample'
     expectedUnits = {'integer','time'};
@@ -573,10 +499,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(2).value+sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
   case 'SL-Hold'
     expectedUnits = {'integer'};
     fcnMetaData.meta_data = ...
@@ -584,9 +506,6 @@ switch controlFunctionName
      auroraConfig.labels.initialDelay, controlFunctionOptionsUpd(1).value);
 
     commandDuration = controlFunctionOptionsUpd(1).value+sampleTime;
-    endTime         = startTime+commandDuration;
-    nextStartTime   = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'SL-Trigger'
     expectedUnits = {'time'};
@@ -596,9 +515,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(1).value+sampleTime;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
   case 'SL-Track'
     expectedUnits = {'bool'};
     fcnMetaData.meta_data = ...
@@ -606,10 +522,6 @@ switch controlFunctionName
      auroraConfig.labels.switchOnOff, controlFunctionOptionsUpd(1).value);
 
     commandDuration = sampleTime;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   %Stim
   case 'Stimulus'
@@ -640,9 +552,6 @@ switch controlFunctionName
     commandDuration = externalFileMetaData.duration_s*s2ms ...
                     + controlFunctionOptionsUpd(2).value;
 
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
   case 'Trigger1'
     expectedUnits = {'integer','time'};
     fcnMetaData.meta_data = ...
@@ -670,10 +579,6 @@ switch controlFunctionName
 
     commandDuration = externalFileMetaData.duration_s*s2ms ...
                     + controlFunctionOptionsUpd(2).value;
-
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'Trigger2'
     expectedUnits = {'integer','time'};
@@ -711,12 +616,17 @@ switch controlFunctionName
 
 
     commandDuration = sampleTime;
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
     assert(programMetaData.dataEnable==0,...
       'Error: attempted to call Data-Enable twice');
+
     programMetaData.dataEnable=1;
+
+    programMetaData.totalIgnoredTime = ...
+      programMetaData.totalIgnoredTime ...
+      + (startTime-programMetaData.timeOfLastDisable);
+    programMetaData.timeOfLastEnable=startTime;
+
 
   case 'Data-Disable'
     expectedUnits = {};
@@ -731,9 +641,18 @@ switch controlFunctionName
 
     programMetaData.dataEnable=0;
 
+    programMetaData.totalRecordedTime = ...
+      programMetaData.totalRecordedTime ...
+      + (startTime-programMetaData.timeOfLastEnable);
+    programMetaData.timeOfLastDisable=startTime;
+
 
   case 'Data-Burst'
     expectedUnits = {'time','time'};
+
+    assert(programMetaData.dataEnable==0,...
+      'Error: attempted to call Data-Burst when Data-Enable has been called');
+    
     fcnMetaData.meta_data = ...
       struct(            bathNameLabel, bathName,...
       auroraConfig.labels.initialDelay, controlFunctionOptionsUpd(1).value,...
@@ -741,9 +660,28 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(1).value ...
                     + controlFunctionOptionsUpd(2).value;
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
 
+    programMetaData.totalRecordedTime = ...
+      programMetaData.totalRecordedTime ...
+      + controlFunctionOptionsUpd(2).value;
+
+    programMetaData.totalIgnoredTime = ...
+      programMetaData.totalIgnoredTime ...
+      + controlFunctionOptionsUpd(1).value;
+
+
+    programMetaData.timeOfLastEnable=...
+      startTime+controlFunctionOptionsUpd(1).value;
+    programMetaData.timeOfLastDisable=...
+      startTime +controlFunctionOptionsUpd(1).value...
+                +controlFunctionOptionsUpd(2).value;
+    
+    programMetaData.dataBurstStartTime=...
+        startTime+controlFunctionOptionsUpd(1).value;
+
+    programMetaData.dataBurstEndTime=...
+        programMetaData.dataBurstStartTime...
+        +controlFunctionOptionsUpd(2).value;
 
   case 'Bath'
     expectedUnits = {'integer','time'};
@@ -758,9 +696,6 @@ switch controlFunctionName
 
     commandDuration = controlFunctionOptionsUpd(2).value ...
                     + auroraConfig.bath.changeTime;
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
 
   case 'Repeat'
     expectedUnits = {'integer','integer'};
@@ -771,17 +706,12 @@ switch controlFunctionName
                 controlFunctionOptionsUpd(1).value);
 
     commandDuration = sampleTime;
-    endTime       = startTime+commandDuration;
-    nextStartTime = endTime+auroraConfig.minimumWaitTime;
-
-
+ 
   case 'Stop'
     expectedUnits = {};
     fcnMetaData.meta_data =  struct( bathNameLabel, bathName);
 
     commandDuration = sampleTime;
-    endTime         = startTime+commandDuration;
-    nextStartTime   = endTime+auroraConfig.minimumWaitTime;
     
   otherwise
     assert(0,'Error: unrecognized control name');
@@ -815,7 +745,54 @@ end
 %
 % Update the command meta data structure
 %
+[commandDuration,commandDurationStr] = ...
+  convertToAuroraFloatingPointFormat600A(...
+    commandDuration,'time',auroraConfig.defaultTimeUnit,0,auroraConfig);
+
+endTime       = startTime+commandDuration;
+
+[endTime,endTimeStr] = ...
+  convertToAuroraFloatingPointFormat600A(...
+    endTime,'time',auroraConfig.defaultTimeUnit,0,auroraConfig);
+
+nextStartTime = endTime+auroraConfig.minimumWaitTime;
+
+[nextStartTime,nextStartTimeStr] = ...
+  convertToAuroraFloatingPointFormat600A(...
+    nextStartTime,'time',auroraConfig.defaultTimeUnit,0,auroraConfig);
+
 fcnMetaData.(auroraConfig.labels.time)=[startTime,endTime];
+fcnMetaData.is_recorded=programMetaData.dataEnable;
+
+if(   ( startTime >= programMetaData.dataBurstStartTime ...
+     && startTime <= programMetaData.dataBurstEndTime) ... 
+     ||  ( endTime >= programMetaData.dataBurstStartTime ...
+     &&    endTime <= programMetaData.dataBurstEndTime) )
+
+  fcnMetaData.is_recorded=1;
+
+end
+
+%Issue a warning if this segment straddles a data burst
+if(    (startTime < programMetaData.dataBurstStartTime ...
+    &&    endTime > programMetaData.dataBurstStartTime ... 
+    &&    endTime < programMetaData.dataBurstEndTime) ... 
+    || (startTime > programMetaData.dataBurstStartTime ...
+    &&  startTime < programMetaData.dataBurstEndTime ... 
+    &&    endTime > programMetaData.dataBurstEndTime) ...
+    || (startTime < programMetaData.dataBurstStartTime ...
+    &&   endTime > programMetaData.dataBurstEndTime) )
+
+  fprintf(['\nWarning: segment time (%1.1f,%1.1f) is not contained ',...
+           'within Data-Burst interval (%1.1f,%1.1f)\n'],...
+           startTime,endTime,...
+           programMetaData.dataBurstStartTime,...
+           programMetaData.dataBurstEndTime);
+
+    fcnMetaData.is_recorded=0.5;
+    
+end
+
 
 %
 % Update the program meta data
