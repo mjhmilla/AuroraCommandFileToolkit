@@ -226,7 +226,9 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       dLengthTime = dLength/zTrialSettings.length.ratePerSecond;
 
       lengthRampOptions(1).value = zTrialSettings.target.length;
-      lengthRampOptions(2).value = dLengthTime*auroraConfig.oneSecond;
+      lengthRampOptions(2).value = ...
+        max(dLengthTime*auroraConfig.oneSecond,...
+            auroraConfig.minimumCommandDuration);
 
       startTime = programMetaData.nextStartTime;
       flag_printMetaDataLabelsToCsv=1;
@@ -260,6 +262,13 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 %
   if(strcmp(trialType,'active'))
 
+   assert( abs(zTrialSettings.start.length-1)<1e-6,...
+           ['Error: active trials are assumed to have a starting ',...
+           'normalized length of 1 Lo']);
+
+   assert( abs(zTrialSettings.target.length-1)<1e-6,...
+          ['Error: active trials are assumed to have a target ',...
+           'normalized length of 1 Lo']);   
     %
     %3a. Move to the pre-activation bath
     %
@@ -378,7 +387,28 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 % 5. Apply the larb signal
 %
 %
-% 5a. Data-Enable
+% 5a. Ramp to the desired length
+%
+isRelativeOverride=zTrialSettings.length.isRelative;
+lengthRampOptions = getCommandFunctionOptions600AUpd(...
+                      'Length-Ramp',auroraConfig,isRelativeOverride);
+
+
+  lengthRampOptions(1).value = zTrialSettings.target.length;
+  lengthRampOptions(2).value = auroraConfig.oneSecond;
+
+  startTime = programMetaData.nextStartTime;
+  flag_printMetaDataLabelsToCsv=1;
+
+[programMetaData,fcnMetaData] =  ...
+    writeControlFunction600AUpd(...
+      fid,startTime,'Length-Ramp',lengthRampOptions,...
+        [],auroraConfig,programMetaData, flag_printMetaDataLabelsToCsv);
+
+segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+
+%
+% 5b. Data-Enable
 %
   if(zTrialSettings.useMinimalData==1)
     startTime=programMetaData.nextStartTime;
@@ -432,7 +462,28 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 %
 for idxSine=1:1:length(sineSeries.frequencyHz)
   %
-  % 6a. Data-Enable
+  % 6a. Ramp back to the desired length
+  %
+  isRelativeOverride=zTrialSettings.length.isRelative;
+  lengthRampOptions = getCommandFunctionOptions600AUpd(...
+                        'Length-Ramp',auroraConfig,isRelativeOverride);
+  
+  
+    lengthRampOptions(1).value = zTrialSettings.target.length;
+    lengthRampOptions(2).value = auroraConfig.oneSecond;
+  
+    startTime = programMetaData.nextStartTime;
+    flag_printMetaDataLabelsToCsv=1;
+  
+  [programMetaData,fcnMetaData] =  ...
+      writeControlFunction600AUpd(...
+        fid,startTime,'Length-Ramp',lengthRampOptions,...
+          [],auroraConfig,programMetaData, flag_printMetaDataLabelsToCsv);
+  
+  segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+
+  %
+  % 6b. Data-Enable
   %
     if(zTrialSettings.useMinimalData==1)
       startTime=programMetaData.nextStartTime+auroraConfig.oneSecond*2;
@@ -442,7 +493,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
     end
 
   %
-  % 6b. Sine-Wave
+  % 6c. Sine-Wave
   %
     lengthSineOptions = ...
       getCommandFunctionOptions600AUpd('Length-Sine',auroraConfig,[]);
@@ -461,7 +512,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
     segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
 
   %
-  % 6c. Data-Disable
+  % 6d. Data-Disable
   %
     if(zTrialSettings.useMinimalData==1)
       startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
@@ -491,13 +542,17 @@ isRelativeOverride=zTrialSettings.length.isRelative;
 lengthRampOptions = getCommandFunctionOptions600AUpd(...
                       'Length-Ramp',auroraConfig,isRelativeOverride);
   
-  dL = abs(zTrialSettings.start.length-zTrialSettings.target.length);
-  dt = (dL/zTrialSettings.length.ratePerSecond)*s2ms;
 
-  lengthRampOptions(1).value = zTrialSettings.start.length;
-  lengthRampOptions(2).value = dt;
+dLength = abs(zTrialSettings.target.length-zTrialSettings.start.length);
+dLengthTime = dLength/zTrialSettings.length.ratePerSecond;
 
-  startTime = programMetaData.nextStartTime;
+lengthRampOptions(1).value = zTrialSettings.target.length;
+lengthRampOptions(2).value = ...
+  max(dLengthTime*auroraConfig.oneSecond,...
+      auroraConfig.minimumCommandDuration);
+
+startTime = programMetaData.nextStartTime;
+
 
 [programMetaData,fcnMetaData] =  ...
     writeControlFunction600AUpd(...

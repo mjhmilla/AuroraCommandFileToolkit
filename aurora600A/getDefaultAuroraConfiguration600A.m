@@ -7,6 +7,15 @@ function auroraConfig =  getDefaultAuroraConfiguration600A(...
                             maxNormalizedSpeedLPS,...
                             commentStr)
 
+auroraConfig.defaultLengthUnit      = 'Lo';
+auroraConfig.defaultForceUnit       = 'Fmax';
+auroraConfig.defaultTimeUnit        = 'ms';
+auroraConfig.defaultFrequencyUnit   = 'Hz';
+
+assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
+    ['Error: The 600A code base has only been tested using', ...
+     ' time units of ms']);
+s2ms=1000;
 
 %pg 3 of the manual for 322 C-I: 300um in 700us
 auroraConfig.maximumSpeedInMPS = (300e-6/700e-6);
@@ -28,6 +37,8 @@ auroraConfig.analogToDigitalSampleRateHz = sampleFrequencyHz;
 
 auroraConfig.analogToDigitalSampleTimeS  = 1/sampleFrequencyHz;
 
+auroraConfig.minimumCommandDuration = ...
+  round(2*auroraConfig.analogToDigitalSampleTimeS*s2ms,1);
 
 auroraConfig.minimumLengthResolution_um = 0.5;
 auroraConfig.minimumForceResolution_uN  = 0.5;
@@ -51,7 +62,6 @@ auroraConfig.comment = commentStr;
 
 auroraConfig.numberOfDigits=6;
 
-s2ms = 1000;
 
 auroraConfig.minimumNormalizedLength    = minLengthLo;
 auroraConfig.maximumNormalizedLength    = maxLengthLo;
@@ -71,10 +81,7 @@ auroraConfig.bath.rigor                 = 4;
 auroraConfig.bath.Karnovsky             = 5;
 
 
-auroraConfig.defaultLengthUnit      = 'Lo';
-auroraConfig.defaultForceUnit       = 'Fmax';
-auroraConfig.defaultTimeUnit        = 'ms';
-auroraConfig.defaultFrequencyUnit   = 'Hz';
+
 
 auroraConfig.oneSecond = 1*s2ms;
 
@@ -93,6 +100,3 @@ auroraConfig.labels = getMetaDataFieldNames600A(auroraConfig,bathOptionFields);
 auroraConfig.structMetaData=...
     struct('type','',auroraConfig.labels.time,[0,0],'meta_data',[]);
 
-assert(strcmp(auroraConfig.defaultTimeUnit,'ms'),...
-    ['Error: The 600A code base has only been tested using', ...
-     ' time units of ms']);
