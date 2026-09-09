@@ -1,4 +1,4 @@
-function jsonFileNameArray = createImpedanceCalibrationTrial600A(...    
+function jsonFileNameArray = createImpedanceTrial600A_LarbSine(...    
                                 fileCount,...                    
                                 seriesName,...
                                 blockName,...
@@ -85,17 +85,23 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 
   startBathName= auroraConfig.labels.bathNames{zTrialSettings.start.bathNumber};
   startLength  = zTrialSettings.start.length;
+  targetLength = zTrialSettings.target.length;
+  
   lengthUnit   = auroraConfig.defaultLengthUnit;
 
   takePhoto   = '';
-  fname       = getTrialName600A(seriesName,idx,blockName,...
-                  startBathName,startLength,lengthUnit,dateId,'.pro');
-  fnameOutput = getTrialName600A(seriesName,idx,blockName,...
-                  startBathName,startLength,lengthUnit,dateId,'.dat');
-  fnameMetaData = getTrialName600A(seriesName,idx,blockName,...
-                  startBathName,startLength,lengthUnit,dateId,'.json');
-  fnameLabels = getTrialName600A(seriesName,idx,blockName,...
-                  startBathName,startLength,lengthUnit,[dateId,'_labels'],'.csv');
+  fname       = getTrialName600A_startEndLength(seriesName,idx,blockName,...
+                  startBathName,startLength,targetLength,...
+                  lengthUnit,dateId,'.pro');
+  fnameOutput = getTrialName600A_startEndLength(seriesName,idx,blockName,...
+                  startBathName,startLength,targetLength,...
+                  lengthUnit,dateId,'.dat');
+  fnameMetaData = getTrialName600A_startEndLength(seriesName,idx,blockName,...
+                  startBathName,startLength,targetLength,...
+                  lengthUnit,dateId,'.json');
+  fnameLabels = getTrialName600A_startEndLength(seriesName,idx,blockName,...
+                  startBathName,startLength,targetLength,...
+                  lengthUnit,[dateId,'_labels'],'.csv');
 
   larbFileName = zTrialSettings.Larb.fileName;
 
@@ -104,7 +110,7 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       larbFileName=fname;
       idxP=strfind(larbFileName,'.pro');
       larbFileName=larbFileName(1,1:idxP);
-      larbFileName=[larbFileName,'.csv'];
+      larbFileName=[larbFileName,'csv'];
     end
   end
 
@@ -209,60 +215,57 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
   segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
 
 %
-% 2. If this is a passive stretch trial, then record the fiber as
-%    it is lengthened, and then shut off the recording
+% 2. Record the fiber as it is lengthened, and then shut off the recording
 %
-  if(strcmp(trialType,'passive'))
-    %
-    % 2a. Data-Enable
-    %
-    if(zTrialSettings.useMinimalData==1)
-      startTime=programMetaData.nextStartTime;
-      [programMetaData,fcnMetaData] = ...
-          dataEnable600A(fid,startTime,auroraConfig,programMetaData);
-      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
-    end
+%
+% 2a. Data-Enable
+%
+if(zTrialSettings.useMinimalData==1)
+  startTime=programMetaData.nextStartTime;
+  [programMetaData,fcnMetaData] = ...
+      dataEnable600A(fid,startTime,auroraConfig,programMetaData);
+  %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+end
 
-    %
-    % 2b. Lengthen
-    %
+%
+% 2b. Lengthen
+%
 
-    isRelativeOverride=zTrialSettings.length.isRelative;
-    lengthRampOptions = getCommandFunctionOptions600AUpd(...
-                          'Length-Ramp',auroraConfig,isRelativeOverride);
+isRelativeOverride=zTrialSettings.length.isRelative;
+lengthRampOptions = getCommandFunctionOptions600AUpd(...
+                      'Length-Ramp',auroraConfig,isRelativeOverride);
 
-      dLength = abs(zTrialSettings.target.length-zTrialSettings.start.length);
-      dLengthTime = dLength/zTrialSettings.length.ratePerSecond;
+  dLength = abs(zTrialSettings.target.length-zTrialSettings.start.length);
+  dLengthTime = dLength/zTrialSettings.length.ratePerSecond;
 
-      lengthRampOptions(1).value = zTrialSettings.target.length;
-      lengthRampOptions(2).value = ...
-        max(dLengthTime*auroraConfig.oneSecond,...
-            auroraConfig.minimumCommandDuration);
+  lengthRampOptions(1).value = zTrialSettings.target.length;
+  lengthRampOptions(2).value = ...
+    max(dLengthTime*auroraConfig.oneSecond,...
+        auroraConfig.minimumCommandDuration);
 
-      startTime = programMetaData.nextStartTime;
-      flag_printMetaDataLabelsToCsv=1;
+  startTime = programMetaData.nextStartTime;
+  flag_printMetaDataLabelsToCsv=1;
 
-    [programMetaData,fcnMetaData] =  ...
-        writeControlFunction600AUpd(...
-          fid,startTime,'Length-Ramp',lengthRampOptions,...
-            [],auroraConfig,programMetaData, flag_printMetaDataLabelsToCsv);
+[programMetaData,fcnMetaData] =  ...
+    writeControlFunction600AUpd(...
+      fid,startTime,'Length-Ramp',lengthRampOptions,...
+        [],auroraConfig,programMetaData, flag_printMetaDataLabelsToCsv);
 
-    segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
 
-    %
-    % 2c. Data-Disable
-    %
-    if(zTrialSettings.useMinimalData==1)
-      startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
-      [programMetaData,fcnMetaData] = ...
-          dataDisable600A(fid,startTime,auroraConfig,programMetaData);
-      %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
-    end
+%
+% 2c. Data-Disable
+%
+if(zTrialSettings.useMinimalData==1)
+  startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
+  [programMetaData,fcnMetaData] = ...
+      dataDisable600A(fid,startTime,auroraConfig,programMetaData);
+  %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
+end
 
-    programMetaData.nextStartTime= programMetaData.nextStartTime...
-                                  + zTrialSettings.passiveRelaxationTime;
+programMetaData.nextStartTime= programMetaData.nextStartTime...
+                              + zTrialSettings.passiveRelaxationTime;
 
-  end
 
 %
 % 3. If this is an active trial make brief a brief recording:
@@ -271,13 +274,6 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
 %
   if(strcmp(trialType,'active'))
 
-   assert( abs(zTrialSettings.start.length-1)<1e-6,...
-           ['Error: active trials are assumed to have a starting ',...
-           'normalized length of 1 Lo']);
-
-   assert( abs(zTrialSettings.target.length-1)<1e-6,...
-          ['Error: active trials are assumed to have a target ',...
-           'normalized length of 1 Lo']);   
     %
     %3a. Move to the pre-activation bath
     %
@@ -339,10 +335,15 @@ function jsonFileNameArray = createImpedanceCalibrationTrial600A(...
       %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
     end
 
-    %Wait 2 x minimalActivationDuration just to be sure that the
+    %Wait at least 2 x minimalActivationDuration just to be sure that the
     %force has stablized
+
+    assert(zTrialSettings.activationScaling>=1,...
+      'Error: aTrialSettings.activationScaling should be at least 1.');
+
     programMetaData.nextStartTime= programMetaData.nextStartTime...
-                          + 2*auroraConfig.bath.minimumActivationDuration;
+       + ((2*auroraConfig.bath.minimumActivationDuration) ...
+            *zTrialSettings.activationScaling);
 
   end
 
@@ -532,12 +533,26 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
 end
 
 
+%
+% 7. If this was an active trial, return the fiber to the passive bath
+%
+
+if(strcmp(trialType,'active'))
+  startTime=programMetaData.nextStartTime;
+
+  [programMetaData, fcnMetaData] = ...
+      writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData);
+
+  %segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
+
+end
+
 
 %
-% 7. Move the fiber back to its starting length
+% 8. Move the fiber back to its starting length
 %
 %
-% 7a. Data-Enable
+% 8a. Data-Enable
 %
 if(zTrialSettings.useMinimalData==1)
   startTime=programMetaData.nextStartTime+auroraConfig.oneSecond;
@@ -555,7 +570,7 @@ lengthRampOptions = getCommandFunctionOptions600AUpd(...
 dLength = abs(zTrialSettings.target.length-zTrialSettings.start.length);
 dLengthTime = dLength/zTrialSettings.length.ratePerSecond;
 
-lengthRampOptions(1).value = zTrialSettings.target.length;
+lengthRampOptions(1).value = zTrialSettings.start.length;
 lengthRampOptions(2).value = ...
   max(dLengthTime*auroraConfig.oneSecond,...
       auroraConfig.minimumCommandDuration);
@@ -571,7 +586,7 @@ startTime = programMetaData.nextStartTime;
 segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
 
 %
-% 7c. Data-Disable
+% 9c. Data-Disable
 %
   if(zTrialSettings.useMinimalData==1)
     startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
@@ -580,22 +595,10 @@ segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
     %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
   end
 
-%
-% 8. If this was an active trial, return the fiber to the passive bath
-%
 
-if(strcmp(trialType,'active'))
-  startTime=programMetaData.nextStartTime;
-
-  [programMetaData, fcnMetaData] = ...
-      writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData);
-
-  %segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
-
-end
 
 %%
-% 9. Stop
+% 10. Stop
 %%
 startTime=programMetaData.nextStartTime;            
 

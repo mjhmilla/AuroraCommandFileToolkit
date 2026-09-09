@@ -18,7 +18,7 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal               = 0;
+flag_generateRandomSignal               = 1;
 flag_generateExponentiallySpacedSinusoids=1;
 
 % Experiments to generate
@@ -33,7 +33,8 @@ flag_generateImpedanceForceLengthProtocol_Sine  = 0; %For length/sine
 flag_generateImpedanceForceLengthProtocol_Larb  = 0; %For larb
 flag_generateImpedanceAmplitudeProtocol_Larb    = 0;
 
-flag_generateCalibrationProtocol                = 1;
+flag_generateCalibrationProtocol                = 0;
+flag_generateLarbSinusoidImpedanceProtocol      = 1;
 
 
 settingsExperiment = [];
@@ -129,7 +130,8 @@ if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     arbitraryWaveformManualSettings.paddingDuration = [1,1].*0.125;
 end
 
-if(flag_generateCalibrationProtocol==1)
+if(flag_generateCalibrationProtocol==1 ...
+    || flag_generateLarbSinusoidImpedanceProtocol==1)
     arbitraryWaveformManualSettings.frequencyHz     = 1000;
     arbitraryWaveformManualSettings.points          = [2^13];
     arbitraryWaveformManualSettings.magnitude       = [1];
@@ -517,6 +519,51 @@ if(flag_generateCalibrationProtocol==1)
 
 end
 
+if(flag_generateLarbSinusoidImpedanceProtocol==1)
+
+  indexStart=1;
+  writeProtocolHeader=1;
+
+  assert(length(expSettings.impedance.isometricNormLengths)==7,...
+        'Error: expected 7 different isometric lengths');
+
+  lengthRandomization = ...
+      [7     1     3     2     5     6     4;...
+       1     5     2     3     4     7     6;...
+       4     6     2     5     3     7     1;...
+       1     3     5     7     4     6     2;...
+       5     2     6     4     3     7     1;...
+       4     6     5     3     2     1     7;...
+       6     1     3     4     7     2     5;...
+       6     5     7     3     4     2     1;...
+       2     4     5     1     6     7     3;...
+       6     1     5     7     2     4     3];
+  
+  idxR=3;
+  settingsImpedance=expSettings.impedance;
+  settingsFields=fields(expSettings.impedance);
+  for i=1:1:length(settingsFields)
+    if(length(expSettings.impedance.(settingsFields{i}))==7)
+      settingsImpedance.(settingsFields{i}) = ...
+        expSettings.impedance.(settingsFields{i})(lengthRandomization(idxR,:));
+    end
+  end
+
+  indexEnd = createImpedanceForceLengthExperiments600A_LarbSine(...
+              indexStart,...
+              ['zL_R',num2str(idxR),'_'],...              
+              settingsImpedance,...              
+              stochasticWaves,...
+              sineSeriesExponentiallySpaced,...
+              writeProtocolHeader,...
+              projectFolders,...
+              auroraConfig,...
+              auroraConfigSlow,...
+              settingsExperiment);
+
+
+end
+
 
 if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     %%
@@ -558,6 +605,8 @@ if(flag_generateImpedanceForceLengthProtocol_Larb==1)
     indexStart=1;
     writeProtocolHeader = 1;
  
+
+    
     indexEnd = createImpedanceForceLengthExperiments600A_Larb(...
                     indexStart,...
                     'larb',...
