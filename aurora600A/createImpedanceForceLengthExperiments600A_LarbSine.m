@@ -4,6 +4,7 @@ function indexEnd = ...
                       seriesName,...
                       settingsImpedance,...
                       stochasticWaveSet,...
+                      calibrationStochasticWave,...
                       sinSeries,...
                       writeProtocolHeader,...
                       projectFolders,...
@@ -130,13 +131,31 @@ zTrialSettingsDefault.passiveRelaxationTime = 5*60*auroraConfigWaveSet.oneSecond
 zTrialSettingsDefault.sineSeries.amplitude = 0.002;
 zTrialSettingsDefault.Larb.amplitude    = 0.002;
 
-bwStr = ['',num2str(round(stochasticWaveSet(1).metadata.bandwidth_Hz)),'Hz'];
-ampStr= sprintf('%1.3f%s',zTrialSettingsDefault.Larb.amplitude,...
-                          auroraConfigWaveSet.defaultLengthUnit);
-id=strfind(ampStr,'.');
-ampStr(id)='p';
 
-zTrialSettingsDefault.Larb.fileName = ['larb_',dateId,'_',bwStr,'_',ampStr];
+fieldBW =auroraConfigWaveSet.labels.bandwidth;
+flag_mergedStochasticSet=0;
+
+if(length(stochasticWaveSet(1).metadata.(fieldBW))==1)
+  
+  bwStr = ['',num2str(round(stochasticWaveSet(1).metadata.bandwidth_Hz)),'Hz'];
+  ampStr= sprintf('%1.3f%s',zTrialSettingsDefault.Larb.amplitude,...
+                            auroraConfigWaveSet.defaultLengthUnit);
+  id=strfind(ampStr,'.');
+  ampStr(id)='p';
+  
+  zTrialSettingsDefault.Larb.fileName = ['larb_',dateId,'_',bwStr,'_',ampStr];
+  flag_mergedStochasticSet=0;
+else
+  zTrialSettingsDefault.Larb.fileName = '';
+  flag_mergedStochasticSet=1;
+end
+
+zTrialSettingsDefault.Larb.scaleAmplitude = 1;
+if(flag_mergedStochasticSet==1)
+  zTrialSettingsDefault.Larb.scaleAmplitude=0;
+end
+
+
 zTrialSettingsDefault.Larb.id = nan;
 zTrialSettingsDefault.Larb.writeFile=0;
 
@@ -181,6 +200,13 @@ for idxZ = 1:1:length(settingsImpedance.isometricNormLengths)
         zTrialSettings.Larb.useProtocolFileName=1;
         blockName='zActive';
    
+    end
+
+    if(flag_mergedStochasticSet==1)
+      zTrialSettings.Larb.useProtocolFileName=1;
+      zTrialSettings.Larb.id=1;
+      zTrialSettings.Larb.writeFile = 1;
+      zTrialSettings.Larb.fileName = '';      
     end
   
 
@@ -238,11 +264,18 @@ for idxC = 1:1:2
         assert(0,'Error: exceeded the number of impedance cases');
   end
 
+  if(flag_mergedStochasticSet==1)
+    zTrialSettings.Larb.useProtocolFileName=1;
+    zTrialSettings.Larb.id=1;
+    zTrialSettings.Larb.writeFile = 1;
+    zTrialSettings.Larb.fileName = '';      
+  end
+
   jsonFileNames = createImpedanceTrial600A_LarbSine(...    
                                 fileCount,...                    
                                 seriesName,...
                                 blockName,...
-                                stochasticWaveSet,...
+                                calibrationStochasticWave,...
                                 sinSeries,...
                                 stepSeries,...
                                 zTrialSettings,...
@@ -269,10 +302,12 @@ protocolMetaData.experiment.experimenter='Sven Weidner';
 protocolMetaData.experiment.apparatus = 'Aurora 1400A';
 protocolMetaData.experiment.specimen = 'animal-muscle-name';
 protocolMetaData.experiment.temperature_C = nan;
-protocolMetaData.experiment.temperatureControl = nan;
+protocolMetaData.experiment.temperature_control = nan;
 protocolMetaData.experiment.length_mm = nan;
 protocolMetaData.experiment.width_mm = nan;
 protocolMetaData.experiment.height_mm = nan;
+protocolMetaData.experiment.rho_kg_m3 = nan;
+protocolMetaData.experiment.material = '';
 protocolMetaData.experiment.maximum_isometric_stress_kPa = nan;
 protocolMetaData.experiment.comment = nan;
 

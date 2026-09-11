@@ -30,6 +30,15 @@ function jsonFileNameArray = createImpedanceTrial600A_LarbSine(...
          ' handle absolute length changes']);
   s2ms=1000;
 
+  flag_mergedStochasticWaveSet=0;
+  numberOfStochasticWaves=1;
+  if(length(stochasticWaveSet.metadata.(auroraConfig.labels.bandwidth))==1)
+    flag_mergedStochasticWaveSet=0;
+    numberOfStochasticWaves=1;
+  else
+    flag_mergedStochasticWaveSet=1;
+    numberOfStochasticWaves = length(stochasticWaveSet.metadata.(auroraConfig.labels.bandwidth));
+  end
 
 %
 % Check the trial configuration
@@ -111,6 +120,7 @@ function jsonFileNameArray = createImpedanceTrial600A_LarbSine(...
       idxP=strfind(larbFileName,'.pro');
       larbFileName=larbFileName(1,1:idxP);
       larbFileName=[larbFileName,'csv'];
+      zTrialSettings.Larb.fileName=['wave',{larbFileName}];
     end
   end
 
@@ -118,17 +128,20 @@ function jsonFileNameArray = createImpedanceTrial600A_LarbSine(...
   % Write the larb file if needed
   %
   if(zTrialSettings.Larb.writeFile)
-    larbData= stochasticWaveSet(1).fileData;
+    larbData= stochasticWaveSet.fileData;
 
-    assert(abs(stochasticWaveSet(1).metadata.amplitude_Lo-1)<1e-6,...
-           ['Error: the stochastic wave should have an amplitude of 1',...
-             ' so that it can be easily transformed to the desired signal']);
-    avgVal = mean(larbData);
-    assert(abs(avgVal)<1e-6,...
-       ['Error: the average value of the stochastic wave ',...
-        'should be close to zero']);
+    if(zTrialSettings.Larb.scaleAmplitude==1)
+      assert(abs(stochasticWaveSet.metadata.amplitude_Lo-1)<1e-6,...
+             ['Error: the stochastic wave should have an amplitude of 1',...
+               ' so that it can be easily transformed to the desired signal']);
+      avgVal = mean(larbData);
+      assert(abs(avgVal)<1e-6,...
+         ['Error: the average value of the stochastic wave ',...
+          'should be close to zero']);
+  
+      larbData = larbData .* zTrialSettings.Larb.amplitude;
+    end
 
-    larbData = larbData .* zTrialSettings.Larb.amplitude;
     larbData = larbData + zTrialSettings.target.length;
 
     filePathLarb = fullfile(codeWavesDir,larbFileName);
@@ -429,21 +442,28 @@ segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
 %
 % 5b. Write the Larb command, and the Larb file
 %
-  lengthArbOptions = stochasticWaveSet(1).options;
+  lengthArbOptions = stochasticWaveSet.options;
 
   lengthArbOptions(1).value = zTrialSettings.Larb.id;
   lengthArbOptions(1).isRelative=0;
   lengthArbOptions(2).isRelative=0;
 
   larbFrequency = lengthArbOptions(2).value;
-  larbDuration  = length(stochasticWaveSet(1).fileData)/larbFrequency;
+  larbDuration  = length(stochasticWaveSet.fileData)/larbFrequency;
 
   %Form the external meta data struct and update it.
   externalFileMetaData.duration_s = larbDuration;
-  externalFileMetaData.file_name   = zTrialSettings.Larb.fileName;
-  externalFileMetaData.meta_data  = stochasticWaveSet(1).metadata;
-  externalFileMetaData.meta_data.(auroraConfig.labels.amplitude)...
-                                  = zTrialSettings.Larb.amplitude;
+  
+
+  externalFileMetaData.meta_data      = stochasticWaveSet.metadata;  
+  externalFileMetaData.meta_data.file = zTrialSettings.Larb.fileName;
+
+  if(zTrialSettings.Larb.scaleAmplitude==1)
+    for idxLarb=1:1:numberOfStochasticWaves
+      externalFileMetaData.meta_data.(auroraConfig.labels.amplitude)(idxLarb)...
+                                      = zTrialSettings.Larb.amplitude;
+    end
+  end
 
   startTime = programMetaData.nextStartTime;
 
@@ -454,7 +474,6 @@ segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
           flag_printMetaDataLabelsToCsv);
 
   segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
-
 %
 % 5c. Data-Disable
 %
@@ -625,7 +644,7 @@ segmentMetaDataArray=[segmentMetaDataArray,timingMetaDataArray];
 
 jsonMetaData.segments = segmentMetaDataArray;   
 jsonMetaData.experiment.title = trialTitle;
-
+jsonMetaData.experiment.keywords = {'Impedance-Length-Arb','Impedance-Length-Sine'};
 jsonMetaDataEncoded = jsonencode(jsonMetaData);
 fidJson = fopen(fullfile(codeDir,fnameMetaData),'w');
 fprintf(fidJson,jsonMetaDataEncoded);        

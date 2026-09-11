@@ -99,7 +99,6 @@ stochasticWave.config           = configVibration;
 stochasticWave.controlFunctions = stochasticFunctions;
 
 
-
 %%
 % Get the conditioning vibration vector
 %

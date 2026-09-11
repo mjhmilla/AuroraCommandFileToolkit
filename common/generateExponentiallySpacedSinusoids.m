@@ -8,8 +8,10 @@ ts            = sampleFrequencyHz;
 maxFrequency  = settings.maxFrequencyHz;
 minFrequency  = settings.minFrequencyHz;
 n             = settings.numberOfSinusoids;
-maxDuration   = settings.maxSinusoidDurationS;
+%maxDuration   = settings.maxSinusoidDurationS;
+preferredDuration=settings.preferredSinusoidDurationS;
 maxCycleCount = settings.maxCycleCount;
+minCycleCount = settings.minCycleCount;
 
 nDigits       = auroraConfig.numberOfDigits;
 
@@ -23,9 +25,12 @@ if(verbose==1)
   fprintf(['C(F)\tFrequency corrected (Hz)\n']);
   fprintf('Err(F)\tFrequency error (Hz)\n');
   fprintf('Err(A)\tAngular error (degrees)\n\n');
+  fprintf('N Cycles (#)\n');
+  fprintf('T*N\tDuration (s)\n\n');
+  fprintf('sum(T*N)\tCumulated duration (s)\n\n');
 
 
-  fprintf('#\tF\t\tC(F)\tErr(F)\t\tErr(A)\n');
+  fprintf('#\tF\t\tC(F)\tErr(F)\t\tErr(A)\t\tN\tT*C\t\tsum(T*C)\n');
 end
 
 sinSeries = struct('frequencyHz',zeros(n,1),...
@@ -40,6 +45,7 @@ sinSeries = struct('frequencyHz',zeros(n,1),...
 
 
 tt=0;
+
 for i=1:1:n
 
   f = minFrequency*a^(i-1);
@@ -60,7 +66,7 @@ for i=1:1:n
                   f2,'frequency','Hz',0,auroraConfig);
 
   rt = 1/rf2;
-  c = min([round(maxDuration*rf2),maxCycleCount]);
+  c = max(min([round(preferredDuration*rf2),maxCycleCount]),minCycleCount);
 
 
   d = c*rt;
@@ -88,7 +94,8 @@ for i=1:1:n
                   f2,'frequency','Hz',0,auroraConfig);
 
       rt = 1/rf2;
-      c = min([round(maxDuration*rf2),maxCycleCount]);
+      %c = min([round(maxDuration*rf2),maxCycleCount]);
+      c = max(min([round(preferredDuration*rf2),maxCycleCount]),minCycleCount);
       d        = c*rt;
       errorDeg = (d*ts-round(d*ts))*(180/pi)/(1/rf2); 
 
@@ -105,7 +112,8 @@ for i=1:1:n
     rf2= round(f2,(nRound),'decimals');
   
     rt = 1/rf2;
-    c = min([round(maxDuration*rf2),maxCycleCount]);
+    %c = min([round(maxDuration*rf2),maxCycleCount]);
+    c = max(min([round(preferredDuration*rf2),maxCycleCount]),minCycleCount);
     d        = c*rt;
     errorDeg = (d*ts-round(d*ts))*(180/pi)/(1/rf2); 
 
@@ -129,10 +137,10 @@ for i=1:1:n
     t1 = max(floor(log10(rf2))+1,1);
     t2 = nDigits-t1;
     strFormat = [strFormat,['\t%',num2str(t1),'.',num2str(t2),'f']];
-    strFormat = [strFormat,'\t%1.5e\t%1.5e\t'];
+    strFormat = [strFormat,'\t%1.5e\t%1.5e\t%i\t%1.1f\t\t%1.1f\t'];
     strFormat = [strFormat,'\n'];
 
     fprintf(strFormat,...
-        i,f,rf2,(f-rf2),sinSeries.periodError(i));
+        i,f,rf2,(f-rf2),sinSeries.periodError(i),c,d,tt);
   end
 end

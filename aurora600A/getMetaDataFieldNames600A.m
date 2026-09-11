@@ -40,7 +40,7 @@ metaDataFieldNames.duration = ...
 
 metaDataFieldNames.sampleNumber = 'sample_number';
 
-metaDataFieldNames.fileName = 'file_name';
+metaDataFieldNames.fileName = 'file';
 
 metaDataFieldNames.lengthUnit = 'length_unit';
 
@@ -65,8 +65,6 @@ metaDataFieldNames.bathNumber=['bath_number'];
 metaDataFieldNames.bathName  =['bath'];
 
 metaDataFieldNames.numberOfRepetitions=['number_of_repetitions'];
-
-metaDataFieldNames.fileName=['file_name'];
 
 tmpNames = fields(auroraConfig.bath);
 

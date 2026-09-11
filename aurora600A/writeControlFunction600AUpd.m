@@ -33,8 +33,8 @@ if(~isempty(externalFileMetaData))
   assert(isfield(externalFileMetaData,'duration_s'),...
          'Error: externalFileMetaData must have a duration_s field');
 
-  assert(isfield(externalFileMetaData,'file_name'),...
-         'Error: externalFileMetaData must have a file_name field');
+  assert(isfield(externalFileMetaData.meta_data,'file'),...
+         'Error: externalFileMetaData must have a file field');
 
   assert(isfield(externalFileMetaData,'meta_data'),...
          'Error: externalFileMetaData must have a meta_data field');
@@ -251,6 +251,7 @@ end
 bathNameLabel   = auroraConfig.labels.bathName;
 bathName        = auroraConfig.labels.bathNames{programMetaData.bathNumber};
 
+isFcnMetaDataComplete = 0;
 
 switch controlFunctionName
   %Length functions
@@ -390,27 +391,119 @@ switch controlFunctionName
   case 'Length-Arb'
     expectedUnits = {'integer','frequency'};
 
-    fcnMetaData.meta_data = ...
-      struct(        bathNameLabel, bathName,...
-           auroraConfig.labels.waveNumber, controlFunctionOptionsUpd(1).value,...
-            auroraConfig.labels.frequency, controlFunctionOptionsUpd(2).value,...
-             auroraConfig.labels.fileName, externalFileMetaData.file_name);
-
-    mdField = fields(externalFileMetaData.meta_data);
-    for idxF = 1:1:length(mdField)
-      fcnMetaData.meta_data.(mdField{idxF}) ...
-        = externalFileMetaData.meta_data.(mdField{idxF});
+    mdField ={'bandwidth_Hz','amplitude_Lo','point_count','frequency_Hz'};
+    extMdField = fields(externalFileMetaData.meta_data);
+    if(length(mdField)==length(extMdField))
+      for idxF = 1:1:length(mdField)
+        assert(strcmp(mdField{idxF},extMdField{idxF}),...
+          ['Error: meta_data fields in externalFileMetaData ',...
+          'do not match the expected fields']);
+      end
     end
 
+    if(length(externalFileMetaData.meta_data.amplitude_Lo)==1)
 
-    assert(~isempty(externalFileMetaData.duration_s),...
-           'Error: externalFileMetaData.duration_s must contain data');    
-    assert(~isnan(externalFileMetaData.duration_s),...
-           'Error: externalFileMetaData.duration_s must contain data');
-    assert(~isinf(externalFileMetaData.duration_s),...
-           'Error: externalFileMetaData.duration_s must contain data');
+%       fcnMetaData.meta_data = ...
+%         struct(               ...
+%                           bathNameLabel, bathName,...
+%          auroraConfig.labels.waveNumber, controlFunctionOptionsUpd(1).value,...
+%           auroraConfig.labels.frequency, controlFunctionOptionsUpd(2).value,...
+%            auroraConfig.labels.fileName, '',...
+%            'bandwidth_Hz', externalFileMetaData.meta_data.bandwidth_Hz,...
+%            'amplitude_Lo', externalFileMetaData.meta_data.amplitude_Lo,...
+%            'point_count',  externalFileMetaData.meta_data.point_count);
+%   
+%       fcnMetaData.meta_data.(auroraConfig.labels.fileName) = ...
+%         externalFileMetaData.file;
+      fcnMetaData.meta_data = ...
+        struct(               ...
+                          bathNameLabel, bathName,...
+         auroraConfig.labels.waveNumber, controlFunctionOptionsUpd(1).value,...
+          auroraConfig.labels.frequency, controlFunctionOptionsUpd(2).value);
+  
+      mdField = fields(externalFileMetaData.meta_data);
+      for idxF = 1:1:length(mdField)
+        fcnMetaData.meta_data.(mdField{idxF}) ...
+          = externalFileMetaData.meta_data.(mdField{idxF});
+      end
+  
+      assert(~isempty(externalFileMetaData.duration_s),...
+             'Error: externalFileMetaData.duration_s must contain data');    
+      assert(~isnan(externalFileMetaData.duration_s),...
+             'Error: externalFileMetaData.duration_s must contain data');
+      assert(~isinf(externalFileMetaData.duration_s),...
+             'Error: externalFileMetaData.duration_s must contain data');
+  
+      commandDuration = externalFileMetaData.duration_s*s2ms;
+    else
+      %
+      % The Length-Arb data contains several different sections, each
+      % with different meta data
+      %
+      labelBw = auroraConfig.labels.bandwidth;
+      labelLo = auroraConfig.labels.amplitude;
+      labelFrequency=auroraConfig.labels.frequency;
+      labelPoints=auroraConfig.labels.pointCount;
 
-    commandDuration = externalFileMetaData.duration_s*s2ms;
+      
+      segStartTime=startTime;
+      segEndTime=nan;
+      segDuration=nan;
+
+      fcnMetaDataEmpty=fcnMetaData;
+      fcnMetaDataSet=[];
+      commandDuration=0;
+
+      numberLArbSeg=length(externalFileMetaData.meta_data.(labelBw));
+
+      for idxLArb=1:1:numberLArbSeg
+
+        ampLo = externalFileMetaData.meta_data.(labelLo)(idxLArb);
+        segPoints=externalFileMetaData.meta_data.(labelPoints)(idxLArb);
+        segFrequency=externalFileMetaData.meta_data.(labelFrequency)(idxLArb);
+        segDuration=(segPoints/segFrequency)*s2ms;
+        segEndTime = segStartTime+segDuration;
+
+        commandDuration = commandDuration+segDuration;
+
+        if(abs(ampLo)>1e-6)
+          fcnMetaDataSeg = fcnMetaDataEmpty;
+          fcnMetaDataSeg.type = 'Length-Arb';
+          fcnMetaDataSeg.(auroraConfig.labels.time)=[segStartTime,segEndTime];
+          fcnMetaDataSeg.is_recorded = programMetaData.dataEnable;
+          fcnMetaDataSeg.meta_data = ...
+            struct(               ...
+                              bathNameLabel, bathName,...
+             auroraConfig.labels.waveNumber, controlFunctionOptionsUpd(1).value,...
+              auroraConfig.labels.frequency, controlFunctionOptionsUpd(2).value);
+      
+          mdField = fields(externalFileMetaData.meta_data);
+          for idxF = 1:1:length(mdField)
+            if(length(externalFileMetaData.meta_data.(mdField{idxF}))==numberLArbSeg)
+              fcnMetaDataSeg.meta_data.(mdField{idxF}) ...
+                = externalFileMetaData.meta_data.(mdField{idxF})(idxLArb);
+            else
+              fcnMetaDataSeg.meta_data.(mdField{idxF}) ...
+                = externalFileMetaData.meta_data.(mdField{idxF});
+            end
+          end
+
+          if(isempty(fcnMetaDataSet))
+            fcnMetaDataSet=fcnMetaDataSeg;
+          else
+            fcnMetaDataSet=[fcnMetaDataSet,fcnMetaDataSeg];
+          end
+
+
+        end
+        
+        segStartTime=segEndTime;
+      end
+
+      fcnMetaData=fcnMetaDataSet;
+      isFcnMetaDataComplete=1;
+    end
+
 
   %Force functions
   case 'Force-Step'
@@ -594,8 +687,7 @@ switch controlFunctionName
         auroraConfig.labels.stimulusPatternNumber, ...
                                       controlFunctionOptionsUpd(1).value,...
         auroraConfig.labels.initialDelay,...
-                                      controlFunctionOptionsUpd(2).value,...
-        auroraConfig.labels.fileName, externalFileMetaData.file_name);
+                                      controlFunctionOptionsUpd(2).value);
 
     mdField = fields(externalFileMetaData.meta_data);
     for idxF = 1:1:length(mdField)
@@ -622,8 +714,7 @@ switch controlFunctionName
          auroraConfig.labels.triggerPatternNumber,...
                       controlFunctionOptionsUpd(1).value,...
          auroraConfig.labels.initialDelay,...
-                      controlFunctionOptionsUpd(2).value,...
-        auroraConfig.labels.fileName, externalFileMetaData.file_name);
+                      controlFunctionOptionsUpd(2).value);
 
     mdField = fields(externalFileMetaData.meta_data);
     for idxF = 1:1:length(mdField)
@@ -650,8 +741,7 @@ switch controlFunctionName
         auroraConfig.labels.triggerPatternNumber,...
                       controlFunctionOptionsUpd(1).value,...
         auroraConfig.labels.initialDelay,...
-                      controlFunctionOptionsUpd(2).value,...
-        auroraConfig.labels.fileName, externalFileMetaData.file_name);
+                      controlFunctionOptionsUpd(2).value);
 
     mdField = fields(externalFileMetaData.meta_data);
     for idxF = 1:1:length(mdField)
@@ -828,17 +918,21 @@ nextStartTime = endTime+auroraConfig.minimumWaitTime;
   convertToAuroraFloatingPointFormat600A(...
     nextStartTime,'time',auroraConfig.defaultTimeUnit,0,auroraConfig);
 
-fcnMetaData.(auroraConfig.labels.time)=[startTime,endTime];
-fcnMetaData.is_recorded=programMetaData.dataEnable;
-
+if(isFcnMetaDataComplete==0)
+  fcnMetaData.(auroraConfig.labels.time)=[startTime,endTime];
+  fcnMetaData.is_recorded=programMetaData.dataEnable;
+end
+  
 if(   ( startTime >= programMetaData.dataBurstStartTime ...
      && startTime <= programMetaData.dataBurstEndTime) ... 
      ||  ( endTime >= programMetaData.dataBurstStartTime ...
      &&    endTime <= programMetaData.dataBurstEndTime) )
 
-  fcnMetaData.is_recorded=1;
-
+  if(isFcnMetaDataComplete==0)
+    fcnMetaData.is_recorded=1;
+  end
 end
+
 
 %Issue a warning if this segment straddles a data burst
 if(    (startTime < programMetaData.dataBurstStartTime ...
@@ -856,7 +950,9 @@ if(    (startTime < programMetaData.dataBurstStartTime ...
            programMetaData.dataBurstStartTime,...
            programMetaData.dataBurstEndTime);
 
+  if(isFcnMetaDataComplete==0)
     fcnMetaData.is_recorded=0.5;
+  end
     
 end
 
@@ -875,10 +971,11 @@ programMetaData.nextStartTime         = nextStartTime;
 
 programMetaData.lineCount             = programMetaData.lineCount + 1;
 
-fcnMetaData.(auroraConfig.labels.time) = ...
-  [programMetaData.controlFunction.startTime,...
-   programMetaData.controlFunction.endTime];
-
+if(isFcnMetaDataComplete==0)
+  fcnMetaData.(auroraConfig.labels.time) = ...
+    [programMetaData.controlFunction.startTime,...
+     programMetaData.controlFunction.endTime];
+end
 
 
 %%

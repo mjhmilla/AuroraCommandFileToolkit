@@ -18,8 +18,8 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal               = 1;
-flag_generateExponentiallySpacedSinusoids=1;
+flag_generateRandomSignal               = 0;
+flag_generateExponentiallySpacedSinusoids=0;
 
 % Experiments to generate
 flag_generateRubberProtocol                     = 0;
@@ -121,6 +121,21 @@ if(flag_generateArbitraryWaveImpedanceProtocol==1)
         [1,1,1,1].*0.125;
 end
 
+if(flag_generateLarbSinusoidImpedanceProtocol==1)
+    arbitraryWaveformManualSettings.frequencyHz   = 1000;
+
+    arbitraryWaveformManualSettings.points        = ...
+        [2^13,2^13,2^13,2^13,2^13];
+    arbitraryWaveformManualSettings.magnitude     = ...
+        [0.01, 0.01, 0.001, 0.001,0.002];
+    arbitraryWaveformManualSettings.bandwidth     = ...
+        [35, 90, 35, 90,90];        
+    arbitraryWaveformManualSettings.canBeMerged = ...
+        [1,1,1,1,0];   
+    arbitraryWaveformManualSettings.paddingDuration= ...
+        [1,1,1,1,1].*0.125;
+end
+
 if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     arbitraryWaveformManualSettings.frequencyHz   = 1000;
     arbitraryWaveformManualSettings.points          = [2^13,2^13];
@@ -130,8 +145,7 @@ if(flag_generateImpedanceAmplitudeProtocol_Larb==1)
     arbitraryWaveformManualSettings.paddingDuration = [1,1].*0.125;
 end
 
-if(flag_generateCalibrationProtocol==1 ...
-    || flag_generateLarbSinusoidImpedanceProtocol==1)
+if(flag_generateCalibrationProtocol==1)
     arbitraryWaveformManualSettings.frequencyHz     = 1000;
     arbitraryWaveformManualSettings.points          = [2^13];
     arbitraryWaveformManualSettings.magnitude       = [1];
@@ -219,7 +233,9 @@ if(flag_generateExponentiallySpacedSinusoids==1)
   sinSettings.maxFrequencyHz                    = 167*1.43526477;
   sinSettings.minFrequencyHz                    = 0.25;
   sinSettings.numberOfSinusoids                 = 20;
-  sinSettings.maxSinusoidDurationS              = 8;
+  %sinSettings.maxSinusoidDurationS              = (1/sinSettings.minFrequencyHz)+sqrt(eps);
+  sinSettings.preferredSinusoidDurationS        = 1;
+  sinSettings.minCycleCount                     = 1;
   sinSettings.maxCycleCount                     = 100;
   sinSettings.maxAngularErrorDegrees            = 0.1;
   sinSettings.frequencyHzTolerancePercentage    = 0.075;
@@ -521,6 +537,24 @@ end
 
 if(flag_generateLarbSinusoidImpedanceProtocol==1)
 
+  mergedStochasticWave = mergeArbitraryWaveSegments(stochasticWaves,...
+                                  mergedArbitraryWaveformSettings,...
+                                  auroraConfig);
+
+  countCalibrationWave=0;
+  for idxWave=1:1:length(stochasticWaves)    
+    if(stochasticWaves(idxWave).waveConfig.canBeMerged==0)
+      calibrationStochasticWave = stochasticWaves(idxWave);
+      countCalibrationWave=countCalibrationWave+1;
+    end
+  end
+
+  if(countCalibrationWave==0)
+    calibrationStochasticWave=mergedStochasticWave;
+  end
+  assert(countCalibrationWave==1,...
+         'Error: there should be at least one calibration trial');
+
   indexStart=1;
   writeProtocolHeader=1;
 
@@ -551,9 +585,10 @@ if(flag_generateLarbSinusoidImpedanceProtocol==1)
 
   indexEnd = createImpedanceForceLengthExperiments600A_LarbSine(...
               indexStart,...
-              ['zL_R',num2str(idxR),'_'],...              
+              ['zLR',num2str(idxR),'_'],...              
               settingsImpedance,...              
-              stochasticWaves,...
+              mergedStochasticWave,...
+              calibrationStochasticWave,...
               sineSeriesExponentiallySpaced,...
               writeProtocolHeader,...
               projectFolders,...
