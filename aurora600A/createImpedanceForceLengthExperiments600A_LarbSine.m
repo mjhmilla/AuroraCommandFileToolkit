@@ -229,8 +229,32 @@ for idxZ = 1:1:length(settingsImpedance.isometricNormLengths)
   end
 end
 
-%The last two trials
+%%
+%Screening trials again, so we can quantify the degradation.
+%%
 
+for idxIso=1:1:nScreeningTrials
+  blockName='screen';
+  startingLength = 1.0;
+  startingBathId = auroraConfigLowRes.bath.passive;
+
+  jsonFileNames=createActivePassiveScreeningTrial600A(...    
+                  fileCount,...                    
+                  seriesName,...
+                  blockName,...
+                  startingLength,...
+                  startingBathId,...
+                  fidProtocol,...
+                  auroraConfigLowRes,...
+                  trialFileFolderSettings,...
+                  settingsExperiment);
+  jsonFileNameArray = [jsonFileNameArray,jsonFileNames];
+  fileCount=fileCount+1;
+end
+
+%%
+%The last two trials: rigor and fixation
+%%
 for idxC = 1:1:2
   zTrialSettings=zTrialSettingsDefault;
 
