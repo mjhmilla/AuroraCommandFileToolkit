@@ -33,6 +33,16 @@ switch muscleName
 
     case 'SOL'
         assert(0,'Error: Populate the solues settings');
+    case 'GL'
+
+        configMuscle.name                   = 'GL';
+        configMuscle.temperatureC           = temperatureC                  ;
+        configMuscle.referenceTemperature   = 37;
+        configMuscle.lceOptMM   = mean([13.7,14.7,13.3]); %Reuvers et al. 2026
+        configMuscle.vceMaxMMPS = mean([144,147,140]); %Reuvers et al. 2026
+        configMuscle.vceMaxLPS  = configMuscle.vceMaxMMPS/configMuscle.lceOptMM;
+        configMuscle.passiveRelaxationTime  = 10;
+    
     otherwise 
         assert(0,'Error: unrecognized muscle name');
 end

@@ -236,7 +236,7 @@ if(flag_generateExponentiallySpacedSinusoids==1)
   %sinSettings.maxSinusoidDurationS              = (1/sinSettings.minFrequencyHz)+sqrt(eps);
   sinSettings.preferredSinusoidDurationS        = 1;
   sinSettings.minCycleCount                     = 1;
-  sinSettings.maxCycleCount                     = 100;
+  sinSettings.maxCycleCount                     = inf;
   sinSettings.maxAngularErrorDegrees            = 0.1;
   sinSettings.frequencyHzTolerancePercentage    = 0.075;
   sinSettings.flag_correctFrequencyToSampleRate =1;
@@ -573,7 +573,7 @@ if(flag_generateLarbSinusoidImpedanceProtocol==1)
        2     4     5     1     6     7     3;...
        6     1     5     7     2     4     3];
   
-  idxR=3;
+  idxR=4;
   settingsImpedance=expSettings.impedance;
   settingsFields=fields(expSettings.impedance);
   for i=1:1:length(settingsFields)

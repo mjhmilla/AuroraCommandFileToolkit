@@ -131,7 +131,6 @@ zTrialSettingsDefault.passiveRelaxationTime = 5*60*auroraConfigWaveSet.oneSecond
 zTrialSettingsDefault.sineSeries.amplitude = 0.002;
 zTrialSettingsDefault.Larb.amplitude    = 0.002;
 
-
 fieldBW =auroraConfigWaveSet.labels.bandwidth;
 flag_mergedStochasticSet=0;
 

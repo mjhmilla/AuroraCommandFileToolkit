@@ -560,7 +560,7 @@ if(strcmp(trialType,'active'))
   startTime=programMetaData.nextStartTime;
 
   [programMetaData, fcnMetaData] = ...
-      writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData);
+      writeDeactivationBlock600AUpd(fid, startTime, auroraConfig, programMetaData);
 
   %segmentMetaDataArray=[segmentMetaDataArray,fcnMetaData];
 

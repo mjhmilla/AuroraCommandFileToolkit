@@ -51,16 +51,38 @@ switch configMuscle.name
   case 'SOL'
     assert(0,'Error: Populate the solues settings');
 
+  case 'GL'
+    %From Reuvers et al. 2026
+    configTetanus.initialDelay   = 0;   
+
+    configTetanus.pulseFrequency   =  100;
+
+    configTetanus.pulseWidth       = 0.100; %In ms
+   
+    halfRiseTime=mean([13.2,13.8,9.97]).*0.001;
+
+    configTetanus.timeToReachMaxActivation = ...
+      round(4*halfRiseTime.*1000).*0.001;
+    %Set to 4 half rise times to accomodate the fact that
+    %the muscle might not reach its maximum activation is quickly 
+    %towards the end of the protocol
+
+    configTetanus.durationExtension        = 0.05;
+    
+    configTetanus.recoveryTime            = 5;
+
   otherwise
     assert(0,'Error: unrecognized muscle name');
 
 end
 
 
-assert(((1000/configTiming.sampleFrequency)< configTetanus.pulseWidth),...
-        ['Error: configTiming.sampleFrequency is not high enough to ensure that ',...
+if( ~((1000/configTiming.sampleFrequency)< configTetanus.pulseWidth) )
+  disp('----------------------------------------');
+  disp(['Warning: configTiming.sampleFrequency is not high enough to ensure that ',...
          'stimulation pulses are recorded.']);
-
+  disp('----------------------------------------');  
+end
 if(verbose==1)
     settingsFields = fields(configTetanus);
     fprintf('getPropertiesTetanus610A\n')

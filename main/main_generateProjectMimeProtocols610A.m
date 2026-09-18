@@ -35,8 +35,19 @@ dateIdOverride                  = [];
 
 verbose     = 1;
 
-muscleName  ='EDL';
-temperatureC= 22;
+%
+% In-Situ exp at VUA:
+%
+isTwitchCommandAvailable=0;
+muscleName  ='GL';%'EDL';
+temperatureC= 37.0;% 22;
+
+%
+% In-vitro exp at US
+%
+% isTwitchCommandAvailable=1;
+% muscleName  ='EDL';
+% temperatureC= 22;
 
 lceOptMM_measured = [];
 vceOptMM_measured = [];
@@ -82,6 +93,7 @@ experimentComputerFolder=...
 %
 disp('auroraConfig.default');
 auroraConfig.default = getDefaultAuroraConfiguration610A(...
+                        isTwitchCommandAvailable,...
                         configTiming.sampleFrequency,...    
                         configMuscle.lceOptMM,...
                         configMuscle.vceMaxLPS,...
@@ -89,6 +101,7 @@ auroraConfig.default = getDefaultAuroraConfiguration610A(...
 
 disp('auroraConfig.recovery');
 auroraConfig.recovery = getDefaultAuroraConfiguration610A(...
+                        isTwitchCommandAvailable,...
                         configTiming.sampleFrequencyRecovery,...    
                         configMuscle.lceOptMM,...
                         configMuscle.vceMaxLPS,...
@@ -96,6 +109,7 @@ auroraConfig.recovery = getDefaultAuroraConfiguration610A(...
 
 disp('auroraConfig.twitch');
 auroraConfig.twitch = getDefaultAuroraConfiguration610A(...
+                    isTwitchCommandAvailable,...
                     configTiming.sampleFrequencyTwitch,...    
                     configMuscle.lceOptMM,...
                     configMuscle.vceMaxLPS,...
@@ -473,6 +487,8 @@ dataFolderName        = 'data';
 protocolFolderName    = 'protocols';
 blockLabelsFolderName = 'segmentLabels';
 sequenceMetaData      = 'sequenceMetaData';
+timeSeriesDataFolderName = 'timeSeriesData';
+timeSeriesImagesFolderName = 'timeSeriesImages';
 
 
 codeDir         = fullfile(projectFolders.output_code,[dateId,'_610A']); 
@@ -497,11 +513,14 @@ if(~exist(labelDir,'dir'))
 end
 
 
-expFolders.rootFolderPath         = codeDir;
-expFolders.dataFolderName         = dataFolderName;
-expFolders.protocolFolderName     = protocolFolderName;
-expFolders.blockLabelsFolderName  = blockLabelsFolderName;
-expFolders.sequenceMetaData       = sequenceMetaData;
+expFolders.rootFolderPath             = codeDir;
+expFolders.dataFolderName             = dataFolderName;
+expFolders.protocolFolderName         = protocolFolderName;
+expFolders.blockLabelsFolderName      = blockLabelsFolderName;
+expFolders.sequenceMetaData           = sequenceMetaData;
+expFolders.timeSeriesDataFolderName   = timeSeriesDataFolderName;
+expFolders.timeSeriesImagesFolderName = timeSeriesImagesFolderName;
+
 
 %%
 % Generate the protocols
@@ -955,7 +974,7 @@ if(flag_preInjuryProtocol==1)
   sequenceName = 'preInjury';
 
   [trialId, preInjuryFolders] = ...
-    constructPrePostInjuryExperiment610A(...
+    constructPrePostInjuryExperiment610A_01(...
                           dateId,...
                           trialId,...
                           sequenceId,...
@@ -989,6 +1008,8 @@ if(flag_preInjuryProtocol==1)
 end
 
 if(flag_injuryRampProtocol==1)
+
+  assert(0,'Error: this still needs to be converted');
 
   rampConfig.muscle=configMuscle;
   rampConfig.timing=configTiming;
@@ -1083,7 +1104,7 @@ if(flag_postInjuryProtocol==1)
   sequenceName = 'postInjury';
 
   [trialId, postInjuryFolders] = ...
-    constructPrePostInjuryExperiment610A(...
+    constructPrePostInjuryExperiment610A_01(...
                           dateId,...
                           trialId,...
                           sequenceId,...

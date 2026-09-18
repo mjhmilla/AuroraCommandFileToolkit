@@ -1,5 +1,5 @@
 function [programMetaData, segmentMetaData] = ...
-    writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData)
+    writeDeactivationBlock600AUpd(fid, startTime, auroraConfig, programMetaData)
 
 
 bathOptions = getCommandFunctionOptions600AUpd('Bath',auroraConfig,[]);
@@ -8,7 +8,7 @@ bathOptions = getCommandFunctionOptions600AUpd('Bath',auroraConfig,[]);
 bathOptions(1).value = auroraConfig.bath.passive;
 bathOptions(2).value = 0;
 
-startTime= programMetaData.nextStartTime;
+%startTime= programMetaData.nextStartTime;
 
 flag_printMetaDataToCsv=1;
 

@@ -153,6 +153,8 @@ programMetaData.nextStartTime = ...
 [programMetaData, actSegMetaDataArray]= ...
   writeActivationBlock600AUpd(fid, auroraConfig, programMetaData);  
 
+timeInActivationBath=programMetaData.controlFunction.endTime;
+
 segmentMetaDataArray=[segmentMetaDataArray,actSegMetaDataArray];
 
 
@@ -180,10 +182,11 @@ segmentMetaDataArray=[segmentMetaDataArray,slTriggerMetaData];
 %%
 % 5. Deactivate 
 %%
-startTime=programMetaData.nextStartTime;
-
+startTime=(timeInActivationBath+15*s2ms);
+assert(startTime>programMetaData.nextStartTime);
+ 
 [programMetaData, deActMetaData] = ...
-    writeDeactivationBlock600AUpd(fid, auroraConfig, programMetaData);
+    writeDeactivationBlock600AUpd(fid, startTime, auroraConfig, programMetaData);
 
 segmentMetaDataArray=[segmentMetaDataArray,deActMetaData];
 
