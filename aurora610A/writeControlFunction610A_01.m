@@ -591,9 +591,27 @@ switch controlFunctionName
         programMetaData.data=[programMetaData.data;...
                               dataUpd]; 
 
+
+
+        %
+        % Update the time series data
+        %
+        t0 = startTime+dt;
+        t1 = t0+waitTimeInS+dt;
+        nSteps=abs(t1-t0)*sampleFrequencyHz;
+        if( nSteps > 2)
+          timeSeries_s=[t0:dt:t1]';
+          lengthSeries = ones(size(timeSeries_s)).*programMetaData.data(end,2);
+          stimSeries = zeros(size(timeSeries_s));
+          for idxT=1:1:length(timeSeries_s)
+            stimSeries(idxT)=isActive610A(timeSeries_s(idxT),programMetaData);
+          end
+          programMetaData.data=[programMetaData.data; ...
+                                timeSeries_s,lengthSeries,stimSeries];
+        end        
+
         programMetaData.Stimulus_time=[];
         
-
     otherwise
         assert(0, ['Error: ',controlFunctionName,...
                 ' is an unrecognized function']);

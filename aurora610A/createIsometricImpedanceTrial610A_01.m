@@ -455,7 +455,6 @@ fclose(programMetaData.labelFileHandle);
 %
 % Write the json files
 %
-jsonMetaData.segments = segmentMetaDataArray;
 
 experimentTitle = ...
   sprintf('Active Isometric Impedance: %1.1f mm',...

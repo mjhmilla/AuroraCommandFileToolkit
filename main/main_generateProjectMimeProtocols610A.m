@@ -39,6 +39,7 @@ verbose     = 1;
 % In-Situ exp at VUA:
 %
 isTwitchCommandAvailable=0;
+useSmallerLengths = 1;
 muscleName  ='GL';%'EDL';
 temperatureC= 37.0;% 22;
 
@@ -917,13 +918,6 @@ if(flag_preInjuryProtocol==1)
   prePostConfig.twitch      = configTwitch;
   prePostConfig.positioning = configPositioning;
   prePostConfig.relax       = configRelax;
-
-  %prePostConfig.unitSystem  = unitSystem;
-  %prePostConfig.lceOptMM    = lceOptMM;
-  %prePostConfig.vceMaxLPS   = vceMaxLPS;
-
-  %prePostConfig.waitTime = 1;  
-  %prePostConfig.stopWaitTime = 5;
   
   prePostConfig.passive.ramp.velocity = [0.01,0.33,1].*configMuscle.vceMaxMMPS*0.5; 
   prePostConfig.passive.ramp.waitTime = 1;
@@ -943,6 +937,9 @@ if(flag_preInjuryProtocol==1)
   
   prePostConfig.passive.impedance.waitTime = 1;
   prePostConfig.passive.impedance.length = [2,4];
+  if(useSmallerLengths==1)
+    prePostConfig.passive.impedance.length = [1,3];
+  end
   prePostConfig.passive.impedance.stochasticWaveIndex=2;
   prePostConfig.passive.impedance.amplitude=perturbationLengthMM;  
 
@@ -956,9 +953,12 @@ if(flag_preInjuryProtocol==1)
 
   %Isometric
   prePostConfig.isometric.lengths = [-3,2,4];
+  if(useSmallerLengths==1)
+    prePostConfig.isometric.lengths = [-3,1,3];    
+  end
 
   %Active ramp
-  prePostConfig.activeRamp.lengths = [1,-2;-2,1];
+  prePostConfig.activeRamp.lengths = [1,-1;-1,1];
   prePostConfig.activeRamp.velocity= [-1;1].*(configMuscle.vceMaxMMPS*0.5);
 
   %Active impedance
@@ -1009,60 +1009,34 @@ end
 
 if(flag_injuryRampProtocol==1)
 
-  assert(0,'Error: this still needs to be converted');
 
   rampConfig.muscle=configMuscle;
   rampConfig.timing=configTiming;
   rampConfig.tetanus=configTetanus;
   rampConfig.recovery = configRecovery;
   rampConfig.positioning = configPositioning;
-
-
-  %rampConfig.waitTime = 1;  
-  %rampConfig.stopWaitTime = 5;
-  %rampConfig.temperature = muscleTemperature;
-  %rampConfig.timeToReachMaxActivation = configTetanus.timeToReachMaxActivation;
   
   rampConfig.ramp.velocity = configMuscle.vceMaxMMPS*0.5; 
   rampConfig.ramp.waitTime = 1;
   rampConfig.ramp.length   = [5,7,9];  
+  if(useSmallerLengths==1)
+    rampConfig.ramp.length   = [3,5,7];  
+  end
   rampConfig.ramp.duration = rampConfig.ramp.length ./ rampConfig.ramp.velocity;
   rampConfig.ramp.duration = ...
     roundTimeToNearestSampleTime(rampConfig.ramp.duration,auroraConfig.default);
   rampConfig.ramp.velocity = rampConfig.ramp.length./rampConfig.ramp.duration;
   rampConfig.ramp.isActive = ones(size(rampConfig.ramp.length));
   
-  %Activations settings
-  %rampConfig.tetanus.waitTime       = 1;
-  %rampConfig.tetanus.initialDelay   = 0;
-  %rampConfig.tetanus.pulseFrequency = pulseFrequency;
-  %rampConfig.tetanus.pulseWidth     = configTetanus.pulseWidth;
-  %rampConfig.tetanus.durationExtension = 0.5*configTetanus.timeToReachMaxActivation;
-  %rampConfig.tetanus.duration       = nan;
 
   %Probe trial settings
   rampConfig.probe.velocity = 1;
   rampConfig.probe.waitTime = 1;
   rampConfig.probe.passiveLength = 3;
 
-    
-  %This is the relaxation sine wave between trials
 
-  %rampConfig.recovery.sineWave.waitTime  = 1;
-  %rampConfig.recovery.sineWave.frequency = 1;
-  %rampConfig.recovery.sineWave.amplitude = sineWaveRecoveryAmplitude;
-  %rampConfig.recovery.sineWave.cycles    = ...
-  %  rampConfig.recovery.sineWave.frequency*sineWaveRecoveryDurationS;
-  %rampConfig.recovery.sineWave.sampleFrequency = 100;
-  %rampConfig.recovery.stopWaitTime = rampConfig.stopWaitTime;
-  %rampConfig.recovery.sampleFrequency = 100;
-
-  %rampConfig.muscleName  =muscleName;
-  %rampConfig.unitSystem  =unitSystem;
-  %rampConfig.lceOptMM    =lceOptMM;
-  %rampConfig.vceMaxLPS   =vceMaxLPS;
-
-  [trialId, alFolders] = constructActiveLengtheningInjuryExperiment610A(...
+  [trialId, alFolders] = ...
+    constructActiveLengtheningInjuryExperiment610A_01(...
                               dateId,...
                               trialId,...
                               sequenceId,...
