@@ -94,7 +94,7 @@ assert(length(stochasticWaveSet)==1,...
 jsonFileNameArray = [];
 fileCount=indexStart;
 
-nScreeningTrials=2;
+nScreeningTrials=1;
 
 for idxIso=1:1:nScreeningTrials
   blockName='screen';

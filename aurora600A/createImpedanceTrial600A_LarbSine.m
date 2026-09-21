@@ -498,11 +498,14 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
                         'Length-Ramp',auroraConfig,isRelativeOverride);
   
   
-    lengthRampOptions(1).value = zTrialSettings.target.length;
-    lengthRampOptions(2).value = auroraConfig.oneSecond;
+  wait100ms=round(auroraConfig.oneSecond*0.100);
+  wait200ms=round(auroraConfig.oneSecond*0.200);
+
+  lengthRampOptions(1).value = zTrialSettings.target.length;
+  lengthRampOptions(2).value = wait100ms;
   
-    startTime = programMetaData.nextStartTime;
-    flag_printMetaDataLabelsToCsv=1;
+  startTime = programMetaData.nextStartTime;
+  flag_printMetaDataLabelsToCsv=1;
   
   [programMetaData,fcnMetaData] =  ...
       writeControlFunction600AUpd(...
@@ -515,7 +518,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
   % 6b. Data-Enable
   %
     if(zTrialSettings.useMinimalData==1)
-      startTime=programMetaData.nextStartTime+auroraConfig.oneSecond*2;
+      startTime=programMetaData.nextStartTime+wait200ms;
       [programMetaData,fcnMetaData] = ...
           dataEnable600A(fid,startTime,auroraConfig,programMetaData);
       %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];
@@ -531,7 +534,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
     lengthSineOptions(2).value = zTrialSettings.sineSeries.amplitude;
     lengthSineOptions(3).value = sineSeries.durationS(idxSine)*s2ms;
 
-    startTime = programMetaData.nextStartTime+auroraConfig.oneSecond;
+    startTime = programMetaData.nextStartTime + wait200ms;
 
     [programMetaData,fcnMetaData] =  ...
         writeControlFunction600AUpd(...
@@ -544,7 +547,7 @@ for idxSine=1:1:length(sineSeries.frequencyHz)
   % 6d. Data-Disable
   %
     if(zTrialSettings.useMinimalData==1)
-      startTime=programMetaData.nextStartTime + auroraConfig.oneSecond;
+      startTime=programMetaData.nextStartTime+wait200ms;
       [programMetaData,fcnMetaData] = ...
           dataDisable600A(fid,startTime,auroraConfig,programMetaData);
       %segmentMetaDataArray = [segmentMetaDataArray, fcnMetaData];

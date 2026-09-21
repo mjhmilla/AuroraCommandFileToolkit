@@ -18,8 +18,8 @@ addpath(projectFolders.signals);
 %%
 % Script configuration
 %%
-flag_generateRandomSignal               = 0;
-flag_generateExponentiallySpacedSinusoids=0;
+flag_generateRandomSignal               = 1;
+flag_generateExponentiallySpacedSinusoids=1;
 
 % Experiments to generate
 flag_generateRubberProtocol                     = 0;
@@ -125,9 +125,9 @@ if(flag_generateLarbSinusoidImpedanceProtocol==1)
     arbitraryWaveformManualSettings.frequencyHz   = 1000;
 
     arbitraryWaveformManualSettings.points        = ...
-        [2^13,2^13,2^13,2^13,2^13];
+        [2^12,2^12,2^12,2^12,2^13];
     arbitraryWaveformManualSettings.magnitude     = ...
-        [0.01, 0.01, 0.001, 0.001,0.002];
+        [0.01, 0.01, 0.002, 0.002,0.002];
     arbitraryWaveformManualSettings.bandwidth     = ...
         [35, 90, 35, 90,90];        
     arbitraryWaveformManualSettings.canBeMerged = ...
@@ -234,7 +234,7 @@ if(flag_generateExponentiallySpacedSinusoids==1)
   sinSettings.minFrequencyHz                    = 0.25;
   sinSettings.numberOfSinusoids                 = 20;
   %sinSettings.maxSinusoidDurationS              = (1/sinSettings.minFrequencyHz)+sqrt(eps);
-  sinSettings.preferredSinusoidDurationS        = 1;
+  sinSettings.preferredSinusoidDurationS        = 0.5;
   sinSettings.minCycleCount                     = 1;
   sinSettings.maxCycleCount                     = inf;
   sinSettings.maxAngularErrorDegrees            = 0.1;
