@@ -1,4 +1,5 @@
 function expSettings = getExperimentSettings(maxNormalizedShorteningSpeedLPS)
+
 %%
 % Impedance calibration block
 %%
