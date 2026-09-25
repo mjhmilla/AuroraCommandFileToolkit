@@ -7,6 +7,7 @@ function indexEnd = ...
                       calibrationStochasticWave,...
                       sinSeries,...
                       sinProbeSeries,...
+                      sinCalibrationSeries,...
                       writeProtocolHeader,...
                       projectFolders,...
                       auroraConfigWaveSet,...
@@ -121,6 +122,13 @@ end
 %%
 zTrialSettingsDefault.useMinimalData    = 1;
 
+zTrialSettingsDefault.moveToStartingLength=1;
+zTrialSettingsDefault.moveToTargetLength  =1;
+zTrialSettingsDefault.applyStepChanges    =1;
+zTrialSettingsDefault.applyLengthArb      =1;
+zTrialSettingsDefault.applySinSeries      =1;
+
+
 zTrialSettingsDefault.start.bathNumber  = nan;
 zTrialSettingsDefault.start.length      = nan;
 zTrialSettingsDefault.target.bathNumber = nan;
@@ -129,9 +137,9 @@ zTrialSettingsDefault.length.isRelative = 0;
 zTrialSettingsDefault.length.ratePerSecond = 0.1;
 zTrialSettingsDefault.passiveRelaxationTime = 5*60*auroraConfigWaveSet.oneSecond; %5 min.
 
-zTrialSettingsDefault.sineSeries.amplitude = 0.002;
-zTrialSettingsDefault.Larb.amplitude       = 0.002;
-zTrialSettingsDefault.sineProbe.amplitude  = 0.002;
+zTrialSettingsDefault.sineSeries.amplitude = 0.0015;
+zTrialSettingsDefault.Larb.amplitude       = 0.0015;
+zTrialSettingsDefault.sineProbe.amplitude  = 0.0015;
 
 
 fieldBW =auroraConfigWaveSet.labels.bandwidth;
@@ -186,6 +194,10 @@ for idxZ = 1:1:length(settingsImpedance.isometricNormLengths)
         zTrialSettings.Larb.writeFile = 1;
         zTrialSettings.Larb.fileName = '';
         zTrialSettings.Larb.useProtocolFileName=1;
+
+        %zTrialSettings.sineSeries.amplitude = 0.01;
+        %zTrialSettings.Larb.amplitude       = 0.01;
+        %zTrialSettings.sineProbe.amplitude  = 0.01;        
         blockName='zPassive';
   
       case 2
@@ -282,8 +294,20 @@ end
 %%
 %The last two trials: rigor and fixation
 %%
+
+zTrialSettingsDefault.moveToStartingLength=0;
+zTrialSettingsDefault.moveToTargetLength  =0;
+zTrialSettingsDefault.applyStepChanges    =0;
+zTrialSettingsDefault.applyLengthArb      =1;
+zTrialSettingsDefault.applySinSeries      =1;
+
+
+
+
 for idxC = 1:1:2
   zTrialSettings=zTrialSettingsDefault;
+
+  sinSeriesTrial = [];
 
   switch idxC
     case 1
@@ -297,6 +321,9 @@ for idxC = 1:1:2
       zTrialSettings.Larb.writeFile = 1;
       zTrialSettings.Larb.fileName = '';
       zTrialSettings.Larb.useProtocolFileName=1;      
+
+      sinSeriesTrial=sinSeries;
+
       blockName='zRigor';
 
     case 2
@@ -310,6 +337,13 @@ for idxC = 1:1:2
       zTrialSettings.Larb.writeFile = 1;
       zTrialSettings.Larb.fileName = '';
       zTrialSettings.Larb.useProtocolFileName=1;      
+
+      zTrialSettings.sineSeries.amplitude = 0.001;
+      zTrialSettings.Larb.amplitude       = 0.001;
+      zTrialSettings.sineProbe.amplitude  = 0.001;  
+
+      sinSeriesTrial=sinCalibrationSeries;
+      
       blockName='zKarnovsky';
     otherwise 
         assert(0,'Error: exceeded the number of impedance cases');
@@ -327,7 +361,7 @@ for idxC = 1:1:2
                                 seriesName,...
                                 blockName,...
                                 calibrationStochasticWave,...
-                                sinSeries,...
+                                sinSeriesTrial,...
                                 stepSeries,...
                                 zTrialSettings,...
                                 fidProtocol,... 

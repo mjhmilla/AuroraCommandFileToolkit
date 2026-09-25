@@ -122,10 +122,10 @@ if(flag_generateArbitraryWaveImpedanceProtocol==1)
 end
 
 if(flag_generateLarbSinusoidImpedanceProtocol==1)
-    arbitraryWaveformManualSettings.frequencyHz   = 1000;
+    arbitraryWaveformManualSettings.frequencyHz   = 4000;
 
     arbitraryWaveformManualSettings.points        = ...
-        [2^13,2^13];
+        [2^15,2^15];
     arbitraryWaveformManualSettings.magnitude     = ...
         [1,1];
     arbitraryWaveformManualSettings.bandwidth     = ...
@@ -182,6 +182,9 @@ minNormLength                   = 0.5;
 maxNormLength                   = 1.85;
 
 if(flag_generateCalibrationProtocol==1)
+  sampleFrequency=4000;
+end
+if(flag_generateLarbSinusoidImpedanceProtocol==1)
   sampleFrequency=4000;
 end
 
@@ -262,6 +265,27 @@ if(flag_generateExponentiallySpacedSinusoids==1)
        'sineSeriesExponentiallySpaced.mat'),...
        'sineSeriesExponentiallySpaced','-mat');   
 
+  sinCalibrationSettings.maxFrequencyHz                    = 167*1.43526477;
+  sinCalibrationSettings.minFrequencyHz                    = 0.25;
+  sinCalibrationSettings.numberOfSinusoids                 = 20;
+  %sinCalibrationSettings.maxSinusoidDurationS              = (1/sinCalibrationSettings.minFrequencyHz)+sqrt(eps);
+  sinCalibrationSettings.preferredSinusoidDurationS        = 5;
+  sinCalibrationSettings.minCycleCount                     = 1;
+  sinCalibrationSettings.maxCycleCount                     = inf;
+  sinCalibrationSettings.maxAngularErrorDegrees            = 0.1;
+  sinCalibrationSettings.frequencyHzTolerancePercentage    = 0.075;
+  sinCalibrationSettings.flag_correctFrequencyToSampleRate =1;
+
+  sineCalibrationSeriesExponentiallySpaced = ...
+    generateExponentiallySpacedSinusoids(sampleFrequency,...
+                                         sinCalibrationSettings,...
+                                         auroraConfig,...
+                                         1);
+
+  save(fullfile(projectFolders.output_structs,...
+       'sineCalibrationSeriesExponentiallySpaced.mat'),...
+       'sineCalibrationSeriesExponentiallySpaced','-mat');     
+
   sineProbeSettings.maxFrequencyHz                    = 125;
   sineProbeSettings.minFrequencyHz                    = 12.5;
   sineProbeSettings.numberOfSinusoids                 = 7;
@@ -295,6 +319,11 @@ else
           'sineProbeSeriesExponentiallySpaced.mat');
   load(filePath);    
   fprintf('\nSine-probe-series file loaded\n\t%s\n\n',filePath);
+
+  filePath=fullfile(projectFolders.output_structs,...
+          'sineCalibrationSeriesExponentiallySpaced.mat');
+  load(filePath);    
+  fprintf('\nSine-calibration-series file loaded\n\t%s\n\n',filePath);
   
 end
 
@@ -633,6 +662,7 @@ if(flag_generateLarbSinusoidImpedanceProtocol==1)
               calibrationStochasticWave,...
               sineSeriesExponentiallySpaced,...
               sineProbeSeriesExponentiallySpaced,...
+              sineCalibrationSeriesExponentiallySpaced,...
               writeProtocolHeader,...
               projectFolders,...
               auroraConfig,...
